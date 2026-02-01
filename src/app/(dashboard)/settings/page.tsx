@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -15,6 +16,8 @@ import {
   Bell,
   HelpCircle,
   Sparkles,
+  BookOpen,
+  ChevronRight,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -247,13 +250,31 @@ export default function SettingsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Family Expense Manager v1.0.0
-          </p>
-          <p className="text-sm text-muted-foreground">
-            A family expense and finance management application to track your income,
-            expenses, investments, and family spending.
-          </p>
+          {/* How to Use Link */}
+          <Link href="/settings/how-to-use">
+            <Button variant="outline" className="w-full justify-between h-auto py-3">
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-5 w-5 text-primary" />
+                <div className="text-left">
+                  <p className="font-medium">How to Use This App</p>
+                  <p className="text-xs text-muted-foreground">
+                    Step-by-step guide and FAQ
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </Button>
+          </Link>
+          
+          <div className="pt-2">
+            <p className="text-sm text-muted-foreground">
+              Family Expense Manager v1.0.0
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              A family expense and finance management application to track your income,
+              expenses, investments, and family spending.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

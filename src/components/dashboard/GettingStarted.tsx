@@ -1,0 +1,230 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import {
+  Users,
+  Building2,
+  CreditCard,
+  Wallet,
+  PiggyBank,
+  Target,
+  Tag,
+  CheckCircle2,
+  ChevronRight,
+  X,
+  Rocket,
+} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
+
+interface SetupStep {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  href: string;
+  checkKey: string;
+  required?: boolean;
+}
+
+const setupSteps: SetupStep[] = [
+  {
+    id: 'members',
+    title: 'Add Family Members',
+    description: 'Add your family members to track expenses by person',
+    icon: <Users className="h-5 w-5" />,
+    href: '/members/new',
+    checkKey: 'hasMembers',
+    required: true,
+  },
+  {
+    id: 'bank-accounts',
+    title: 'Add Bank Accounts',
+    description: 'Connect your bank accounts to track balances',
+    icon: <Building2 className="h-5 w-5" />,
+    href: '/accounts/banks/new',
+    checkKey: 'hasBankAccounts',
+    required: true,
+  },
+  {
+    id: 'cards',
+    title: 'Add Credit/Debit Cards',
+    description: 'Add your cards to track spending',
+    icon: <CreditCard className="h-5 w-5" />,
+    href: '/accounts/cards/new',
+    checkKey: 'hasCards',
+  },
+  {
+    id: 'categories',
+    title: 'Customize Categories',
+    description: 'Set up income and expense categories',
+    icon: <Tag className="h-5 w-5" />,
+    href: '/settings',
+    checkKey: 'hasCategories',
+  },
+  {
+    id: 'investments',
+    title: 'Add Investments',
+    description: 'Track your mutual funds, stocks, and more',
+    icon: <PiggyBank className="h-5 w-5" />,
+    href: '/investments/new',
+    checkKey: 'hasInvestments',
+  },
+  {
+    id: 'goals',
+    title: 'Set Financial Goals',
+    description: 'Create savings goals to stay motivated',
+    icon: <Target className="h-5 w-5" />,
+    href: '/goals/new',
+    checkKey: 'hasGoals',
+  },
+];
+
+interface SetupStatus {
+  hasMembers: boolean;
+  hasBankAccounts: boolean;
+  hasCards: boolean;
+  hasCategories: boolean;
+  hasInvestments: boolean;
+  hasGoals: boolean;
+  memberCount: number;
+}
+
+export function GettingStarted() {
+  const [dismissed, setDismissed] = useState(false);
+
+  // Check if user has dismissed the getting started guide
+  useEffect(() => {
+    const isDismissed = localStorage.getItem('getting-started-dismissed');
+    if (isDismissed === 'true') {
+      setDismissed(true);
+    }
+  }, []);
+
+  // Fetch setup status
+  const { data: status, isLoading } = useQuery<SetupStatus>({
+    queryKey: ['setup-status'],
+    queryFn: async () => {
+      const response = await fetch('/api/setup-status');
+      if (!response.ok) throw new Error('Failed to fetch setup status');
+      const data = await response.json();
+      return data.data;
+    },
+  });
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    localStorage.setItem('getting-started-dismissed', 'true');
+  };
+
+  // Don't show if dismissed or loading
+  if (dismissed || isLoading) return null;
+
+  // Check if setup is complete (has at least one member beyond self, and has bank accounts)
+  // A default "Self" member is created automatically, so we check for more than 1 member
+  // or just check if they have bank accounts (indicating they've started setting up)
+  const isSetupComplete = status?.hasBankAccounts || (status?.memberCount && status.memberCount > 1);
+
+  if (isSetupComplete) return null;
+
+  // Calculate progress
+  const completedSteps = setupSteps.filter(
+    (step) => status?.[step.checkKey as keyof SetupStatus]
+  ).length;
+  const progress = (completedSteps / setupSteps.length) * 100;
+
+  return (
+    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-full bg-primary/10">
+              <Rocket className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Welcome! Let&apos;s get started</CardTitle>
+              <CardDescription>
+                Complete these steps to set up your finance manager
+              </CardDescription>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={handleDismiss}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="mt-3 space-y-1">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Setup Progress</span>
+            <span className="font-medium">{completedSteps}/{setupSteps.length} completed</span>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="grid gap-2">
+          {setupSteps.map((step) => {
+            const isCompleted = status?.[step.checkKey as keyof SetupStatus];
+
+            return (
+              <Link
+                key={step.id}
+                href={isCompleted ? '#' : step.href}
+                className={cn(
+                  'flex items-center gap-3 p-3 rounded-lg transition-colors',
+                  isCompleted
+                    ? 'bg-muted/50 cursor-default'
+                    : 'bg-card hover:bg-muted border border-border/50'
+                )}
+                onClick={(e) => isCompleted && e.preventDefault()}
+              >
+                <div
+                  className={cn(
+                    'p-2 rounded-full',
+                    isCompleted
+                      ? 'bg-green-500/10 text-green-500'
+                      : 'bg-primary/10 text-primary'
+                  )}
+                >
+                  {isCompleted ? (
+                    <CheckCircle2 className="h-5 w-5" />
+                  ) : (
+                    step.icon
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={cn(
+                    'font-medium text-sm',
+                    isCompleted && 'text-muted-foreground line-through'
+                  )}>
+                    {step.title}
+                    {step.required && !isCompleted && (
+                      <span className="ml-1 text-xs text-destructive">*</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {step.description}
+                  </p>
+                </div>
+                {!isCompleted && (
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          <span className="text-destructive">*</span> Required steps
+        </p>
+      </CardContent>
+    </Card>
+  );
+}

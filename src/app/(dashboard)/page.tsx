@@ -28,6 +28,7 @@ import { formatRelativeDate } from '@/lib/utils/dates';
 import { TransactionType } from '@/types';
 import { cn } from '@/lib/utils';
 import { BudgetAlerts } from '@/components/dashboard/BudgetAlerts';
+import { GettingStarted } from '@/components/dashboard/GettingStarted';
 
 // Lazy load chart components for better initial page load
 const ExpensePieChart = dynamic(() => import('@/components/dashboard/Charts').then(mod => ({ default: mod.ExpensePieChart })), {
@@ -157,6 +158,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Getting Started Guide for New Users */}
+      <GettingStarted />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
