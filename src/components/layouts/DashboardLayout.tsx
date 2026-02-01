@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import {
   LayoutDashboard,
@@ -31,6 +31,8 @@ import {
   FileUp,
   List,
   LucideIcon,
+  ArrowLeft,
+  Home,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -99,9 +101,46 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+
+  // Check if we're on the home page
+  const isHomePage = pathname === '/';
+
+  // Get page title from pathname
+  const pageTitle = useMemo(() => {
+    const titles: Record<string, string> = {
+      '/': 'Dashboard',
+      '/accounts': 'Accounts',
+      '/accounts/banks': 'Bank Accounts',
+      '/accounts/cards': 'Cards',
+      '/transactions': 'Transactions',
+      '/transactions/new': 'New Transaction',
+      '/transactions/import': 'Import Transactions',
+      '/categories': 'Categories',
+      '/reports': 'Reports',
+      '/budgets': 'Budgets',
+      '/goals': 'Goals',
+      '/investments': 'Investments',
+      '/trips': 'Trips',
+      '/documents': 'Documents',
+      '/tax': 'Tax',
+      '/assets': 'Assets',
+      '/vehicles': 'Vehicles',
+      '/members': 'Members',
+      '/scheduled-payments': 'Scheduled Payments',
+      '/settings': 'Settings',
+    };
+    // Check for exact match first
+    if (titles[pathname]) return titles[pathname];
+    // Check for partial matches (for dynamic routes)
+    for (const [path, title] of Object.entries(titles)) {
+      if (pathname.startsWith(path) && path !== '/') return title;
+    }
+    return 'Money Manager';
+  }, [pathname]);
 
   const toggleMenu = useCallback((menuName: string) => {
     setExpandedMenus(prev => ({
@@ -271,7 +310,36 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <div className="lg:pl-64">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-background px-4 lg:px-6">
+          {/* Mobile Back Button - only show on non-home pages */}
+          {!isHomePage && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="h-5 w-5" />
+              <span className="sr-only">Go back</span>
+            </Button>
+          )}
+
+          {/* Mobile Home Button - only show on non-home pages */}
+          {!isHomePage && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              asChild
+            >
+              <Link href="/">
+                <Home className="h-5 w-5" />
+                <span className="sr-only">Go home</span>
+              </Link>
+            </Button>
+          )}
+
+          {/* Desktop Menu Toggle */}
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden">
@@ -280,6 +348,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </Button>
             </SheetTrigger>
           </Sheet>
+
+          {/* Page Title - Mobile only */}
+          <span className="font-semibold text-sm truncate lg:hidden">{pageTitle}</span>
 
           <div className="flex-1" />
 
