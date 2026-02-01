@@ -217,6 +217,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
     mutationFn: (data: Partial<Trip>) => updateTrip(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trip', id] });
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
       toast.success('Trip updated successfully');
     },
     onError: () => toast.error('Failed to update trip'),

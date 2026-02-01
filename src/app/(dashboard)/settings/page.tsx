@@ -98,41 +98,6 @@ export default function SettingsPage() {
           <CardDescription>Customize how the app looks</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Theme */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Theme</Label>
-              <p className="text-sm text-muted-foreground">
-                Select your preferred theme
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={theme === 'light' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setTheme('light')}
-              >
-                <Sun className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={theme === 'dark' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setTheme('dark')}
-              >
-                <Moon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={theme === 'system' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setTheme('system')}
-              >
-                <Monitor className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <Separator />
-
           {/* Currency */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
@@ -157,36 +122,72 @@ export default function SettingsPage() {
 
           <Separator />
 
-          {/* Color Theme */}
+          {/* Theme & Color Theme Combined */}
           <div className="space-y-4">
             <div className="space-y-0.5">
               <Label className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
-                Color Theme
+                Theme
               </Label>
               <p className="text-sm text-muted-foreground">
-                Choose a themed color palette
+                Choose your preferred appearance
               </p>
             </div>
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex gap-2 pb-3">
-                {colorThemes.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => handleColorThemeChange(t.id)}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all min-w-[80px] ${
-                      colorTheme === t.id
-                        ? 'border-primary bg-primary/10'
-                        : 'border-transparent hover:bg-muted'
-                    }`}
-                  >
-                    <span className="text-2xl">{t.emoji}</span>
-                    <span className="text-xs font-medium whitespace-nowrap">{t.name}</span>
-                  </button>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            
+            {/* Light/Dark/System Toggle */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant={theme === 'light' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTheme('light')}
+                className="gap-2"
+              >
+                <Sun className="h-4 w-4" />
+                Light
+              </Button>
+              <Button
+                variant={theme === 'dark' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTheme('dark')}
+                className="gap-2"
+              >
+                <Moon className="h-4 w-4" />
+                Dark
+              </Button>
+              <Button
+                variant={theme === 'system' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setTheme('system')}
+                className="gap-2"
+              >
+                <Monitor className="h-4 w-4" />
+                System
+              </Button>
+            </div>
+            
+            {/* Color Themes */}
+            <div className="pt-2">
+              <p className="text-xs text-muted-foreground mb-2">Color Palette</p>
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex gap-2 pb-3">
+                  {colorThemes.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => handleColorThemeChange(t.id)}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all min-w-[80px] ${
+                        colorTheme === t.id
+                          ? 'border-primary bg-primary/10'
+                          : 'border-transparent hover:bg-muted'
+                      }`}
+                    >
+                      <span className="text-2xl">{t.emoji}</span>
+                      <span className="text-xs font-medium whitespace-nowrap">{t.name}</span>
+                    </button>
+                  ))}
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -39,7 +39,7 @@ export function Providers({ children }: ProvidersProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000, // 5 minutes stale time
+            staleTime: 0, // Data is immediately stale, will refetch on mount
             gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
             retry: 1,
             refetchOnWindowFocus: false,
