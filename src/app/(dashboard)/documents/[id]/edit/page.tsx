@@ -73,7 +73,7 @@ const documentSchema = z.object({
   issueDate: z.string().optional(),
   expiryDate: z.string().optional(),
   notes: z.string().optional(),
-  reminderDays: z.coerce.number().min(0).optional(),
+  reminderDays: z.number().min(0).optional(),
   isActive: z.boolean(),
 });
 

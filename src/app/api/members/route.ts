@@ -57,11 +57,15 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase();
 
-    const member = await Member.create({
+    // Convert null dateOfBirth to undefined for MongoDB
+    const memberData = {
       ...validatedData,
+      dateOfBirth: validatedData.dateOfBirth ?? undefined,
       userId: session.user.id,
       isActive: true,
-    });
+    };
+
+    const member = await Member.create(memberData);
 
     return NextResponse.json(
       {

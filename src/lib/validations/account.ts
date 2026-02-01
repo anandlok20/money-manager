@@ -21,24 +21,12 @@ export const cardSchema = z.object({
   cardNetwork: CardNetwork.optional(),
   cardNumber: z.string().max(19, 'Card number is too long').optional(),
   last4Digits: z.string().length(4, 'Must be exactly 4 digits').regex(/^\d+$/, 'Must contain only numbers').optional(),
-  expiryMonth: z.preprocess(
-    (val) => (val === '' || val === undefined || val === null || Number.isNaN(val) ? undefined : Number(val)),
-    z.number().int().min(1).max(12).optional()
-  ),
-  expiryYear: z.preprocess(
-    (val) => (val === '' || val === undefined || val === null || Number.isNaN(val) ? undefined : Number(val)),
-    z.number().int().min(2000).max(2100).optional()
-  ),
+  expiryMonth: z.number().int().min(1).max(12).optional(),
+  expiryYear: z.number().int().min(2000).max(2100).optional(),
   cvv: z.string().min(3).max(4).optional().or(z.literal('')),
   pin: z.string().min(4).max(6).optional().or(z.literal('')),
-  billingCycleDay: z.preprocess(
-    (val) => (val === '' || val === undefined || val === null || Number.isNaN(val) ? undefined : Number(val)),
-    z.number().int().min(1).max(31).optional()
-  ),
-  creditLimit: z.preprocess(
-    (val) => (val === '' || val === undefined || val === null || Number.isNaN(val) ? undefined : Number(val)),
-    z.number().positive().optional()
-  ),
+  billingCycleDay: z.number().int().min(1).max(31).optional(),
+  creditLimit: z.number().positive().optional(),
   linkedBankId: z.string().optional(),
   linkedMemberId: z.string().optional(),
 });

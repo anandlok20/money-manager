@@ -105,12 +105,11 @@ export default function NewCardPage() {
     handleSubmit,
     watch,
     formState: { errors },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } = useForm({
-    resolver: zodResolver(cardSchema) as any,
+  } = useForm<CardInput>({
+    resolver: zodResolver(cardSchema),
     defaultValues: {
       cardName: '',
-      cardType: 'CREDIT' as const,
+      cardType: 'CREDIT',
     },
   });
 
@@ -129,16 +128,16 @@ export default function NewCardPage() {
     },
   });
 
-  const onSubmit = (data: unknown) => {
-    const cardData = data as CardInput;
+  const onSubmit = (data: CardInput) => {
+    const cardData = { ...data };
     // Extract last 4 digits from card number if provided
     if (cardData.cardNumber && !cardData.last4Digits) {
       cardData.last4Digits = cardData.cardNumber.replace(/\s/g, '').slice(-4);
     }
     // Clean empty strings from optional fields
-    if (cardData.cvv === '') delete (cardData as Record<string, unknown>).cvv;
-    if (cardData.pin === '') delete (cardData as Record<string, unknown>).pin;
-    if (cardData.cardNumber === '') delete (cardData as Record<string, unknown>).cardNumber;
+    if (cardData.cvv === '') cardData.cvv = undefined;
+    if (cardData.pin === '') cardData.pin = undefined;
+    if (cardData.cardNumber === '') cardData.cardNumber = undefined;
     mutation.mutate(cardData);
   };
 

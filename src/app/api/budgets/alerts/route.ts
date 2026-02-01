@@ -18,6 +18,13 @@ export interface BudgetAlert {
   message: string;
 }
 
+// Type for populated budget with category
+interface PopulatedBudget {
+  _id: string;
+  categoryId: { _id: string; name: string } | string;
+  amount: number;
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -43,7 +50,7 @@ export async function GET() {
       isActive: true,
       month: currentMonth,
       year: currentYear,
-    }).populate('categoryId', 'name');
+    }).populate('categoryId', 'name').lean() as unknown as PopulatedBudget[];
 
     if (budgets.length === 0) {
       return NextResponse.json({
@@ -64,11 +71,16 @@ export async function GET() {
     // Calculate spending for each budget
     const alerts: BudgetAlert[] = await Promise.all(
       budgets.map(async (budget) => {
+        // Handle populated categoryId (could be object or ObjectId)
+        const categoryId = typeof budget.categoryId === 'object' && '_id' in budget.categoryId
+          ? budget.categoryId._id
+          : budget.categoryId;
+          
         const spending = await Transaction.aggregate([
           {
             $match: {
               userId: { $eq: userId },
-              categoryId: budget.categoryId._id || budget.categoryId,
+              categoryId: categoryId,
               type: TransactionType.EXPENSE,
               dateTime: { $gte: monthStart, $lte: monthEnd },
             },

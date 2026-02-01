@@ -11,6 +11,13 @@ import Goal, { GoalStatus } from '@/lib/mongodb/models/Goal';
 import { TransactionType } from '@/types';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 
+// Type for populated budget with category
+interface PopulatedBudget {
+  _id: string;
+  categoryId: { _id: string; name: string } | string;
+  amount: number;
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -140,15 +147,15 @@ export async function GET() {
         },
       ]),
 
-      // Active budgets
+      // Active budgets for current month
       Budget.find({ 
         userId, 
         isActive: true,
-        startDate: { $lte: monthEnd },
-        endDate: { $gte: monthStart },
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
       })
         .populate('categoryId', 'name')
-        .lean(),
+        .lean() as unknown as Promise<PopulatedBudget[]>,
 
       // Active goals
       Goal.find({ userId, status: GoalStatus.ACTIVE })
@@ -226,13 +233,18 @@ export async function GET() {
     // Calculate budget progress
     const budgetProgress = await Promise.all(
       budgets.map(async (budget) => {
+        // Handle populated categoryId (could be object or string)
+        const categoryId = typeof budget.categoryId === 'object' && '_id' in budget.categoryId
+          ? budget.categoryId._id
+          : budget.categoryId;
+          
         const spent = await Transaction.aggregate([
           {
             $match: {
               userId: { $eq: userId },
-              categoryId: budget.categoryId?._id || budget.categoryId,
+              categoryId: categoryId,
               type: TransactionType.EXPENSE,
-              dateTime: { $gte: new Date(budget.startDate), $lte: new Date(budget.endDate) },
+              dateTime: { $gte: monthStart, $lte: monthEnd },
             },
           },
           {
@@ -250,7 +262,7 @@ export async function GET() {
 
         return {
           _id: budget._id.toString(),
-          name: budget.name || categoryName,
+          name: categoryName,
           category: categoryName,
           budgetAmount: budget.amount,
           spent: spentAmount,
