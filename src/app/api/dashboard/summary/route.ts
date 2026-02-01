@@ -1,0 +1,328 @@
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/config';
+import { connectToDatabase } from '@/lib/mongodb/client';
+import BankAccount from '@/lib/mongodb/models/BankAccount';
+import Card from '@/lib/mongodb/models/Card';
+import Investment from '@/lib/mongodb/models/Investment';
+import Transaction from '@/lib/mongodb/models/Transaction';
+import Budget from '@/lib/mongodb/models/Budget';
+import Goal, { GoalStatus } from '@/lib/mongodb/models/Goal';
+import { TransactionType } from '@/types';
+import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    await connectToDatabase();
+
+    const userId = session.user.id;
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    const sixMonthsAgo = startOfMonth(subMonths(now, 5));
+
+    // Get all balances in parallel
+    const [
+      bankAccounts,
+      cards,
+      investments,
+      recentTransactions,
+      monthlyStats,
+      expenseByCategory,
+      monthlyTrends,
+      budgets,
+      activeGoals,
+    ] = await Promise.all([
+      // Bank accounts
+      BankAccount.find({ userId, isActive: true })
+        .select('bankName accountHolderName currentBalance')
+        .lean(),
+
+      // Cards
+      Card.find({ userId, isActive: true })
+        .select('cardName currentBalance')
+        .lean(),
+
+      // Investments
+      Investment.find({ userId, isActive: true })
+        .select('name type currentValue')
+        .lean(),
+
+      // Recent transactions
+      Transaction.find({ userId })
+        .sort({ dateTime: -1, createdAt: -1 })
+        .limit(10)
+        .populate('categoryId', 'name icon color type')
+        .populate('memberId', 'name')
+        .lean(),
+
+      // Monthly income and expense
+      Transaction.aggregate([
+        {
+          $match: {
+            userId: { $eq: userId },
+            dateTime: { $gte: monthStart, $lte: monthEnd },
+            type: { $in: [TransactionType.INCOME, TransactionType.EXPENSE] },
+          },
+        },
+        {
+          $group: {
+            _id: '$type',
+            total: { $sum: '$amount' },
+          },
+        },
+      ]),
+
+      // Expense breakdown by category for current month
+      Transaction.aggregate([
+        {
+          $match: {
+            userId: { $eq: userId },
+            type: TransactionType.EXPENSE,
+            dateTime: { $gte: monthStart, $lte: monthEnd },
+          },
+        },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: 'categoryId',
+            foreignField: '_id',
+            as: 'category',
+          },
+        },
+        {
+          $unwind: { path: '$category', preserveNullAndEmptyArrays: true },
+        },
+        {
+          $group: {
+            _id: '$categoryId',
+            name: { $first: { $ifNull: ['$category.name', 'Uncategorized'] } },
+            value: { $sum: '$amount' },
+          },
+        },
+        {
+          $sort: { value: -1 },
+        },
+        {
+          $limit: 8,
+        },
+      ]),
+
+      // Monthly trends for last 6 months
+      Transaction.aggregate([
+        {
+          $match: {
+            userId: { $eq: userId },
+            dateTime: { $gte: sixMonthsAgo },
+            type: { $in: [TransactionType.INCOME, TransactionType.EXPENSE] },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: '$dateTime' },
+              month: { $month: '$dateTime' },
+              type: '$type',
+            },
+            total: { $sum: '$amount' },
+          },
+        },
+        {
+          $sort: { '_id.year': 1, '_id.month': 1 },
+        },
+      ]),
+
+      // Active budgets
+      Budget.find({ 
+        userId, 
+        isActive: true,
+        startDate: { $lte: monthEnd },
+        endDate: { $gte: monthStart },
+      })
+        .populate('categoryId', 'name')
+        .lean(),
+
+      // Active goals
+      Goal.find({ userId, status: GoalStatus.ACTIVE })
+        .select('name targetAmount currentAmount icon color deadline')
+        .lean(),
+    ]);
+
+    // Calculate totals
+    const totalBankBalance = bankAccounts.reduce(
+      (sum, acc) => sum + acc.currentBalance,
+      0
+    );
+    const totalCardBalance = cards.reduce(
+      (sum, card) => sum + card.currentBalance,
+      0
+    );
+    const totalInvestmentValue = investments.reduce(
+      (sum, inv) => sum + inv.currentValue,
+      0
+    );
+
+    // Net worth = Bank balance + Investment value - Card balance (card balance is debt, positive = owed)
+    const netWorth = totalBankBalance + totalInvestmentValue - totalCardBalance;
+
+    // Parse monthly stats
+    let monthlyIncome = 0;
+    let monthlyExpense = 0;
+    monthlyStats.forEach((stat) => {
+      if (stat._id === TransactionType.INCOME) {
+        monthlyIncome = stat.total;
+      } else if (stat._id === TransactionType.EXPENSE) {
+        monthlyExpense = stat.total;
+      }
+    });
+
+    // Process monthly trends into chart-ready format
+    const monthlyTrendMap = new Map<string, { income: number; expense: number }>();
+    
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const d = subMonths(now, i);
+      const key = format(d, 'yyyy-MM');
+      monthlyTrendMap.set(key, { income: 0, expense: 0 });
+    }
+
+    // Fill in actual data
+    interface TrendItem {
+      _id: { year: number; month: number; type: string };
+      total: number;
+    }
+    monthlyTrends.forEach((item: TrendItem) => {
+      const key = `${item._id.year}-${String(item._id.month).padStart(2, '0')}`;
+      const existing = monthlyTrendMap.get(key);
+      if (existing) {
+        if (item._id.type === TransactionType.INCOME) {
+          existing.income = item.total;
+        } else if (item._id.type === TransactionType.EXPENSE) {
+          existing.expense = item.total;
+        }
+      }
+    });
+
+    // Convert to array format for charts
+    const monthlyTrendData = Array.from(monthlyTrendMap.entries()).map(([key]) => {
+      const data = monthlyTrendMap.get(key)!;
+      const [year, month] = key.split('-').map(Number);
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return {
+        month: monthNames[month - 1],
+        income: data.income,
+        expense: data.expense,
+      };
+    });
+
+    // Calculate budget progress
+    const budgetProgress = await Promise.all(
+      budgets.map(async (budget) => {
+        const spent = await Transaction.aggregate([
+          {
+            $match: {
+              userId: { $eq: userId },
+              categoryId: budget.categoryId?._id || budget.categoryId,
+              type: TransactionType.EXPENSE,
+              dateTime: { $gte: new Date(budget.startDate), $lte: new Date(budget.endDate) },
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: '$amount' },
+            },
+          },
+        ]);
+
+        const spentAmount = spent[0]?.total || 0;
+        const categoryName = typeof budget.categoryId === 'object' && budget.categoryId?.name 
+          ? budget.categoryId.name 
+          : 'Overall';
+
+        return {
+          _id: budget._id.toString(),
+          name: budget.name || categoryName,
+          category: categoryName,
+          budgetAmount: budget.amount,
+          spent: spentAmount,
+          percentage: Math.round((spentAmount / budget.amount) * 100),
+        };
+      })
+    );
+
+    // Process goals for dashboard
+    const goalsProgress = activeGoals.map((goal) => {
+      const progress = Math.min(
+        Math.round((goal.currentAmount / goal.targetAmount) * 100),
+        100
+      );
+      return {
+        _id: goal._id.toString(),
+        name: goal.name,
+        icon: goal.icon,
+        color: goal.color,
+        targetAmount: goal.targetAmount,
+        currentAmount: goal.currentAmount,
+        remaining: goal.targetAmount - goal.currentAmount,
+        progress,
+        deadline: goal.deadline,
+      };
+    });
+
+    // Calculate total goals progress
+    const totalGoalTarget = activeGoals.reduce((sum, g) => sum + g.targetAmount, 0);
+    const totalGoalCurrent = activeGoals.reduce((sum, g) => sum + g.currentAmount, 0);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        totalBankBalance,
+        totalCardBalance,
+        totalInvestmentValue,
+        netWorth,
+        monthlyIncome,
+        monthlyExpense,
+        monthlySavings: monthlyIncome - monthlyExpense,
+        savingsRate: monthlyIncome > 0 ? Math.round(((monthlyIncome - monthlyExpense) / monthlyIncome) * 100) : 0,
+        bankAccounts: bankAccounts.map((a) => ({
+          ...a,
+          _id: a._id.toString(),
+          displayName: `${a.bankName} (${a.accountHolderName})`,
+        })),
+        cards: cards.map((c) => ({ ...c, _id: c._id.toString() })),
+        investments: investments.map((i) => ({ ...i, _id: i._id.toString() })),
+        recentTransactions: recentTransactions.map((t) => ({
+          ...t,
+          _id: t._id.toString(),
+        })),
+        // Chart data
+        expenseByCategory: expenseByCategory.map((item) => ({
+          name: item.name,
+          value: item.value,
+        })),
+        monthlyTrends: monthlyTrendData,
+        budgetProgress,
+        // Goals data
+        goalsProgress,
+        totalGoalTarget,
+        totalGoalCurrent,
+        goalsCount: activeGoals.length,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard summary:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch dashboard summary' },
+      { status: 500 }
+    );
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/scheduled-payments/process",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
