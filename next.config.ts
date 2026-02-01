@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   
   // Performance optimizations
   experimental: {
-    optimizePackageImports: ['lucide-react', 'date-fns', '@tanstack/react-query'],
+    optimizePackageImports: ['lucide-react', 'date-fns', '@tanstack/react-query', 'recharts', 'zod'],
   },
   
   // Image optimization
@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
   
   // Power bundler optimizations
   poweredByHeader: false,
+  
+  // React strict mode for better development
+  reactStrictMode: true,
 };
 
 export default nextConfig;

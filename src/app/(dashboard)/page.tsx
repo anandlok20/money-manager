@@ -3,6 +3,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -25,14 +27,33 @@ import { formatCurrency } from '@/lib/utils/currency';
 import { formatRelativeDate } from '@/lib/utils/dates';
 import { TransactionType } from '@/types';
 import { cn } from '@/lib/utils';
-import {
-  ExpensePieChart,
-  IncomeExpenseBarChart,
-  SavingsRateGauge,
-  BudgetProgressChart,
-} from '@/components/dashboard/Charts';
 import { BudgetAlerts } from '@/components/dashboard/BudgetAlerts';
-import { NetWorthHistoryChart } from '@/components/dashboard/NetWorthHistory';
+
+// Lazy load chart components for better initial page load
+const ExpensePieChart = dynamic(() => import('@/components/dashboard/Charts').then(mod => ({ default: mod.ExpensePieChart })), {
+  loading: () => <Skeleton className="h-[300px] w-full" />,
+  ssr: false,
+});
+
+const IncomeExpenseBarChart = dynamic(() => import('@/components/dashboard/Charts').then(mod => ({ default: mod.IncomeExpenseBarChart })), {
+  loading: () => <Skeleton className="h-[300px] w-full" />,
+  ssr: false,
+});
+
+const SavingsRateGauge = dynamic(() => import('@/components/dashboard/Charts').then(mod => ({ default: mod.SavingsRateGauge })), {
+  loading: () => <Skeleton className="h-[200px] w-full" />,
+  ssr: false,
+});
+
+const BudgetProgressChart = dynamic(() => import('@/components/dashboard/Charts').then(mod => ({ default: mod.BudgetProgressChart })), {
+  loading: () => <Skeleton className="h-[200px] w-full" />,
+  ssr: false,
+});
+
+const NetWorthHistoryChart = dynamic(() => import('@/components/dashboard/NetWorthHistory').then(mod => ({ default: mod.NetWorthHistoryChart })), {
+  loading: () => <Skeleton className="h-[300px] w-full" />,
+  ssr: false,
+});
 
 interface BudgetProgress {
   _id: string;

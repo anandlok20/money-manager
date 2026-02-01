@@ -44,6 +44,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { QuickEmojiSelect } from '@/components/shared/EmojiPicker';
+import { DynamicIcon } from '@/components/shared/DynamicIcon';
 
 interface Category {
   _id: string;
@@ -233,10 +234,13 @@ export default function CategoriesPage() {
           >
             <div className="flex items-center gap-3">
               <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
-                style={{ backgroundColor: `${category.color || '#3b82f6'}20` }}
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ 
+                  backgroundColor: `${category.color || '#3b82f6'}20`,
+                  color: category.color || '#3b82f6'
+                }}
               >
-                {category.icon || '💰'}
+                <DynamicIcon name={category.icon} size={20} />
               </div>
               <span className="font-medium">{category.name}</span>
               {!category.isActive && (

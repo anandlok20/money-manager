@@ -8,6 +8,70 @@ import { TransactionType } from '@/types';
 import { z } from 'zod';
 import { TripStatus } from '@/lib/mongodb/models/Trip';
 
+const travelerSchema = z.object({
+  name: z.string().min(1),
+  phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal('')),
+  memberId: z.string().optional(),
+  isOrganizer: z.boolean().optional(),
+});
+
+const ticketSchema = z.object({
+  type: z.enum(['flight', 'train', 'bus', 'other']),
+  title: z.string().min(1),
+  bookingReference: z.string().optional(),
+  departureLocation: z.string().min(1),
+  arrivalLocation: z.string().min(1),
+  departureTime: z.string().optional(),
+  arrivalTime: z.string().optional(),
+  carrier: z.string().optional(),
+  seatNumber: z.string().optional(),
+  price: z.number().optional(),
+  pdfUrl: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const hotelSchema = z.object({
+  name: z.string().min(1),
+  address: z.string().optional(),
+  checkIn: z.string(),
+  checkOut: z.string(),
+  bookingReference: z.string().optional(),
+  price: z.number().optional(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
+  roomType: z.string().optional(),
+  pdfUrl: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const placeSchema = z.object({
+  name: z.string().min(1),
+  category: z.string().optional(),
+  address: z.string().optional(),
+  plannedDate: z.string().optional(),
+  estimatedDuration: z.string().optional(),
+  estimatedCost: z.number().optional(),
+  priority: z.string().optional(),
+  visited: z.boolean().optional(),
+  rating: z.number().optional(),
+  notes: z.string().optional(),
+});
+
+const cabSchema = z.object({
+  type: z.string(),
+  driverName: z.string().optional(),
+  driverPhone: z.string().optional(),
+  vehicleNumber: z.string().optional(),
+  vehicleType: z.string().optional(),
+  pickupLocation: z.string().optional(),
+  dropLocation: z.string().optional(),
+  pickupTime: z.string().optional(),
+  price: z.number().optional(),
+  bookingReference: z.string().optional(),
+  notes: z.string().optional(),
+});
+
 const updateTripSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
@@ -17,7 +81,11 @@ const updateTripSchema = z.object({
   budget: z.number().positive().optional(),
   status: z.nativeEnum(TripStatus).optional(),
   coverImage: z.string().optional(),
-  travelers: z.array(z.string()).optional(),
+  travelers: z.array(travelerSchema).optional(),
+  tickets: z.array(ticketSchema).optional(),
+  hotels: z.array(hotelSchema).optional(),
+  placesToVisit: z.array(placeSchema).optional(),
+  cabs: z.array(cabSchema).optional(),
   notes: z.string().optional(),
 });
 

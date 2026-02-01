@@ -109,15 +109,41 @@ export default function ReceiptScanner({ bankAccounts, cards, categories }: Prop
 
   const startCamera = async () => {
     try {
+      // Check if camera is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error('Camera not supported on this device');
+        return;
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
       });
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Ensure video plays
+        await videoRef.current.play().catch(() => {
+          // Autoplay might be blocked, that's okay as we have autoPlay attribute
+        });
         setIsCameraActive(true);
       }
-    } catch {
-      toast.error('Could not access camera');
+    } catch (err) {
+      console.error('Camera error:', err);
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          toast.error('Camera permission denied. Please allow camera access.');
+        } else if (err.name === 'NotFoundError') {
+          toast.error('No camera found on this device');
+        } else {
+          toast.error('Could not access camera: ' + err.message);
+        }
+      } else {
+        toast.error('Could not access camera');
+      }
     }
   };
 
@@ -131,19 +157,30 @@ export default function ReceiptScanner({ bankAccounts, cards, categories }: Prop
   };
 
   const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current) {
+      toast.error('Camera not ready');
+      return;
+    }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
+    
+    // Ensure video has dimensions
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      toast.error('Video not ready. Please wait a moment and try again.');
+      return;
+    }
+    
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(video, 0, 0);
-      const dataUrl = canvas.toDataURL('image/jpeg');
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       setImagePreview(dataUrl);
       stopCamera();
+      toast.success('Photo captured!');
     }
   };
 

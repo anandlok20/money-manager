@@ -115,6 +115,344 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Stranger Things Theme - 80s neon red/black */
+.stranger-things {
+  --background: oklch(0.1 0.02 15);
+  --foreground: oklch(0.98 0.02 60);
+  --card: oklch(0.15 0.02 15);
+  --card-foreground: oklch(0.98 0.02 60);
+  --popover: oklch(0.15 0.02 15);
+  --popover-foreground: oklch(0.98 0.02 60);
+  --primary: oklch(0.6 0.25 25);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.25 0.05 15);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.25 0.03 15);
+  --muted-foreground: oklch(0.7 0.05 25);
+  --accent: oklch(0.55 0.22 25);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.65 0.28 25);
+  --border: oklch(0.35 0.1 25);
+  --input: oklch(0.25 0.05 15);
+  --ring: oklch(0.6 0.25 25);
+  --sidebar: oklch(0.12 0.02 15);
+  --sidebar-foreground: oklch(0.98 0.02 60);
+  --sidebar-primary: oklch(0.6 0.25 25);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+}
+
+/* Game of Thrones Theme - Medieval gold/dark */
+.game-of-thrones {
+  --background: oklch(0.12 0.01 45);
+  --foreground: oklch(0.95 0.05 85);
+  --card: oklch(0.18 0.02 45);
+  --card-foreground: oklch(0.95 0.05 85);
+  --popover: oklch(0.18 0.02 45);
+  --popover-foreground: oklch(0.95 0.05 85);
+  --primary: oklch(0.75 0.15 85);
+  --primary-foreground: oklch(0.15 0.02 45);
+  --secondary: oklch(0.3 0.04 45);
+  --secondary-foreground: oklch(0.95 0.05 85);
+  --muted: oklch(0.25 0.02 45);
+  --muted-foreground: oklch(0.65 0.05 85);
+  --accent: oklch(0.5 0.08 45);
+  --accent-foreground: oklch(0.95 0.05 85);
+  --destructive: oklch(0.55 0.2 25);
+  --border: oklch(0.4 0.08 85);
+  --input: oklch(0.25 0.03 45);
+  --ring: oklch(0.75 0.15 85);
+  --sidebar: oklch(0.1 0.01 45);
+  --sidebar-foreground: oklch(0.95 0.05 85);
+  --sidebar-primary: oklch(0.75 0.15 85);
+  --sidebar-primary-foreground: oklch(0.15 0.02 45);
+}
+
+/* Fallout Theme - Post-apocalyptic green/yellow */
+.fallout {
+  --background: oklch(0.12 0.02 95);
+  --foreground: oklch(0.85 0.18 140);
+  --card: oklch(0.18 0.03 95);
+  --card-foreground: oklch(0.85 0.18 140);
+  --popover: oklch(0.18 0.03 95);
+  --popover-foreground: oklch(0.85 0.18 140);
+  --primary: oklch(0.75 0.2 140);
+  --primary-foreground: oklch(0.12 0.02 95);
+  --secondary: oklch(0.28 0.04 95);
+  --secondary-foreground: oklch(0.85 0.18 140);
+  --muted: oklch(0.25 0.03 95);
+  --muted-foreground: oklch(0.6 0.12 140);
+  --accent: oklch(0.65 0.15 85);
+  --accent-foreground: oklch(0.15 0 0);
+  --destructive: oklch(0.55 0.2 25);
+  --border: oklch(0.4 0.1 140);
+  --input: oklch(0.22 0.03 95);
+  --ring: oklch(0.75 0.2 140);
+  --sidebar: oklch(0.1 0.02 95);
+  --sidebar-foreground: oklch(0.85 0.18 140);
+  --sidebar-primary: oklch(0.75 0.2 140);
+  --sidebar-primary-foreground: oklch(0.12 0.02 95);
+}
+
+/* Red Dead Redemption Theme - Western sepia/brown */
+.red-dead-redemption {
+  --background: oklch(0.18 0.05 55);
+  --foreground: oklch(0.92 0.05 75);
+  --card: oklch(0.25 0.06 55);
+  --card-foreground: oklch(0.92 0.05 75);
+  --popover: oklch(0.25 0.06 55);
+  --popover-foreground: oklch(0.92 0.05 75);
+  --primary: oklch(0.55 0.15 35);
+  --primary-foreground: oklch(0.95 0.02 75);
+  --secondary: oklch(0.35 0.06 55);
+  --secondary-foreground: oklch(0.92 0.05 75);
+  --muted: oklch(0.3 0.05 55);
+  --muted-foreground: oklch(0.65 0.05 75);
+  --accent: oklch(0.5 0.12 55);
+  --accent-foreground: oklch(0.95 0.02 75);
+  --destructive: oklch(0.5 0.2 25);
+  --border: oklch(0.4 0.08 55);
+  --input: oklch(0.28 0.05 55);
+  --ring: oklch(0.55 0.15 35);
+  --sidebar: oklch(0.15 0.04 55);
+  --sidebar-foreground: oklch(0.92 0.05 75);
+  --sidebar-primary: oklch(0.55 0.15 35);
+  --sidebar-primary-foreground: oklch(0.95 0.02 75);
+}
+
+/* Barbie Theme - Pink/white */
+.barbie {
+  --background: oklch(0.98 0.02 350);
+  --foreground: oklch(0.25 0.1 340);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.1 340);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.1 340);
+  --primary: oklch(0.7 0.25 340);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.05 340);
+  --secondary-foreground: oklch(0.25 0.1 340);
+  --muted: oklch(0.95 0.03 340);
+  --muted-foreground: oklch(0.5 0.1 340);
+  --accent: oklch(0.85 0.15 340);
+  --accent-foreground: oklch(0.25 0.1 340);
+  --destructive: oklch(0.55 0.22 25);
+  --border: oklch(0.9 0.08 340);
+  --input: oklch(0.95 0.03 340);
+  --ring: oklch(0.7 0.25 340);
+  --sidebar: oklch(0.95 0.05 340);
+  --sidebar-foreground: oklch(0.25 0.1 340);
+  --sidebar-primary: oklch(0.7 0.25 340);
+  --sidebar-primary-foreground: oklch(1 0 0);
+}
+
+/* Batman Theme - Dark grey/yellow */
+.batman {
+  --background: oklch(0.1 0 0);
+  --foreground: oklch(0.9 0 0);
+  --card: oklch(0.15 0 0);
+  --card-foreground: oklch(0.9 0 0);
+  --popover: oklch(0.15 0 0);
+  --popover-foreground: oklch(0.9 0 0);
+  --primary: oklch(0.85 0.18 95);
+  --primary-foreground: oklch(0.1 0 0);
+  --secondary: oklch(0.25 0 0);
+  --secondary-foreground: oklch(0.9 0 0);
+  --muted: oklch(0.2 0 0);
+  --muted-foreground: oklch(0.6 0 0);
+  --accent: oklch(0.35 0.02 95);
+  --accent-foreground: oklch(0.9 0 0);
+  --destructive: oklch(0.55 0.2 25);
+  --border: oklch(0.3 0.02 95);
+  --input: oklch(0.2 0 0);
+  --ring: oklch(0.85 0.18 95);
+  --sidebar: oklch(0.08 0 0);
+  --sidebar-foreground: oklch(0.9 0 0);
+  --sidebar-primary: oklch(0.85 0.18 95);
+  --sidebar-primary-foreground: oklch(0.1 0 0);
+}
+
+/* Superman Theme - Blue/red */
+.superman {
+  --background: oklch(0.15 0.05 250);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.2 0.06 250);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.2 0.06 250);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.6 0.22 25);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.3 0.08 250);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.25 0.05 250);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.5 0.15 250);
+  --accent-foreground: oklch(0.95 0 0);
+  --destructive: oklch(0.55 0.22 25);
+  --border: oklch(0.4 0.1 250);
+  --input: oklch(0.25 0.06 250);
+  --ring: oklch(0.6 0.22 25);
+  --sidebar: oklch(0.12 0.05 250);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.6 0.22 25);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+}
+
+/* Flash Theme - Red/yellow lightning */
+.flash {
+  --background: oklch(0.15 0.06 25);
+  --foreground: oklch(0.95 0.05 85);
+  --card: oklch(0.22 0.08 25);
+  --card-foreground: oklch(0.95 0.05 85);
+  --popover: oklch(0.22 0.08 25);
+  --popover-foreground: oklch(0.95 0.05 85);
+  --primary: oklch(0.85 0.18 95);
+  --primary-foreground: oklch(0.15 0.05 25);
+  --secondary: oklch(0.35 0.1 25);
+  --secondary-foreground: oklch(0.95 0.05 85);
+  --muted: oklch(0.3 0.06 25);
+  --muted-foreground: oklch(0.7 0.05 85);
+  --accent: oklch(0.6 0.2 25);
+  --accent-foreground: oklch(0.95 0.05 85);
+  --destructive: oklch(0.65 0.25 25);
+  --border: oklch(0.45 0.12 95);
+  --input: oklch(0.28 0.08 25);
+  --ring: oklch(0.85 0.18 95);
+  --sidebar: oklch(0.12 0.05 25);
+  --sidebar-foreground: oklch(0.95 0.05 85);
+  --sidebar-primary: oklch(0.85 0.18 95);
+  --sidebar-primary-foreground: oklch(0.15 0.05 25);
+}
+
+/* Iron Man Theme - Red/gold metallic */
+.ironman {
+  --background: oklch(0.12 0.02 25);
+  --foreground: oklch(0.92 0.06 85);
+  --card: oklch(0.18 0.04 25);
+  --card-foreground: oklch(0.92 0.06 85);
+  --popover: oklch(0.18 0.04 25);
+  --popover-foreground: oklch(0.92 0.06 85);
+  --primary: oklch(0.6 0.2 25);
+  --primary-foreground: oklch(0.95 0.05 85);
+  --secondary: oklch(0.65 0.12 85);
+  --secondary-foreground: oklch(0.12 0 0);
+  --muted: oklch(0.25 0.04 25);
+  --muted-foreground: oklch(0.65 0.06 85);
+  --accent: oklch(0.7 0.15 85);
+  --accent-foreground: oklch(0.15 0 0);
+  --destructive: oklch(0.55 0.22 25);
+  --border: oklch(0.45 0.1 85);
+  --input: oklch(0.22 0.03 25);
+  --ring: oklch(0.6 0.2 25);
+  --sidebar: oklch(0.1 0.02 25);
+  --sidebar-foreground: oklch(0.92 0.06 85);
+  --sidebar-primary: oklch(0.65 0.15 85);
+  --sidebar-primary-foreground: oklch(0.12 0 0);
+}
+
+/* Thanos Theme - Purple/gold */
+.thanos {
+  --background: oklch(0.12 0.05 300);
+  --foreground: oklch(0.92 0.05 85);
+  --card: oklch(0.18 0.07 300);
+  --card-foreground: oklch(0.92 0.05 85);
+  --popover: oklch(0.18 0.07 300);
+  --popover-foreground: oklch(0.92 0.05 85);
+  --primary: oklch(0.55 0.2 300);
+  --primary-foreground: oklch(0.95 0.05 85);
+  --secondary: oklch(0.7 0.15 85);
+  --secondary-foreground: oklch(0.15 0 0);
+  --muted: oklch(0.25 0.05 300);
+  --muted-foreground: oklch(0.65 0.05 85);
+  --accent: oklch(0.65 0.15 300);
+  --accent-foreground: oklch(0.95 0.05 85);
+  --destructive: oklch(0.55 0.2 25);
+  --border: oklch(0.4 0.1 300);
+  --input: oklch(0.22 0.05 300);
+  --ring: oklch(0.7 0.15 85);
+  --sidebar: oklch(0.1 0.04 300);
+  --sidebar-foreground: oklch(0.92 0.05 85);
+  --sidebar-primary: oklch(0.55 0.2 300);
+  --sidebar-primary-foreground: oklch(0.95 0.05 85);
+}
+
+/* Joker Theme - Green/purple chaos */
+.joker {
+  --background: oklch(0.15 0.03 150);
+  --foreground: oklch(0.95 0.05 140);
+  --card: oklch(0.2 0.05 150);
+  --card-foreground: oklch(0.95 0.05 140);
+  --popover: oklch(0.2 0.05 150);
+  --popover-foreground: oklch(0.95 0.05 140);
+  --primary: oklch(0.6 0.2 300);
+  --primary-foreground: oklch(0.95 0 0);
+  --secondary: oklch(0.55 0.18 140);
+  --secondary-foreground: oklch(0.1 0 0);
+  --muted: oklch(0.25 0.04 150);
+  --muted-foreground: oklch(0.65 0.08 140);
+  --accent: oklch(0.65 0.2 140);
+  --accent-foreground: oklch(0.1 0 0);
+  --destructive: oklch(0.55 0.22 25);
+  --border: oklch(0.45 0.12 300);
+  --input: oklch(0.22 0.04 150);
+  --ring: oklch(0.6 0.2 300);
+  --sidebar: oklch(0.12 0.03 300);
+  --sidebar-foreground: oklch(0.95 0.05 140);
+  --sidebar-primary: oklch(0.55 0.18 140);
+  --sidebar-primary-foreground: oklch(0.1 0 0);
+}
+
+/* Baby Mode Theme - Soft pastel */
+.baby {
+  --background: oklch(0.98 0.02 220);
+  --foreground: oklch(0.35 0.06 220);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.35 0.06 220);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.35 0.06 220);
+  --primary: oklch(0.75 0.12 220);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.92 0.08 340);
+  --secondary-foreground: oklch(0.35 0.1 340);
+  --muted: oklch(0.95 0.03 220);
+  --muted-foreground: oklch(0.5 0.05 220);
+  --accent: oklch(0.88 0.1 140);
+  --accent-foreground: oklch(0.25 0.05 140);
+  --destructive: oklch(0.7 0.15 25);
+  --border: oklch(0.9 0.05 220);
+  --input: oklch(0.95 0.02 220);
+  --ring: oklch(0.75 0.12 220);
+  --sidebar: oklch(0.95 0.04 220);
+  --sidebar-foreground: oklch(0.35 0.06 220);
+  --sidebar-primary: oklch(0.75 0.12 220);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+}
+
+/* Valentine Theme - Romantic red/pink */
+.valentine {
+  --background: oklch(0.98 0.02 10);
+  --foreground: oklch(0.3 0.1 350);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.3 0.1 350);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.3 0.1 350);
+  --primary: oklch(0.6 0.25 15);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.92 0.12 350);
+  --secondary-foreground: oklch(0.3 0.1 350);
+  --muted: oklch(0.95 0.05 350);
+  --muted-foreground: oklch(0.5 0.1 350);
+  --accent: oklch(0.75 0.2 340);
+  --accent-foreground: oklch(0.2 0.05 340);
+  --destructive: oklch(0.55 0.22 25);
+  --border: oklch(0.88 0.1 350);
+  --input: oklch(0.95 0.03 350);
+  --ring: oklch(0.6 0.25 15);
+  --sidebar: oklch(0.95 0.08 350);
+  --sidebar-foreground: oklch(0.3 0.1 350);
+  --sidebar-primary: oklch(0.6 0.25 15);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

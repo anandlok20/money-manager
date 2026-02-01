@@ -138,7 +138,7 @@ export default function VehiclesPage() {
   const vehicles = data?.data || [];
   const expiringDocuments = data?.expiringDocuments || [];
 
-  const filteredVehicles = statusFilter
+  const filteredVehicles = statusFilter && statusFilter !== 'all'
     ? vehicles.filter((v) => v.status === statusFilter)
     : vehicles;
 
@@ -270,7 +270,7 @@ export default function VehiclesPage() {
             <SelectValue placeholder="Filter status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Vehicles</SelectItem>
+            <SelectItem value="all">All Vehicles</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="sold">Sold</SelectItem>
             <SelectItem value="scrapped">Scrapped</SelectItem>
@@ -292,7 +292,7 @@ export default function VehiclesPage() {
         <EmptyState
           icon={Car}
           title="No vehicles found"
-          description={statusFilter ? `No ${statusFilter} vehicles` : 'Add your first vehicle to get started'}
+          description={statusFilter && statusFilter !== 'all' ? `No ${statusFilter} vehicles` : 'Add your first vehicle to get started'}
           actionLabel="Add Vehicle"
           actionHref="/vehicles/new"
         />

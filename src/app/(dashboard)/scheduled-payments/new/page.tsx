@@ -455,12 +455,12 @@ export default function NewScheduledPaymentPage() {
                 name="memberId"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={(val) => field.onChange(val === 'none' ? undefined : val)} value={field.value || 'none'}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select member" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {members.map((member) => (
                         <SelectItem key={member._id} value={member._id}>
                           {member.name}

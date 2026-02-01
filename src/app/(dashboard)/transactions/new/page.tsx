@@ -608,14 +608,14 @@ export default function NewTransactionPage() {
                   control={control}
                   render={({ field }) => (
                     <Select
-                      value={field.value || ''}
-                      onValueChange={(value) => field.onChange(value || undefined)}
+                      value={field.value || 'none'}
+                      onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Tag to a trip" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No Trip</SelectItem>
+                        <SelectItem value="none">No Trip</SelectItem>
                         {trips.map((trip) => (
                           <SelectItem key={trip._id} value={trip._id}>
                             {trip.name} ({trip.status})

@@ -14,6 +14,7 @@ import {
   Palette,
   Bell,
   HelpCircle,
+  Sparkles,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,19 +28,25 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { supportedCurrencies } from '@/lib/utils/currency';
-import { useUIStore } from '@/stores/uiStore';
+import { useUIStore, colorThemes } from '@/stores/uiStore';
 import { CurrencyConverter } from '@/components/shared/CurrencyConverter';
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
-  const { currency, setCurrency } = useUIStore();
+  const { currency, setCurrency, colorTheme, setColorTheme } = useUIStore();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCurrencyChange = async (newCurrency: string) => {
     setCurrency(newCurrency);
     toast.success(`Currency changed to ${newCurrency}`);
+  };
+
+  const handleColorThemeChange = (newTheme: string) => {
+    setColorTheme(newTheme);
+    toast.success(`Theme changed to ${colorThemes.find(t => t.id === newTheme)?.name || 'Default'}`);
   };
 
   const handleSignOut = async () => {
@@ -143,6 +150,40 @@ export default function SettingsPage() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <Separator />
+
+          {/* Color Theme */}
+          <div className="space-y-4">
+            <div className="space-y-0.5">
+              <Label className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Color Theme
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Choose a themed color palette
+              </p>
+            </div>
+            <ScrollArea className="w-full whitespace-nowrap">
+              <div className="flex gap-2 pb-3">
+                {colorThemes.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => handleColorThemeChange(t.id)}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all min-w-[80px] ${
+                      colorTheme === t.id
+                        ? 'border-primary bg-primary/10'
+                        : 'border-transparent hover:bg-muted'
+                    }`}
+                  >
+                    <span className="text-2xl">{t.emoji}</span>
+                    <span className="text-xs font-medium whitespace-nowrap">{t.name}</span>
+                  </button>
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
         </CardContent>
       </Card>

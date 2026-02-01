@@ -399,56 +399,56 @@ export default function BankStatementImport({ bankAccounts, categories }: Props)
 
       {/* Summary Section */}
       {summary && (
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 md:pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Income</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-xs md:text-sm text-muted-foreground">Income</p>
+                  <p className="text-lg md:text-2xl font-bold text-green-600">
                     {formatCurrency(summary.income)}
                   </p>
                 </div>
-                <ArrowDownCircle className="h-8 w-8 text-green-500 opacity-50" />
+                <ArrowDownCircle className="h-6 w-6 md:h-8 md:w-8 text-green-500 opacity-50" />
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 md:pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Expenses</p>
-                  <p className="text-2xl font-bold text-red-600">
+                  <p className="text-xs md:text-sm text-muted-foreground">Expenses</p>
+                  <p className="text-lg md:text-2xl font-bold text-red-600">
                     {formatCurrency(summary.expense)}
                   </p>
                 </div>
-                <ArrowUpCircle className="h-8 w-8 text-red-500 opacity-50" />
+                <ArrowUpCircle className="h-6 w-6 md:h-8 md:w-8 text-red-500 opacity-50" />
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 md:pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Transfers</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-xs md:text-sm text-muted-foreground">Transfers</p>
+                  <p className="text-lg md:text-2xl font-bold text-blue-600">
                     {formatCurrency(summary.transfer)}
                   </p>
                 </div>
-                <ArrowRightLeft className="h-8 w-8 text-blue-500 opacity-50" />
+                <ArrowRightLeft className="h-6 w-6 md:h-8 md:w-8 text-blue-500 opacity-50" />
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 md:pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Investments</p>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-xs md:text-sm text-muted-foreground">Investments</p>
+                  <p className="text-lg md:text-2xl font-bold text-purple-600">
                     {formatCurrency(summary.investment)}
                   </p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-purple-500 opacity-50" />
+                <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-purple-500 opacity-50" />
               </div>
             </CardContent>
           </Card>
@@ -459,7 +459,7 @@ export default function BankStatementImport({ bankAccounts, categories }: Props)
       {parsedTransactions.length > 0 && (
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <CardTitle>Review Transactions</CardTitle>
                 <CardDescription>
@@ -484,7 +484,96 @@ export default function BankStatementImport({ bankAccounts, categories }: Props)
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[500px]">
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3 max-h-[500px] overflow-y-auto">
+              {parsedTransactions.map((txn) => (
+                <div 
+                  key={txn.id}
+                  className={`p-4 rounded-lg border space-y-3 ${!selectedIds.has(txn.id) ? 'opacity-50 bg-muted/50' : 'bg-card'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={selectedIds.has(txn.id)}
+                        onCheckedChange={() => toggleSelect(txn.id)}
+                      />
+                      <span className="text-sm text-muted-foreground">{txn.date}</span>
+                    </div>
+                    <span className={`font-mono font-semibold ${
+                      txn.type === 'income' ? 'text-green-600' : 
+                      txn.type === 'expense' ? 'text-red-600' : ''
+                    }`}>
+                      {txn.type === 'income' ? '+' : txn.type === 'expense' ? '-' : ''}
+                      {formatCurrency(Math.abs(txn.amount))}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium line-clamp-2">{txn.description}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select
+                      value={typeOverrides[txn.id] || txn.type}
+                      onValueChange={(value) => handleTypeChange(txn.id, value)}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="income">
+                          <div className="flex items-center gap-2">
+                            <ArrowDownCircle className="h-4 w-4 text-green-500" />
+                            Income
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="expense">
+                          <div className="flex items-center gap-2">
+                            <ArrowUpCircle className="h-4 w-4 text-red-500" />
+                            Expense
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="transfer">
+                          <div className="flex items-center gap-2">
+                            <ArrowRightLeft className="h-4 w-4 text-blue-500" />
+                            Transfer
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="investment">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-purple-500" />
+                            Investment
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={categoryAssignments[txn.id] || 'none'}
+                      onValueChange={(value) => handleCategoryChange(txn.id, value === 'none' ? '' : value)}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Category</SelectItem>
+                        {categories
+                          .filter(c => {
+                            const type = typeOverrides[txn.id] || txn.type;
+                            if (type === 'income') return c.type === 'INCOME';
+                            if (type === 'expense') return c.type === 'EXPENSE';
+                            return true;
+                          })
+                          .map(category => (
+                            <SelectItem key={category._id} value={category._id}>
+                              {category.name}
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <ScrollArea className="h-[500px] hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
