@@ -39,12 +39,12 @@ export function Providers({ children }: ProvidersProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 10 * 60 * 1000, // 10 minutes - longer cache
+            staleTime: 5 * 60 * 1000, // 5 minutes stale time
             gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
             retry: 1,
             refetchOnWindowFocus: false,
-            refetchOnMount: false, // Don't refetch on component mount if data exists
-            refetchOnReconnect: false, // Don't refetch on reconnect
+            refetchOnMount: true, // Refetch when component mounts if data is stale
+            refetchOnReconnect: false,
           },
         },
       })
