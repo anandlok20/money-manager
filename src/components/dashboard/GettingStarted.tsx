@@ -139,15 +139,15 @@ export function GettingStarted() {
 
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-full bg-primary/10">
-              <Rocket className="h-5 w-5 text-primary" />
+      <CardHeader className="pb-3 px-3 sm:px-6">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start sm:items-center gap-2 sm:gap-3 min-w-0">
+            <div className="p-1.5 sm:p-2 rounded-full bg-primary/10 flex-shrink-0">
+              <Rocket className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
-            <div>
-              <CardTitle className="text-lg">Welcome! Let&apos;s get started</CardTitle>
-              <CardDescription>
+            <div className="min-w-0">
+              <CardTitle className="text-base sm:text-lg leading-tight">Welcome! Let&apos;s get started</CardTitle>
+              <CardDescription className="text-xs sm:text-sm mt-0.5">
                 Complete these steps to set up your finance manager
               </CardDescription>
             </div>
@@ -155,21 +155,21 @@ export function GettingStarted() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 -mr-1"
             onClick={handleDismiss}
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
         <div className="mt-3 space-y-1">
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-muted-foreground">Setup Progress</span>
             <span className="font-medium">{completedSteps}/{setupSteps.length} completed</span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 px-3 sm:px-6">
         <div className="grid gap-2">
           {setupSteps.map((step) => {
             const isCompleted = status?.[step.checkKey as keyof SetupStatus];
@@ -179,7 +179,7 @@ export function GettingStarted() {
                 key={step.id}
                 href={isCompleted ? '#' : step.href}
                 className={cn(
-                  'flex items-center gap-3 p-3 rounded-lg transition-colors',
+                  'flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg transition-colors',
                   isCompleted
                     ? 'bg-muted/50 cursor-default'
                     : 'bg-card hover:bg-muted border border-border/50'
@@ -188,21 +188,23 @@ export function GettingStarted() {
               >
                 <div
                   className={cn(
-                    'p-2 rounded-full',
+                    'p-1.5 sm:p-2 rounded-full flex-shrink-0',
                     isCompleted
                       ? 'bg-green-500/10 text-green-500'
                       : 'bg-primary/10 text-primary'
                   )}
                 >
                   {isCompleted ? (
-                    <CheckCircle2 className="h-5 w-5" />
+                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
                   ) : (
-                    step.icon
+                    <span className="[&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5">
+                      {step.icon}
+                    </span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className={cn(
-                    'font-medium text-sm',
+                    'font-medium text-xs sm:text-sm leading-tight',
                     isCompleted && 'text-muted-foreground line-through'
                   )}>
                     {step.title}
@@ -210,18 +212,18 @@ export function GettingStarted() {
                       <span className="ml-1 text-xs text-destructive">*</span>
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate mt-0.5">
                     {step.description}
                   </p>
                 </div>
                 {!isCompleted && (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 )}
               </Link>
             );
           })}
         </div>
-        <p className="text-xs text-muted-foreground mt-3">
+        <p className="text-[10px] sm:text-xs text-muted-foreground mt-3">
           <span className="text-destructive">*</span> Required steps
         </p>
       </CardContent>
