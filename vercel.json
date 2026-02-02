@@ -4,22 +4,6 @@
     {
       "path": "/api/scheduled-payments/process",
       "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/daily-summary",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/weekly-summary",
-      "schedule": "30 4 * * 0"
-    },
-    {
-      "path": "/api/cron/monthly-summary",
-      "schedule": "30 4 1 * *"
-    },
-    {
-      "path": "/api/cron/check-alerts",
-      "schedule": "0 */3 * * *"
     }
   ]
 }

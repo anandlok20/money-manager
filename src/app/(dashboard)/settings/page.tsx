@@ -18,7 +18,6 @@ import {
   Sparkles,
   BookOpen,
   ChevronRight,
-  MessageCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -227,25 +226,7 @@ export default function SettingsPage() {
           </div>
           <CardDescription>Configure notification preferences</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* WhatsApp Notifications Link */}
-          <Link href="/settings/notifications">
-            <Button variant="outline" className="w-full justify-between h-auto py-3">
-              <div className="flex items-center gap-3">
-                <MessageCircle className="h-5 w-5 text-green-500" />
-                <div className="text-left">
-                  <p className="font-medium">WhatsApp Notifications</p>
-                  <p className="text-xs text-muted-foreground">
-                    Daily summaries, alerts & reminders
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </Button>
-          </Link>
-
-          <Separator />
-
+        <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Push Notifications</Label>
@@ -256,7 +237,7 @@ export default function SettingsPage() {
             <Switch disabled />
           </div>
           <p className="text-xs text-muted-foreground">
-            Push notifications coming soon
+            Notifications coming soon
           </p>
         </CardContent>
       </Card>
