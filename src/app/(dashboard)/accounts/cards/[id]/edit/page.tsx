@@ -356,6 +356,7 @@ export default function EditCardPage() {
                     type={showCvv ? 'text' : 'password'}
                     placeholder="***"
                     maxLength={4}
+                    autoComplete="off"
                     {...register('cvv')}
                   />
                   <Button
@@ -380,6 +381,7 @@ export default function EditCardPage() {
                     type={showPin ? 'text' : 'password'}
                     placeholder="****"
                     maxLength={6}
+                    autoComplete="off"
                     {...register('pin')}
                   />
                   <Button
