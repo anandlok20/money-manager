@@ -1,10 +1,18 @@
 import { z } from 'zod';
 import { Frequency, AccountType } from '@/types';
 
+// Helper to coerce string dates to Date objects
+const dateSchema = z.preprocess((arg) => {
+  if (typeof arg === 'string' || arg instanceof Date) {
+    return new Date(arg);
+  }
+  return arg;
+}, z.date());
+
 // Base schema without refinements for partial()
 const scheduledPaymentBaseSchema = z.object({
   frequency: z.nativeEnum(Frequency),
-  startDate: z.date(),
+  startDate: dateSchema,
   amount: z.number().positive('Amount must be positive'),
   note: z.string().max(500, 'Note is too long').optional(),
   memberId: z.string().optional(),

@@ -28,7 +28,6 @@ import {
   Receipt,
   Landmark,
   Car,
-  FileUp,
   List,
   LucideIcon,
   ArrowLeft,
@@ -83,7 +82,6 @@ const navigation: NavItem[] = [
     icon: ArrowLeftRight,
     children: [
       { name: 'All Transactions', href: '/transactions', icon: List },
-      { name: 'Import', href: '/transactions/import', icon: FileUp },
     ],
   },
   { name: 'Categories', href: '/categories', icon: Tag },
@@ -124,7 +122,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       '/accounts/assets': 'Assets & Investments',
       '/transactions': 'Transactions',
       '/transactions/new': 'New Transaction',
-      '/transactions/import': 'Import Transactions',
       '/categories': 'Categories',
       '/reports': 'Reports',
       '/budgets': 'Budgets',
