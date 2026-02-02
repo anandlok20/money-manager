@@ -28,11 +28,226 @@ interface ParsedTransaction {
   type: TransactionType;
   balance?: number;
   reference?: string;
+  narration?: string;
+  chequeNo?: string;
+  valueDate?: string;
+  transactionId?: string;
+  merchantName?: string;
+  paymentMode?: string;
   suggestedCategory?: string;
   suggestedCategoryId?: string;
   isTransfer: boolean;
   isInvestment: boolean;
   confidence: number;
+  rawText?: string;
+}
+
+interface StatementMetadata {
+  bankDetected: string;
+  accountNumber?: string;
+  accountHolder?: string;
+  openingBalance?: number;
+  closingBalance?: number;
+  statementPeriod?: {
+    from: string;
+    to: string;
+  };
+}
+
+// Extract metadata from statement text
+function extractStatementMetadata(text: string, bank: string): StatementMetadata {
+  const metadata: StatementMetadata = { bankDetected: bank };
+  
+  // Try to find account number
+  const accountPatterns = [
+    /Account\s*(?:No|Number|#)[\s.:]*(\d{9,18})/i,
+    /A\/C\s*(?:No|Number)?[\s.:]*(\d{9,18})/i,
+    /(?:Savings|Current|SB)\s*(?:Account)?[\s.:]*(\d{9,18})/i,
+    /Account\s*ID[\s.:]*(\d{9,18})/i,
+  ];
+  
+  for (const pattern of accountPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      metadata.accountNumber = match[1];
+      break;
+    }
+  }
+  
+  // Try to find account holder name
+  const namePatterns = [
+    /(?:Account\s*Holder|Customer\s*Name|Name)[\s.:]+([A-Z][A-Z\s.]+)/i,
+    /(?:Mr\.|Mrs\.|Ms\.|Dr\.)\s+([A-Z][A-Z\s.]+)/,
+  ];
+  
+  for (const pattern of namePatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      metadata.accountHolder = match[1].trim();
+      break;
+    }
+  }
+  
+  // Try to find opening/closing balance
+  const openingPatterns = [
+    /Opening\s*Balance[\s.:]*(?:₹|Rs\.?|INR)?\s*([\d,]+\.?\d*)/i,
+    /Balance\s*(?:B\/F|Brought\s*Forward)[\s.:]*(?:₹|Rs\.?|INR)?\s*([\d,]+\.?\d*)/i,
+    /Op(?:ening)?\.?\s*Bal(?:ance)?[\s.:]*(?:₹|Rs\.?|INR)?\s*([\d,]+\.?\d*)/i,
+  ];
+  
+  const closingPatterns = [
+    /Closing\s*Balance[\s.:]*(?:₹|Rs\.?|INR)?\s*([\d,]+\.?\d*)/i,
+    /Balance\s*(?:C\/F|Carried\s*Forward)[\s.:]*(?:₹|Rs\.?|INR)?\s*([\d,]+\.?\d*)/i,
+    /Cl(?:osing)?\.?\s*Bal(?:ance)?[\s.:]*(?:₹|Rs\.?|INR)?\s*([\d,]+\.?\d*)/i,
+    /Available\s*Balance[\s.:]*(?:₹|Rs\.?|INR)?\s*([\d,]+\.?\d*)/i,
+  ];
+  
+  for (const pattern of openingPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      metadata.openingBalance = parseFloat(match[1].replace(/,/g, ''));
+      break;
+    }
+  }
+  
+  for (const pattern of closingPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      metadata.closingBalance = parseFloat(match[1].replace(/,/g, ''));
+      break;
+    }
+  }
+  
+  // Try to find statement period
+  const periodPatterns = [
+    /(?:Statement\s*)?Period[\s.:]+(\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4})\s*(?:to|-)\s*(\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4})/i,
+    /From[\s.:]+(\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4})\s*(?:to|-)\s*(\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4})/i,
+    /(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})\s*(?:to|-)\s*(\d{1,2}\s+[A-Za-z]{3}\s+\d{4})/i,
+    /(\d{1,2}[-][A-Za-z]{3}[-]\d{4})\s*(?:to|-)\s*(\d{1,2}[-][A-Za-z]{3}[-]\d{4})/i,
+  ];
+  
+  for (const pattern of periodPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      metadata.statementPeriod = {
+        from: match[1],
+        to: match[2],
+      };
+      break;
+    }
+  }
+  
+  return metadata;
+}
+
+// Extract additional transaction details from description
+function extractTransactionDetails(description: string, rawText?: string): {
+  narration?: string;
+  reference?: string;
+  chequeNo?: string;
+  transactionId?: string;
+  merchantName?: string;
+  paymentMode?: string;
+  valueDate?: string;
+} {
+  const details: {
+    narration?: string;
+    reference?: string;
+    chequeNo?: string;
+    transactionId?: string;
+    merchantName?: string;
+    paymentMode?: string;
+    valueDate?: string;
+  } = {};
+  
+  const text = rawText || description;
+  
+  // Extract UPI reference
+  const upiRefMatch = text.match(/UPI[\/\-]?(\d{12,})/i);
+  if (upiRefMatch) {
+    details.reference = upiRefMatch[1];
+    details.paymentMode = 'UPI';
+  }
+  
+  // Extract IMPS reference
+  const impsRefMatch = text.match(/IMPS[\/\-]?(\d{12,})/i);
+  if (impsRefMatch) {
+    details.reference = impsRefMatch[1];
+    details.paymentMode = 'IMPS';
+  }
+  
+  // Extract NEFT reference
+  const neftRefMatch = text.match(/NEFT[\/\-]?(\w{16,})/i);
+  if (neftRefMatch) {
+    details.reference = neftRefMatch[1];
+    details.paymentMode = 'NEFT';
+  }
+  
+  // Extract RTGS reference
+  const rtgsRefMatch = text.match(/RTGS[\/\-]?(\w{16,})/i);
+  if (rtgsRefMatch) {
+    details.reference = rtgsRefMatch[1];
+    details.paymentMode = 'RTGS';
+  }
+  
+  // Extract cheque number
+  const chequeMatch = text.match(/(?:CHQ|Cheque|Chq)\s*(?:No|#)?[\s.:]*(\d{6,})/i);
+  if (chequeMatch) {
+    details.chequeNo = chequeMatch[1];
+    details.paymentMode = 'Cheque';
+  }
+  
+  // Extract ATM transaction
+  if (/ATM\s*(WDL|Withdrawal|Cash)/i.test(text)) {
+    details.paymentMode = 'ATM';
+  }
+  
+  // Extract POS transaction
+  if (/POS\s*(Purchase|TXN)?/i.test(text)) {
+    details.paymentMode = 'POS';
+  }
+  
+  // Extract value date
+  const valueDateMatch = text.match(/Value\s*(?:Date|Dt)?[\s.:]*(\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4})/i);
+  if (valueDateMatch) {
+    details.valueDate = valueDateMatch[1];
+  }
+  
+  // Extract transaction ID
+  const txnIdMatch = text.match(/(?:TXN|Trans(?:action)?)\s*(?:ID|No)?[\s.:]*(\w{12,})/i);
+  if (txnIdMatch) {
+    details.transactionId = txnIdMatch[1];
+  }
+  
+  // Extract merchant name from common patterns
+  // UPI format: UPI-NAME-UPIID
+  const upiMerchantMatch = text.match(/UPI[\/\-]\d+[\/\-]([A-Za-z][A-Za-z0-9\s]+?)(?:[\/\-]|@|\d{10,}|$)/i);
+  if (upiMerchantMatch) {
+    details.merchantName = upiMerchantMatch[1].trim();
+  }
+  
+  // Try to extract merchant from common patterns
+  const merchantPatterns = [
+    /(?:Paid\s*to|Payment\s*to|Transfer\s*to)[\s.:]+([A-Za-z][A-Za-z\s.]+)/i,
+    /(?:From|By)[\s.:]+([A-Za-z][A-Za-z\s.]+)/i,
+  ];
+  
+  if (!details.merchantName) {
+    for (const pattern of merchantPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        details.merchantName = match[1].trim();
+        break;
+      }
+    }
+  }
+  
+  // Set narration if different from cleaned description
+  if (rawText && rawText.length > description.length + 10) {
+    details.narration = rawText;
+  }
+  
+  return details;
 }
 
 // Keywords for identifying transaction types
@@ -1300,10 +1515,13 @@ function parseGenericStatement(text: string): ParsedTransaction[] {
 }
 
 // Main PDF parser - detects bank and uses appropriate parser
-function parsePDF(text: string): ParsedTransaction[] {
+function parsePDF(text: string): { transactions: ParsedTransaction[]; metadata: StatementMetadata } {
   const bank = detectBank(text);
   console.log(`Detected bank: ${bank}`);
   console.log(`PDF text preview (first 500 chars): ${text.substring(0, 500)}`);
+  
+  // Extract metadata first
+  const metadata = extractStatementMetadata(text, bank);
   
   let transactions: ParsedTransaction[] = [];
   
@@ -1358,6 +1576,15 @@ function parsePDF(text: string): ParsedTransaction[] {
     }
   }
   
+  // Extract additional details for each transaction
+  transactions = transactions.map(txn => {
+    const details = extractTransactionDetails(txn.description, txn.rawText);
+    return {
+      ...txn,
+      ...details,
+    };
+  });
+  
   // Sort by date
   transactions.sort((a, b) => {
     const dateA = parseDate(a.date);
@@ -1365,7 +1592,32 @@ function parsePDF(text: string): ParsedTransaction[] {
     return dateA.getTime() - dateB.getTime();
   });
   
-  return transactions;
+  // Try to extract opening/closing balance from transactions if not in metadata
+  if (!metadata.openingBalance && transactions.length > 0 && transactions[0].balance) {
+    const firstTxn = transactions[0];
+    if (firstTxn.type === TransactionType.EXPENSE || firstTxn.type === TransactionType.TRANSFER_SELF) {
+      metadata.openingBalance = (firstTxn.balance || 0) + firstTxn.amount;
+    } else {
+      metadata.openingBalance = (firstTxn.balance || 0) - firstTxn.amount;
+    }
+  }
+  
+  if (!metadata.closingBalance && transactions.length > 0) {
+    const lastTxn = transactions[transactions.length - 1];
+    if (lastTxn.balance) {
+      metadata.closingBalance = lastTxn.balance;
+    }
+  }
+  
+  // Try to extract statement period from transactions if not in metadata
+  if (!metadata.statementPeriod && transactions.length > 0) {
+    metadata.statementPeriod = {
+      from: transactions[0].date,
+      to: transactions[transactions.length - 1].date,
+    };
+  }
+  
+  return { transactions, metadata };
 }
 
 // Parse various date formats to Date object
@@ -1451,6 +1703,7 @@ export async function POST(request: NextRequest) {
     const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c._id.toString()]));
 
     let transactions: ParsedTransaction[] = [];
+    let metadata: StatementMetadata = { bankDetected: 'Generic' };
     
     const fileName = file.name.toLowerCase();
     
@@ -1461,7 +1714,9 @@ export async function POST(request: NextRequest) {
       
       try {
         const pdfText = await parsePDFBuffer(buffer);
-        transactions = parsePDF(pdfText);
+        const result = parsePDF(pdfText);
+        transactions = result.transactions;
+        metadata = result.metadata;
       } catch (pdfError) {
         console.error('PDF parsing error:', pdfError);
         return NextResponse.json(
@@ -1472,6 +1727,7 @@ export async function POST(request: NextRequest) {
     } else if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
       const content = await file.text();
       transactions = parseCSV(content);
+      metadata = { bankDetected: 'CSV Import' };
     } else {
       return NextResponse.json(
         { success: false, error: 'Unsupported file format. Please upload a PDF or CSV file.' },
@@ -1480,32 +1736,75 @@ export async function POST(request: NextRequest) {
     }
 
     // Match suggested categories with user's actual categories
-    // Also add unique IDs to each transaction
+    // Also add unique IDs to each transaction and map types for UI
     const transactionsWithIds = transactions.map((t, index) => {
+      // Map internal type to UI type
+      let uiType: 'income' | 'expense' | 'transfer' | 'investment' = 'expense';
+      if (t.type === TransactionType.INCOME) {
+        uiType = 'income';
+      } else if (t.type === TransactionType.EXPENSE) {
+        uiType = 'expense';
+      } else if (t.type === TransactionType.TRANSFER_SELF) {
+        uiType = 'transfer';
+      } else if (t.type === TransactionType.INVESTMENT_CONTRIBUTION) {
+        uiType = 'investment';
+      }
+      
       const txn = {
-        ...t,
         id: `txn-${index}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        date: t.date,
+        description: t.description,
+        amount: t.amount,
+        type: uiType,
+        balance: t.balance,
+        reference: t.reference,
+        narration: t.narration,
+        chequeNo: t.chequeNo,
+        valueDate: t.valueDate,
+        transactionId: t.transactionId,
+        merchantName: t.merchantName,
+        paymentMode: t.paymentMode,
+        category: t.suggestedCategory,
+        categoryId: t.suggestedCategoryId,
+        confidence: Math.round(t.confidence * 100),
+        isDuplicate: false,
+        rawText: t.rawText,
       };
-      if (txn.suggestedCategory) {
-        const categoryId = categoryMap.get(txn.suggestedCategory.toLowerCase());
+      
+      if (txn.category) {
+        const categoryId = categoryMap.get(txn.category.toLowerCase());
         if (categoryId) {
-          txn.suggestedCategoryId = categoryId;
+          txn.categoryId = categoryId;
         }
       }
+      
       return txn;
     });
 
+    // Calculate summary
+    const incomeTransactions = transactionsWithIds.filter(t => t.type === 'income');
+    const expenseTransactions = transactionsWithIds.filter(t => t.type === 'expense');
+    const transferTransactions = transactionsWithIds.filter(t => t.type === 'transfer');
+    const investmentTransactions = transactionsWithIds.filter(t => t.type === 'investment');
+
     return NextResponse.json({
-      success: true,
-      data: {
-        transactions: transactionsWithIds,
-        totalCount: transactionsWithIds.length,
-        summary: {
-          income: transactionsWithIds.filter(t => t.type === TransactionType.INCOME).length,
-          expense: transactionsWithIds.filter(t => t.type === TransactionType.EXPENSE).length,
-          transfer: transactionsWithIds.filter(t => t.type === TransactionType.TRANSFER_SELF).length,
-          investment: transactionsWithIds.filter(t => t.type === TransactionType.INVESTMENT_CONTRIBUTION).length,
-        },
+      transactions: transactionsWithIds,
+      bankDetected: metadata.bankDetected,
+      accountNumber: metadata.accountNumber,
+      accountHolder: metadata.accountHolder,
+      openingBalance: metadata.openingBalance,
+      closingBalance: metadata.closingBalance,
+      statementPeriod: metadata.statementPeriod,
+      summary: {
+        total: transactionsWithIds.length,
+        income: incomeTransactions.length,
+        expense: expenseTransactions.length,
+        transfer: transferTransactions.length,
+        investment: investmentTransactions.length,
+        incomeAmount: incomeTransactions.reduce((sum, t) => sum + t.amount, 0),
+        expenseAmount: expenseTransactions.reduce((sum, t) => sum + t.amount, 0),
+        transferAmount: transferTransactions.reduce((sum, t) => sum + t.amount, 0),
+        investmentAmount: investmentTransactions.reduce((sum, t) => sum + t.amount, 0),
       },
     });
   } catch (error) {

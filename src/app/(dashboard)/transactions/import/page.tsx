@@ -5,7 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import BankAccount from '@/lib/mongodb/models/BankAccount';
 import Card from '@/lib/mongodb/models/Card';
 import Category from '@/lib/mongodb/models/Category';
-import BankStatementImport from '@/components/transactions/BankStatementImport';
+import { BankStatementImport } from '@/components/transactions/BankStatementImport';
 import ReceiptScanner from '@/components/transactions/ReceiptScanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileSpreadsheet, Receipt } from 'lucide-react';
@@ -67,10 +67,7 @@ export default async function ImportTransactionsPage() {
         </TabsList>
 
         <TabsContent value="statement">
-          <BankStatementImport
-            bankAccounts={serializedBankAccounts}
-            categories={serializedCategories}
-          />
+          <BankStatementImport />
         </TabsContent>
 
         <TabsContent value="receipt">
