@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Users, Plus, MoreVertical, Edit, Trash2, User, UserCheck, Users2, Mail, Phone, Eye } from 'lucide-react';
+import { Users, Plus, MoreVertical, Edit, Trash2, User, UserCheck, Users2, Mail, Phone, Eye, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,8 +45,9 @@ async function fetchMembers(): Promise<{ data: Member[] }> {
   return response.json();
 }
 
-async function deleteMember(id: string) {
-  const response = await fetch(`/api/members/${id}`, {
+async function deleteMember(id: string, permanent: boolean = false) {
+  const url = permanent ? `/api/members/${id}?permanent=true` : `/api/members/${id}`;
+  const response = await fetch(url, {
     method: 'DELETE',
   });
   if (!response.ok) {
@@ -70,10 +71,21 @@ export default function MembersPage() {
     queryFn: fetchMembers,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: deleteMember,
+  const deactivateMutation = useMutation({
+    mutationFn: (id: string) => deleteMember(id, false),
     onSuccess: () => {
-      toast.success('Member deleted successfully');
+      toast.success('Member deactivated successfully');
+      queryClient.invalidateQueries({ queryKey: ['members'] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteMember(id, true),
+    onSuccess: () => {
+      toast.success('Member permanently deleted');
       queryClient.invalidateQueries({ queryKey: ['members'] });
     },
     onError: (error: Error) => {
@@ -169,6 +181,36 @@ export default function MembersPage() {
                             Edit
                           </Link>
                         </DropdownMenuItem>
+                        {member.isActive && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem
+                                className="text-amber-600"
+                                onSelect={(e) => e.preventDefault()}
+                              >
+                                <UserX className="mr-2 h-4 w-4" />
+                                Deactivate
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Deactivate Member</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to deactivate &quot;{member.name}&quot;? They will be marked as inactive but their data will be preserved.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deactivateMutation.mutate(member._id)}
+                                  className="bg-amber-600 text-white hover:bg-amber-700"
+                                >
+                                  Deactivate
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <DropdownMenuItem
@@ -176,14 +218,14 @@ export default function MembersPage() {
                               onSelect={(e) => e.preventDefault()}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
+                              Delete Permanently
                             </DropdownMenuItem>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Member</AlertDialogTitle>
+                              <AlertDialogTitle>Delete Member Permanently</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete &quot;{member.name}&quot;? This action cannot be undone.
+                                Are you sure you want to permanently delete &quot;{member.name}&quot;? This action cannot be undone and all associated data will be lost.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -192,7 +234,7 @@ export default function MembersPage() {
                                 onClick={() => deleteMutation.mutate(member._id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                Delete
+                                Delete Permanently
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
