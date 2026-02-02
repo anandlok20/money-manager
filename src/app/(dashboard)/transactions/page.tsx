@@ -286,35 +286,35 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Transactions</h1>
-          <p className="text-muted-foreground">
-            View and manage all your transactions
+          <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
+          <p className="text-muted-foreground mt-1">
+            View and manage all your financial transactions
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" disabled={isExporting}>
+              <Button variant="outline" disabled={isExporting} className="rounded-xl">
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-40" align="end">
-              <div className="space-y-2">
+            <PopoverContent className="w-44 rounded-xl" align="end">
+              <div className="space-y-1">
                 <Button
                   variant="ghost"
-                  className="w-full justify-start"
+                  className="w-full justify-start rounded-lg hover:bg-muted/60"
                   onClick={() => handleExport('csv')}
                 >
                   Export as CSV
                 </Button>
                 <Button
                   variant="ghost"
-                  className="w-full justify-start"
+                  className="w-full justify-start rounded-lg hover:bg-muted/60"
                   onClick={() => handleExport('json')}
                 >
                   Export as JSON
@@ -323,13 +323,13 @@ export default function TransactionsPage() {
             </PopoverContent>
           </Popover>
           <Link href="/transactions/import">
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 rounded-xl">
               <FileUp className="h-4 w-4" />
               Import
             </Button>
           </Link>
           <Link href="/transactions/new">
-            <Button className="gap-2">
+            <Button className="gap-2 shadow-lg shadow-primary/25">
               <Plus className="h-4 w-4" />
               Add Transaction
             </Button>
@@ -338,12 +338,12 @@ export default function TransactionsPage() {
       </div>
 
       {/* Search and Quick Filters */}
-      <Card>
-        <CardContent className="py-4">
+      <Card className="border-border/50">
+        <CardContent className="py-5">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search transactions..."
                 value={searchQuery}
@@ -351,16 +351,16 @@ export default function TransactionsPage() {
                   setSearchQuery(e.target.value);
                   setPage(1);
                 }}
-                className="pl-9"
+                className="pl-11 h-11 rounded-xl border-border/50 bg-background/50"
               />
             </div>
 
             {/* Quick Type Filter */}
             <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[160px] h-11 rounded-xl border-border/50">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="ALL">All Types</SelectItem>
                 <SelectItem value={TransactionType.INCOME}>Income</SelectItem>
                 <SelectItem value={TransactionType.EXPENSE}>Expense</SelectItem>
@@ -371,19 +371,19 @@ export default function TransactionsPage() {
             {/* Advanced Filters */}
             <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" className="gap-2">
+                <Button variant="outline" className="gap-2 h-11 rounded-xl border-border/50">
                   <Filter className="h-4 w-4" />
                   Filters
                   {hasActiveFilters && (
-                    <Badge variant="secondary" className="ml-1">
+                    <Badge variant="secondary" className="ml-1 rounded-full">
                       Active
                     </Badge>
                   )}
                 </Button>
               </SheetTrigger>
-              <SheetContent>
+              <SheetContent className="rounded-l-2xl">
                 <SheetHeader>
-                  <SheetTitle>Advanced Filters</SheetTitle>
+                  <SheetTitle className="text-xl">Advanced Filters</SheetTitle>
                   <SheetDescription>
                     Filter transactions by various criteria
                   </SheetDescription>
@@ -395,7 +395,7 @@ export default function TransactionsPage() {
                     <div className="grid grid-cols-2 gap-2">
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="justify-start text-left font-normal">
+                          <Button variant="outline" className="justify-start text-left font-normal rounded-xl">
                             <Calendar className="mr-2 h-4 w-4" />
                             {startDate ? format(startDate, 'MMM dd') : 'Start'}
                           </Button>

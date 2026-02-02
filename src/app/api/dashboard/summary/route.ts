@@ -230,46 +230,56 @@ export async function GET() {
       };
     });
 
-    // Calculate budget progress
-    const budgetProgress = await Promise.all(
-      budgets.map(async (budget) => {
-        // Handle populated categoryId (could be object or string)
-        const categoryId = typeof budget.categoryId === 'object' && '_id' in budget.categoryId
-          ? budget.categoryId._id
-          : budget.categoryId;
-          
-        const spent = await Transaction.aggregate([
-          {
-            $match: {
-              userId: { $eq: userId },
-              categoryId: categoryId,
-              type: TransactionType.EXPENSE,
-              dateTime: { $gte: monthStart, $lte: monthEnd },
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: '$amount' },
-            },
-          },
-        ]);
-
-        const spentAmount = spent[0]?.total || 0;
-        const categoryName = typeof budget.categoryId === 'object' && budget.categoryId?.name 
-          ? budget.categoryId.name 
-          : 'Overall';
-
-        return {
-          _id: budget._id.toString(),
-          name: categoryName,
-          category: categoryName,
-          budgetAmount: budget.amount,
-          spent: spentAmount,
-          percentage: Math.round((spentAmount / budget.amount) * 100),
-        };
-      })
+    // Calculate budget progress - Single aggregation query instead of N queries
+    const budgetCategoryIds = budgets.map((budget) => 
+      typeof budget.categoryId === 'object' && '_id' in budget.categoryId
+        ? budget.categoryId._id
+        : budget.categoryId
     );
+    
+    // Single query to get all spending by category
+    const spendingByCategory = await Transaction.aggregate([
+      {
+        $match: {
+          userId: { $eq: userId },
+          type: TransactionType.EXPENSE,
+          dateTime: { $gte: monthStart, $lte: monthEnd },
+          categoryId: { $in: budgetCategoryIds },
+        },
+      },
+      {
+        $group: {
+          _id: '$categoryId',
+          total: { $sum: '$amount' },
+        },
+      },
+    ]);
+    
+    // Create lookup map for O(1) access
+    const spendingMap = new Map(
+      spendingByCategory.map((s) => [s._id?.toString(), s.total])
+    );
+    
+    // Map budgets with spending data from the single query
+    const budgetProgress = budgets.map((budget) => {
+      const categoryId = typeof budget.categoryId === 'object' && '_id' in budget.categoryId
+        ? budget.categoryId._id
+        : budget.categoryId;
+      
+      const spentAmount = spendingMap.get(categoryId?.toString()) || 0;
+      const categoryName = typeof budget.categoryId === 'object' && budget.categoryId?.name 
+        ? budget.categoryId.name 
+        : 'Overall';
+
+      return {
+        _id: budget._id.toString(),
+        name: categoryName,
+        category: categoryName,
+        budgetAmount: budget.amount,
+        spent: spentAmount,
+        percentage: Math.round((spentAmount / budget.amount) * 100),
+      };
+    });
 
     // Process goals for dashboard
     const goalsProgress = activeGoals.map((goal) => {

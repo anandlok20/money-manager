@@ -114,26 +114,49 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const permanent = searchParams.get('permanent') === 'true';
+
     await connectToDatabase();
 
-    // Soft delete - set isActive to false
-    const member = await Member.findOneAndUpdate(
-      { _id: id, userId: session.user.id },
-      { $set: { isActive: false } },
-      { new: true }
-    ).lean();
+    if (permanent) {
+      // Permanent delete - remove from database
+      const member = await Member.findOneAndDelete({
+        _id: id,
+        userId: session.user.id,
+      });
 
-    if (!member) {
-      return NextResponse.json(
-        { success: false, error: 'Member not found' },
-        { status: 404 }
-      );
+      if (!member) {
+        return NextResponse.json(
+          { success: false, error: 'Member not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Member permanently deleted',
+      });
+    } else {
+      // Soft delete - set isActive to false
+      const member = await Member.findOneAndUpdate(
+        { _id: id, userId: session.user.id },
+        { $set: { isActive: false } },
+        { new: true }
+      ).lean();
+
+      if (!member) {
+        return NextResponse.json(
+          { success: false, error: 'Member not found' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Member deactivated successfully',
+      });
     }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Member deleted successfully',
-    });
   } catch (error) {
     console.error('Error deleting member:', error);
     return NextResponse.json(

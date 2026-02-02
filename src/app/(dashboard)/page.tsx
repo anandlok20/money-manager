@@ -158,22 +158,22 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Getting Started Guide for New Users */}
       <GettingStarted />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">
-            Welcome back, {session?.user?.name?.split(' ')[0]}!
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome back, {session?.user?.name?.split(' ')[0]}! 👋
           </h1>
-          <p className="text-muted-foreground">
-            Here&apos;s your financial overview
+          <p className="text-muted-foreground mt-1">
+            Here&apos;s your financial overview for today
           </p>
         </div>
         <Link href="/transactions/new">
-          <Button className="gap-2">
+          <Button className="gap-2 shadow-lg shadow-primary/25">
             <Plus className="h-4 w-4" />
             Add Transaction
           </Button>
@@ -181,20 +181,23 @@ export default function DashboardPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
         {/* Net Worth */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Net Worth
             </CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Wallet className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-2xl font-bold">
+              <div className="text-2xl sm:text-3xl font-bold">
                 {formatCurrency(data?.netWorth || 0, currency)}
               </div>
             )}
@@ -202,18 +205,21 @@ export default function DashboardPage() {
         </Card>
 
         {/* Bank Balance */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Bank Balance
             </CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <Building2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <div className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                 {formatCurrency(data?.totalBankBalance || 0, currency)}
               </div>
             )}
@@ -221,18 +227,21 @@ export default function DashboardPage() {
         </Card>
 
         {/* Monthly Income */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               This Month Income
             </CardTitle>
-            <ArrowDownLeft className="h-4 w-4 text-green-500" />
+            <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+              <ArrowDownLeft className="h-4 w-4 text-green-600 dark:text-green-400" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <div className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">
                 {formatCurrency(data?.monthlyIncome || 0, currency)}
               </div>
             )}
@@ -240,18 +249,21 @@ export default function DashboardPage() {
         </Card>
 
         {/* Monthly Expense */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               This Month Expense
             </CardTitle>
-            <ArrowUpRight className="h-4 w-4 text-red-500" />
+            <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+              <ArrowUpRight className="h-4 w-4 text-red-600 dark:text-red-400" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+              <div className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400">
                 {formatCurrency(data?.monthlyExpense || 0, currency)}
               </div>
             )}
@@ -260,21 +272,24 @@ export default function DashboardPage() {
       </div>
 
       {/* Secondary Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
         {/* Card Balance (Debt) */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Credit Card Debt
             </CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
+              <CreditCard className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className={cn(
-                "text-2xl font-bold",
+                "text-2xl sm:text-3xl font-bold",
                 (data?.totalCardBalance || 0) > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
               )}>
                 {(data?.totalCardBalance || 0) > 0 ? '-' : ''}{formatCurrency(Math.abs(data?.totalCardBalance || 0), currency)}
@@ -284,18 +299,21 @@ export default function DashboardPage() {
         </Card>
 
         {/* Investments */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Investments
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">
                 {formatCurrency(data?.totalInvestmentValue || 0, currency)}
               </div>
             )}
@@ -303,19 +321,22 @@ export default function DashboardPage() {
         </Card>
 
         {/* Monthly Savings */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Monthly Savings
             </CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+              <Wallet className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className={cn(
-                "text-2xl font-bold",
+                "text-2xl sm:text-3xl font-bold",
                 (data?.monthlySavings || 0) >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
               )}>
                 {formatCurrency(data?.monthlySavings || 0, currency)}
@@ -325,21 +346,24 @@ export default function DashboardPage() {
         </Card>
 
         {/* Savings Rate */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Savings Rate
             </CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <Target className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className={cn(
-                "text-2xl font-bold",
+                "text-2xl sm:text-3xl font-bold",
                 (data?.savingsRate || 0) >= 20 ? "text-green-600 dark:text-green-400" : 
-                (data?.savingsRate || 0) >= 0 ? "text-yellow-600 dark:text-yellow-400" : 
+                (data?.savingsRate || 0) >= 0 ? "text-amber-600 dark:text-amber-400" : 
                 "text-red-600 dark:text-red-400"
               )}>
                 {data?.savingsRate || 0}%
@@ -361,21 +385,24 @@ export default function DashboardPage() {
         <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-base">Expenses by Category</CardTitle>
-              <CardDescription>This month&apos;s spending</CardDescription>
+              <CardTitle className="text-lg font-semibold">Expenses by Category</CardTitle>
+              <CardDescription className="text-xs">This month&apos;s spending breakdown</CardDescription>
             </div>
-            <PieChart className="h-4 w-4 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <PieChart className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-[200px] flex items-center justify-center">
-                <Skeleton className="h-[180px] w-[180px] rounded-full" />
+              <div className="h-[250px] flex items-center justify-center">
+                <Skeleton className="h-[200px] w-[200px] rounded-full" />
               </div>
             ) : data?.expenseByCategory && data.expenseByCategory.length > 0 ? (
               <ExpensePieChart data={data.expenseByCategory} currency={currency} />
             ) : (
-              <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                No expense data
+              <div className="h-[250px] flex flex-col items-center justify-center text-muted-foreground gap-2">
+                <PieChart className="h-12 w-12 opacity-20" />
+                <span>No expense data yet</span>
               </div>
             )}
           </CardContent>
@@ -385,23 +412,26 @@ export default function DashboardPage() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-base">Income vs Expenses</CardTitle>
-              <CardDescription>Last 6 months trend</CardDescription>
+              <CardTitle className="text-lg font-semibold">Income vs Expenses</CardTitle>
+              <CardDescription className="text-xs">Last 6 months trend analysis</CardDescription>
             </div>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <BarChart3 className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-[200px] flex items-end gap-2 justify-center">
+              <div className="h-[250px] flex items-end gap-3 justify-center px-4">
                 {[68, 85, 72, 95, 80, 90].map((height, i) => (
-                  <Skeleton key={i} className="w-12" style={{ height: `${height}px` }} />
+                  <Skeleton key={i} className="w-16 rounded-t-lg" style={{ height: `${height}%` }} />
                 ))}
               </div>
             ) : data?.monthlyTrends && data.monthlyTrends.length > 0 ? (
               <IncomeExpenseBarChart data={data.monthlyTrends} currency={currency} />
             ) : (
-              <div className="h-[200px] flex items-center justify-center text-muted-foreground">
-                No trend data
+              <div className="h-[250px] flex flex-col items-center justify-center text-muted-foreground gap-2">
+                <BarChart3 className="h-12 w-12 opacity-20" />
+                <span>No trend data yet</span>
               </div>
             )}
           </CardContent>
@@ -413,29 +443,32 @@ export default function DashboardPage() {
         {/* Savings Rate */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Monthly Savings Rate</CardTitle>
-            <CardDescription>How much of your income you&apos;re saving</CardDescription>
+            <CardTitle className="text-lg font-semibold">Monthly Savings Rate</CardTitle>
+            <CardDescription className="text-xs">How much of your income you&apos;re saving</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-[160px] flex items-center justify-center">
-                <Skeleton className="h-[140px] w-[140px] rounded-full" />
+              <div className="h-[180px] flex items-center justify-center">
+                <Skeleton className="h-[160px] w-[160px] rounded-full" />
               </div>
             ) : (
-              <div className="flex items-center gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-6">
                 <SavingsRateGauge rate={data?.savingsRate || 0} />
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500" />
-                    <span className="text-sm">Income: {formatCurrency(data?.monthlyIncome || 0, currency)}</span>
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center gap-3 p-2 rounded-lg bg-green-500/5">
+                    <div className="w-3 h-3 rounded-full bg-green-500 shadow-lg shadow-green-500/30" />
+                    <span className="text-sm flex-1">Income</span>
+                    <span className="text-sm font-semibold text-green-600 dark:text-green-400">{formatCurrency(data?.monthlyIncome || 0, currency)}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500" />
-                    <span className="text-sm">Expenses: {formatCurrency(data?.monthlyExpense || 0, currency)}</span>
+                  <div className="flex items-center gap-3 p-2 rounded-lg bg-red-500/5">
+                    <div className="w-3 h-3 rounded-full bg-red-500 shadow-lg shadow-red-500/30" />
+                    <span className="text-sm flex-1">Expenses</span>
+                    <span className="text-sm font-semibold text-red-600 dark:text-red-400">{formatCurrency(data?.monthlyExpense || 0, currency)}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500" />
-                    <span className="text-sm">Savings: {formatCurrency(data?.monthlySavings || 0, currency)}</span>
+                  <div className="flex items-center gap-3 p-2 rounded-lg bg-blue-500/5">
+                    <div className="w-3 h-3 rounded-full bg-blue-500 shadow-lg shadow-blue-500/30" />
+                    <span className="text-sm flex-1">Savings</span>
+                    <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(data?.monthlySavings || 0, currency)}</span>
                   </div>
                 </div>
               </div>
@@ -447,11 +480,11 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
-              <CardTitle className="text-base">Budget Progress</CardTitle>
-              <CardDescription>Active budget tracking</CardDescription>
+              <CardTitle className="text-lg font-semibold">Budget Progress</CardTitle>
+              <CardDescription className="text-xs">Active budget tracking</CardDescription>
             </div>
             <Link href="/budgets">
-              <Button variant="ghost" size="sm" className="gap-1">
+              <Button variant="outline" size="sm" className="gap-2 rounded-lg">
                 <Target className="h-4 w-4" />
                 Manage
               </Button>
@@ -460,18 +493,19 @@ export default function DashboardPage() {
           <CardContent>
             {isLoading ? (
               <div className="space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-14 w-full rounded-lg" />
+                <Skeleton className="h-14 w-full rounded-lg" />
               </div>
             ) : data?.budgetProgress && data.budgetProgress.length > 0 ? (
               <div className="space-y-4">
                 {data.budgetProgress.slice(0, 4).map((budget) => (
-                  <div key={budget._id} className="space-y-2">
+                  <div key={budget._id} className="space-y-2 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
                     <div className="flex justify-between text-sm">
                       <span className="font-medium">{budget.name}</span>
                       <span className={cn(
+                        "font-semibold",
                         budget.percentage > 100 ? 'text-red-500' : 
-                        budget.percentage > 80 ? 'text-yellow-500' : 
+                        budget.percentage > 80 ? 'text-amber-500' : 
                         'text-muted-foreground'
                       )}>
                         {formatCurrency(budget.spent, currency)} / {formatCurrency(budget.budgetAmount, currency)}

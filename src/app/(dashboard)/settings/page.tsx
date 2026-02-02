@@ -58,28 +58,33 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-8 max-w-3xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground mt-1">
           Manage your account settings and preferences
         </p>
       </div>
 
       {/* Profile Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            <CardTitle>Profile</CardTitle>
-          </div>
-          <CardDescription>Your account information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+      <Card className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+        <CardHeader className="relative">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <User className="h-5 w-5 text-primary" />
+            </div>
             <div>
-              <p className="font-medium">{session?.user?.name}</p>
+              <CardTitle className="text-lg">Profile</CardTitle>
+              <CardDescription className="text-xs">Your account information</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4 relative">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
+            <div>
+              <p className="font-semibold">{session?.user?.name}</p>
               <p className="text-sm text-muted-foreground">
                 {session?.user?.email}
               </p>
@@ -91,26 +96,30 @@ export default function SettingsPage() {
       {/* Appearance Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            <CardTitle>Appearance</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Palette className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Appearance</CardTitle>
+              <CardDescription className="text-xs">Customize how the app looks</CardDescription>
+            </div>
           </div>
-          <CardDescription>Customize how the app looks</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Currency */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
             <div className="space-y-0.5">
-              <Label>Currency</Label>
-              <p className="text-sm text-muted-foreground">
+              <Label className="font-medium">Currency</Label>
+              <p className="text-xs text-muted-foreground">
                 Set your default currency
               </p>
             </div>
             <Select value={currency} onValueChange={handleCurrencyChange}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[200px] rounded-xl">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 {supportedCurrencies.map((curr) => (
                   <SelectItem key={curr.code} value={curr.code}>
                     {curr.symbol} {curr.code} - {curr.name}
@@ -125,40 +134,40 @@ export default function SettingsPage() {
           {/* Theme & Color Theme Combined */}
           <div className="space-y-4">
             <div className="space-y-0.5">
-              <Label className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
+              <Label className="flex items-center gap-2 font-medium">
+                <Sparkles className="h-4 w-4 text-primary" />
                 Theme
               </Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Choose your preferred appearance
               </p>
             </div>
             
             {/* Light/Dark/System Toggle */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 p-1 bg-muted/30 rounded-xl w-fit">
               <Button
-                variant={theme === 'light' ? 'default' : 'outline'}
+                variant={theme === 'light' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setTheme('light')}
-                className="gap-2"
+                className="gap-2 rounded-lg"
               >
                 <Sun className="h-4 w-4" />
                 Light
               </Button>
               <Button
-                variant={theme === 'dark' ? 'default' : 'outline'}
+                variant={theme === 'dark' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setTheme('dark')}
-                className="gap-2"
+                className="gap-2 rounded-lg"
               >
                 <Moon className="h-4 w-4" />
                 Dark
               </Button>
               <Button
-                variant={theme === 'system' ? 'default' : 'outline'}
+                variant={theme === 'system' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setTheme('system')}
-                className="gap-2"
+                className="gap-2 rounded-lg"
               >
                 <Monitor className="h-4 w-4" />
                 System
@@ -167,17 +176,17 @@ export default function SettingsPage() {
             
             {/* Color Themes */}
             <div className="pt-2">
-              <p className="text-xs text-muted-foreground mb-2">Color Palette</p>
+              <p className="text-xs text-muted-foreground mb-3 font-medium">Color Palette</p>
               <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex gap-2 pb-3">
+                <div className="flex gap-3 pb-3">
                   {colorThemes.map((t) => (
                     <button
                       key={t.id}
                       onClick={() => handleColorThemeChange(t.id)}
-                      className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all min-w-[80px] ${
+                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all min-w-[90px] ${
                         colorTheme === t.id
-                          ? 'border-primary bg-primary/10'
-                          : 'border-transparent hover:bg-muted'
+                          ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
+                          : 'border-transparent hover:bg-muted/60 hover:scale-105'
                       }`}
                     >
                       <span className="text-2xl">{t.emoji}</span>
@@ -195,23 +204,27 @@ export default function SettingsPage() {
       {/* Security Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            <CardTitle>Security</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+              <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Security</CardTitle>
+              <CardDescription className="text-xs">Manage your security settings</CardDescription>
+            </div>
           </div>
-          <CardDescription>Manage your security settings</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
             <div className="space-y-0.5">
-              <Label>App Lock</Label>
-              <p className="text-sm text-muted-foreground">
+              <Label className="font-medium">App Lock</Label>
+              <p className="text-xs text-muted-foreground">
                 Require PIN to access the app
               </p>
             </div>
             <Switch disabled />
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground px-1">
             App Lock feature coming soon
           </p>
         </CardContent>
@@ -220,23 +233,27 @@ export default function SettingsPage() {
       {/* Notifications Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            <CardTitle>Notifications</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+              <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Notifications</CardTitle>
+              <CardDescription className="text-xs">Configure notification preferences</CardDescription>
+            </div>
           </div>
-          <CardDescription>Configure notification preferences</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
             <div className="space-y-0.5">
-              <Label>Push Notifications</Label>
-              <p className="text-sm text-muted-foreground">
+              <Label className="font-medium">Push Notifications</Label>
+              <p className="text-xs text-muted-foreground">
                 Get notified about important updates
               </p>
             </div>
             <Switch disabled />
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground px-1">
             Notifications coming soon
           </p>
         </CardContent>
@@ -245,19 +262,26 @@ export default function SettingsPage() {
       {/* Help Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <HelpCircle className="h-5 w-5" />
-            <CardTitle>Help & Support</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+              <HelpCircle className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Help & Support</CardTitle>
+              <CardDescription className="text-xs">Get help and learn more</CardDescription>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* How to Use Link */}
           <Link href="/settings/how-to-use">
-            <Button variant="outline" className="w-full justify-between h-auto py-3">
+            <Button variant="outline" className="w-full justify-between h-auto py-4 rounded-xl hover:bg-muted/60 transition-colors">
               <div className="flex items-center gap-3">
-                <BookOpen className="h-5 w-5 text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                </div>
                 <div className="text-left">
-                  <p className="font-medium">How to Use This App</p>
+                  <p className="font-semibold">How to Use This App</p>
                   <p className="text-xs text-muted-foreground">
                     Step-by-step guide and FAQ
                   </p>
@@ -267,11 +291,11 @@ export default function SettingsPage() {
             </Button>
           </Link>
           
-          <div className="pt-2">
-            <p className="text-sm text-muted-foreground">
+          <div className="pt-4 px-1">
+            <p className="text-sm font-medium text-muted-foreground">
               Family Expense Manager v1.0.0
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
               A family expense and finance management application to track your income,
               expenses, investments, and family spending.
             </p>
@@ -286,11 +310,11 @@ export default function SettingsPage() {
       />
 
       {/* Sign Out */}
-      <Card className="border-destructive/50">
+      <Card className="border-destructive/30 bg-destructive/5">
         <CardContent className="pt-6">
           <Button
             variant="destructive"
-            className="w-full"
+            className="w-full rounded-xl"
             onClick={handleSignOut}
             disabled={isLoading}
           >
