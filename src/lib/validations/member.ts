@@ -1,14 +1,6 @@
 import { z } from 'zod';
 import { MemberType } from '@/types';
 
-// Helper to coerce string dates to Date objects
-const dateSchema = z.preprocess((arg) => {
-  if (typeof arg === 'string' || arg instanceof Date) {
-    return new Date(arg);
-  }
-  return arg;
-}, z.date());
-
 const addressSchema = z.object({
   street: z.string().max(200).optional(),
   city: z.string().max(100).optional(),
@@ -22,7 +14,7 @@ export const memberSchema = z.object({
   type: z.nativeEnum(MemberType),
   email: z.string().email('Invalid email').optional().or(z.literal('')),
   phone: z.string().max(20).optional().or(z.literal('')),
-  dateOfBirth: dateSchema.optional().nullable(),
+  dateOfBirth: z.date().optional().nullable(),
   relationship: z.string().max(50).optional().or(z.literal('')),
   address: addressSchema,
   notes: z.string().max(500).optional().or(z.literal('')),

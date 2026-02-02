@@ -1,18 +1,10 @@
 import { z } from 'zod';
 import { TransactionType, AccountType } from '@/types';
 
-// Helper to coerce string dates to Date objects
-const dateSchema = z.preprocess((arg) => {
-  if (typeof arg === 'string' || arg instanceof Date) {
-    return new Date(arg);
-  }
-  return arg;
-}, z.date());
-
 export const transactionSchema = z.object({
   type: z.nativeEnum(TransactionType),
   amount: z.number().positive('Amount must be positive'),
-  dateTime: dateSchema,
+  dateTime: z.date(),
   note: z.string().max(500, 'Note is too long').optional(),
   categoryId: z.string().optional(),
   memberId: z.string().optional(),
@@ -62,8 +54,8 @@ export const transactionFiltersSchema = z.object({
   type: z.nativeEnum(TransactionType).optional(),
   categoryId: z.string().optional(),
   memberId: z.string().optional(),
-  startDate: dateSchema.optional(),
-  endDate: dateSchema.optional(),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
   minAmount: z.number().positive().optional(),
   maxAmount: z.number().positive().optional(),
   page: z.number().int().positive().default(1),
@@ -74,7 +66,7 @@ export const updateTransactionSchema = z.object({
   type: z.enum(['income', 'expense', 'transfer']).optional(),
   amount: z.number().positive('Amount must be positive').optional(),
   description: z.string().min(1, 'Description is required').optional(),
-  date: dateSchema.optional(),
+  date: z.date().optional(),
   sourceAccountId: z.string().optional(),
   destinationAccountId: z.string().optional(),
   categoryId: z.string().nullable().optional(),
