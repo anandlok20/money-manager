@@ -163,7 +163,8 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
     queryFn: async () => {
       const res = await fetch("/api/categories");
       if (!res.ok) throw new Error("Failed to fetch categories");
-      return res.json();
+      const json = await res.json();
+      return json.data || [];
     },
   });
 
@@ -173,7 +174,8 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
     queryFn: async () => {
       const res = await fetch("/api/accounts/banks");
       if (!res.ok) throw new Error("Failed to fetch bank accounts");
-      return res.json();
+      const json = await res.json();
+      return json.data || [];
     },
   });
 
@@ -183,7 +185,8 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
     queryFn: async () => {
       const res = await fetch("/api/accounts/cards");
       if (!res.ok) throw new Error("Failed to fetch credit cards");
-      return res.json();
+      const json = await res.json();
+      return json.data || [];
     },
   });
 
