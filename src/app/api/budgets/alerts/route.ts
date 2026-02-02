@@ -68,68 +68,78 @@ export async function GET() {
       });
     }
 
-    // Calculate spending for each budget
-    const alerts: BudgetAlert[] = await Promise.all(
-      budgets.map(async (budget) => {
-        // Handle populated categoryId (could be object or ObjectId)
-        const categoryId = typeof budget.categoryId === 'object' && '_id' in budget.categoryId
-          ? budget.categoryId._id
-          : budget.categoryId;
-          
-        const spending = await Transaction.aggregate([
-          {
-            $match: {
-              userId: { $eq: userId },
-              categoryId: categoryId,
-              type: TransactionType.EXPENSE,
-              dateTime: { $gte: monthStart, $lte: monthEnd },
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: '$amount' },
-            },
-          },
-        ]);
-
-        const spent = spending[0]?.total || 0;
-        const percentage = Math.round((spent / budget.amount) * 100);
-        const remaining = budget.amount - spent;
-
-        let status: BudgetAlert['status'] = 'safe';
-        let message = '';
-
-        if (percentage >= 100) {
-          status = 'exceeded';
-          message = `You've exceeded your budget by ${Math.abs(remaining).toFixed(0)}`;
-        } else if (percentage >= 90) {
-          status = 'danger';
-          message = `Only ${remaining.toFixed(0)} remaining (${100 - percentage}%)`;
-        } else if (percentage >= 75) {
-          status = 'warning';
-          message = `You've used ${percentage}% of your budget`;
-        } else {
-          status = 'safe';
-          message = `${remaining.toFixed(0)} remaining`;
-        }
-
-        const categoryName = typeof budget.categoryId === 'object' && budget.categoryId?.name
-          ? budget.categoryId.name
-          : 'Unknown';
-
-        return {
-          _id: budget._id.toString(),
-          categoryName,
-          budgetAmount: budget.amount,
-          spent,
-          percentage,
-          remaining,
-          status,
-          message,
-        };
-      })
+    // Calculate spending for all budgets with a single aggregation query
+    const budgetCategoryIds = budgets.map((budget) =>
+      typeof budget.categoryId === 'object' && '_id' in budget.categoryId
+        ? budget.categoryId._id
+        : budget.categoryId
     );
+
+    // Single query to get all spending by category
+    const spendingByCategory = await Transaction.aggregate([
+      {
+        $match: {
+          userId: { $eq: userId },
+          type: TransactionType.EXPENSE,
+          dateTime: { $gte: monthStart, $lte: monthEnd },
+          categoryId: { $in: budgetCategoryIds },
+        },
+      },
+      {
+        $group: {
+          _id: '$categoryId',
+          total: { $sum: '$amount' },
+        },
+      },
+    ]);
+
+    // Create lookup map for O(1) access
+    const spendingMap = new Map(
+      spendingByCategory.map((s) => [s._id?.toString(), s.total])
+    );
+
+    // Map budgets to alerts using the pre-fetched spending data
+    const alerts: BudgetAlert[] = budgets.map((budget) => {
+      const categoryId = typeof budget.categoryId === 'object' && '_id' in budget.categoryId
+        ? budget.categoryId._id
+        : budget.categoryId;
+
+      const spent = spendingMap.get(categoryId?.toString()) || 0;
+      const percentage = Math.round((spent / budget.amount) * 100);
+      const remaining = budget.amount - spent;
+
+      let status: BudgetAlert['status'] = 'safe';
+      let message = '';
+
+      if (percentage >= 100) {
+        status = 'exceeded';
+        message = `You've exceeded your budget by ${Math.abs(remaining).toFixed(0)}`;
+      } else if (percentage >= 90) {
+        status = 'danger';
+        message = `Only ${remaining.toFixed(0)} remaining (${100 - percentage}%)`;
+      } else if (percentage >= 75) {
+        status = 'warning';
+        message = `You've used ${percentage}% of your budget`;
+      } else {
+        status = 'safe';
+        message = `${remaining.toFixed(0)} remaining`;
+      }
+
+      const categoryName = typeof budget.categoryId === 'object' && budget.categoryId?.name
+        ? budget.categoryId.name
+        : 'Unknown';
+
+      return {
+        _id: budget._id.toString(),
+        categoryName,
+        budgetAmount: budget.amount,
+        spent,
+        percentage,
+        remaining,
+        status,
+        message,
+      };
+    });
 
     // Sort by status (exceeded first, then danger, warning, safe)
     const statusOrder = { exceeded: 0, danger: 1, warning: 2, safe: 3 };

@@ -67,17 +67,17 @@ export default function BankAccountsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Bank Accounts</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight">Bank Accounts</h1>
+          <p className="text-muted-foreground mt-1">
             Manage your bank accounts and track balances
           </p>
         </div>
         <Link href="/accounts/banks/new">
-          <Button className="gap-2">
+          <Button className="gap-2 shadow-lg shadow-primary/25">
             <Plus className="h-4 w-4" />
             Add Account
           </Button>
@@ -85,17 +85,18 @@ export default function BankAccountsPage() {
       </div>
 
       {/* Total Balance Card */}
-      <Card>
-        <CardHeader className="pb-2">
+      <Card className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-green-500/5" />
+        <CardHeader className="pb-2 relative">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Total Bank Balance
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
           {isLoading ? (
-            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-12 w-56" />
           ) : (
-            <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+            <p className="text-4xl font-bold text-emerald-600 dark:text-emerald-400">
               {formatCurrency(data?.totalBalance || 0, currency)}
             </p>
           )}
@@ -104,10 +105,10 @@ export default function BankAccountsPage() {
 
       {/* Accounts List */}
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <Skeleton className="h-48 rounded-2xl" />
+          <Skeleton className="h-48 rounded-2xl" />
+          <Skeleton className="h-48 rounded-2xl" />
         </div>
       ) : !data?.data || data.data.length === 0 ? (
         <EmptyState
@@ -118,36 +119,36 @@ export default function BankAccountsPage() {
           actionHref="/accounts/banks/new"
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {data.data.map((account) => (
-            <Card key={account._id} className="relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-green-500 to-emerald-500" />
-              <CardHeader className="pb-2 pt-4">
+            <Card key={account._id} className="relative overflow-hidden group hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500" />
+              <CardHeader className="pb-2 pt-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Building2 className="h-5 w-5 text-primary" />
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                      <Building2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                      <CardTitle className="text-base">{account.bankName}</CardTitle>
-                      <CardDescription>{account.accountHolderName}</CardDescription>
+                      <CardTitle className="text-base font-semibold">{account.bankName}</CardTitle>
+                      <CardDescription className="text-xs">{account.accountHolderName}</CardDescription>
                     </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-muted/60">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="rounded-xl">
                       <DropdownMenuItem asChild>
-                        <Link href={`/accounts/banks/${account._id}/edit`}>
-                          <Edit className="mr-2 h-4 w-4" />
+                        <Link href={`/accounts/banks/${account._id}/edit`} className="gap-2">
+                          <Edit className="h-4 w-4" />
                           Edit
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        <Trash2 className="mr-2 h-4 w-4" />
+                      <DropdownMenuItem className="text-destructive gap-2">
+                        <Trash2 className="h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -157,24 +158,24 @@ export default function BankAccountsPage() {
               <CardContent className="space-y-3">
                 {/* Account Number */}
                 {account.accountNumber && (
-                  <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between p-2.5 bg-muted/30 rounded-xl hover:bg-muted/50 transition-colors">
                     <div>
                       <p className="text-xs text-muted-foreground">Account Number</p>
-                      <p className="font-mono text-sm">****{account.accountNumber.slice(-4)}</p>
+                      <p className="font-mono text-sm font-medium">****{account.accountNumber.slice(-4)}</p>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7"
+                      className="h-8 w-8 rounded-lg"
                       onClick={(e) => {
                         e.preventDefault();
                         copyToClipboard(account.accountNumber!, `${account._id}-acc`);
                       }}
                     >
                       {copiedField === `${account._id}-acc` ? (
-                        <Check className="h-3.5 w-3.5 text-green-500" />
+                        <Check className="h-4 w-4 text-emerald-500" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5" />
+                        <Copy className="h-4 w-4" />
                       )}
                     </Button>
                   </div>
@@ -182,24 +183,24 @@ export default function BankAccountsPage() {
 
                 {/* UPI ID */}
                 {account.upiId && (
-                  <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between p-2.5 bg-muted/30 rounded-xl hover:bg-muted/50 transition-colors">
                     <div>
                       <p className="text-xs text-muted-foreground">UPI ID</p>
-                      <p className="font-mono text-sm">{account.upiId}</p>
+                      <p className="font-mono text-sm font-medium">{account.upiId}</p>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7"
+                      className="h-8 w-8 rounded-lg"
                       onClick={(e) => {
                         e.preventDefault();
                         copyToClipboard(account.upiId!, `${account._id}-upi`);
                       }}
                     >
                       {copiedField === `${account._id}-upi` ? (
-                        <Check className="h-3.5 w-3.5 text-green-500" />
+                        <Check className="h-4 w-4 text-emerald-500" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5" />
+                        <Copy className="h-4 w-4" />
                       )}
                     </Button>
                   </div>
@@ -207,32 +208,32 @@ export default function BankAccountsPage() {
 
                 {/* IFSC Code */}
                 {account.ifscCode && (
-                  <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between p-2.5 bg-muted/30 rounded-xl hover:bg-muted/50 transition-colors">
                     <div>
                       <p className="text-xs text-muted-foreground">IFSC Code</p>
-                      <p className="font-mono text-sm">{account.ifscCode}</p>
+                      <p className="font-mono text-sm font-medium">{account.ifscCode}</p>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7"
+                      className="h-8 w-8 rounded-lg"
                       onClick={(e) => {
                         e.preventDefault();
                         copyToClipboard(account.ifscCode!, `${account._id}-ifsc`);
                       }}
                     >
                       {copiedField === `${account._id}-ifsc` ? (
-                        <Check className="h-3.5 w-3.5 text-green-500" />
+                        <Check className="h-4 w-4 text-emerald-500" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5" />
+                        <Copy className="h-4 w-4" />
                       )}
                     </Button>
                   </div>
                 )}
 
                 {/* Balance */}
-                <div className="pt-2 border-t">
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                <div className="pt-3 border-t border-border/50">
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {formatCurrency(account.currentBalance, currency)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">

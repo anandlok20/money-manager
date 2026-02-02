@@ -1,10 +1,22 @@
-const CACHE_NAME = 'family-expense-manager-v1';
+const CACHE_VERSION = '2';
+const CACHE_NAME = `family-expense-manager-v${CACHE_VERSION}`;
+const MAX_CACHE_ITEMS = 100; // Limit cache size to prevent storage bloat
 const STATIC_ASSETS = [
   '/',
   '/login',
   '/register',
   '/manifest.json',
 ];
+
+// Helper to limit cache size
+async function trimCache(cacheName, maxItems) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length > maxItems) {
+    const keysToDelete = keys.slice(0, keys.length - maxItems);
+    await Promise.all(keysToDelete.map(key => cache.delete(key)));
+  }
+}
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
