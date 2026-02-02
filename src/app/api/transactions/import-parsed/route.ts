@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import { Transaction, BankAccount } from '@/lib/mongodb/models';
 import Card from '@/lib/mongodb/models/Card';
 import { parse, isValid } from 'date-fns';
+import { TransactionType, AccountType } from '@/types';
 
 interface ImportTransaction {
   date: string;
@@ -58,18 +59,18 @@ function parseTransactionDate(value: string): Date | null {
 }
 
 // Map UI types to database types
-function mapTransactionType(uiType: string): string {
+function mapTransactionType(uiType: string): TransactionType {
   switch (uiType) {
     case 'income':
-      return 'income';
+      return TransactionType.INCOME;
     case 'expense':
-      return 'expense';
+      return TransactionType.EXPENSE;
     case 'transfer':
-      return 'transfer_self';
+      return TransactionType.TRANSFER_SELF;
     case 'investment':
-      return 'investment_contribution';
+      return TransactionType.INVESTMENT_CONTRIBUTION;
     default:
-      return 'expense';
+      return TransactionType.EXPENSE;
   }
 }
 
@@ -170,10 +171,10 @@ export async function POST(request: NextRequest) {
 
         // Set source account
         if (bankAccountId) {
-          transactionData.sourceType = 'bank';
+          transactionData.sourceType = AccountType.BANK;
           transactionData.sourceBankId = bankAccountId;
         } else if (creditCardId) {
-          transactionData.sourceType = 'card';
+          transactionData.sourceType = AccountType.CARD;
           transactionData.sourceCardId = creditCardId;
         }
 
