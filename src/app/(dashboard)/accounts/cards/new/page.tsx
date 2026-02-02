@@ -6,13 +6,14 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Loader2, Eye, EyeOff, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { cardSchema, type CardInput } from '@/lib/validations/account';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -104,16 +105,20 @@ export default function NewCardPage() {
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<CardInput>({
     resolver: zodResolver(cardSchema),
     defaultValues: {
       cardName: '',
       cardType: 'CREDIT',
+      spendingLimit: 0,
+      spendingLimitAlert: true,
     },
   });
 
   const cardType = watch('cardType');
+  const spendingLimitAlert = watch('spendingLimitAlert');
 
   const mutation = useMutation({
     mutationFn: createCard,
@@ -376,6 +381,45 @@ export default function NewCardPage() {
                 )}
               </div>
             )}
+
+            {/* Spending Limit Alert Section */}
+            <div className="border rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="spendingLimitAlert" className="flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    Spending Limit Alert
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Get notified when spending exceeds limit
+                  </p>
+                </div>
+                <Switch
+                  id="spendingLimitAlert"
+                  checked={spendingLimitAlert}
+                  onCheckedChange={(checked) => setValue('spendingLimitAlert', checked)}
+                />
+              </div>
+              
+              {spendingLimitAlert && (
+                <div className="space-y-2">
+                  <Label htmlFor="spendingLimit">Monthly Spending Limit</Label>
+                  <Input
+                    id="spendingLimit"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    {...register('spendingLimit', { valueAsNumber: true })}
+                  />
+                  {errors.spendingLimit && (
+                    <p className="text-sm text-destructive">{errors.spendingLimit.message}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    You&apos;ll be alerted when your monthly spending exceeds this amount
+                  </p>
+                </div>
+              )}
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="linkedBankId">Linked Bank Account (Optional)</Label>

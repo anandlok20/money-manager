@@ -6,13 +6,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { bankAccountSchema, type BankAccountInput } from '@/lib/validations/account';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 
 async function createBankAccount(data: BankAccountInput) {
   const response = await fetch('/api/accounts/banks', {
@@ -36,13 +37,19 @@ export default function NewBankAccountPage() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<BankAccountInput>({
     resolver: zodResolver(bankAccountSchema),
     defaultValues: {
       openingBalance: 0,
+      minimumBalance: 0,
+      minimumBalanceAlert: true,
     },
   });
+
+  const minimumBalanceAlert = watch('minimumBalanceAlert');
 
   const mutation = useMutation({
     mutationFn: createBankAccount,
@@ -168,6 +175,45 @@ export default function NewBankAccountPage() {
               <p className="text-xs text-muted-foreground">
                 Enter the current balance in your bank account
               </p>
+            </div>
+
+            {/* Minimum Balance Alert Section */}
+            <div className="border rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="minimumBalanceAlert" className="flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    Low Balance Alert
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Get notified when balance falls below minimum
+                  </p>
+                </div>
+                <Switch
+                  id="minimumBalanceAlert"
+                  checked={minimumBalanceAlert}
+                  onCheckedChange={(checked) => setValue('minimumBalanceAlert', checked)}
+                />
+              </div>
+              
+              {minimumBalanceAlert && (
+                <div className="space-y-2">
+                  <Label htmlFor="minimumBalance">Minimum Balance Threshold</Label>
+                  <Input
+                    id="minimumBalance"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    {...register('minimumBalance', { valueAsNumber: true })}
+                  />
+                  {errors.minimumBalance && (
+                    <p className="text-sm text-destructive">{errors.minimumBalance.message}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    You&apos;ll be alerted when your balance goes below this amount
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-4 pt-4">

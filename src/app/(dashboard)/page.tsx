@@ -29,6 +29,7 @@ import { TransactionType } from '@/types';
 import { cn } from '@/lib/utils';
 import { BudgetAlerts } from '@/components/dashboard/BudgetAlerts';
 import { GettingStarted } from '@/components/dashboard/GettingStarted';
+import { BalanceAlerts } from '@/components/dashboard/BalanceAlerts';
 
 // Lazy load chart components for better initial page load
 const ExpensePieChart = dynamic(() => import('@/components/dashboard/Charts').then(mod => ({ default: mod.ExpensePieChart })), {
@@ -347,6 +348,9 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Balance & Spending Alerts */}
+      <BalanceAlerts />
 
       {/* Budget Alerts (Compact) */}
       <BudgetAlerts currency={currency} compact />

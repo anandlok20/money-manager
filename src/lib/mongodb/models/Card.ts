@@ -18,6 +18,8 @@ export interface ICard extends Document {
   billingCycleDay?: number;
   creditLimit?: number;
   currentBalance: number;
+  spendingLimit?: number;
+  spendingLimitAlert: boolean;
   linkedBankId?: mongoose.Types.ObjectId;
   linkedMemberId?: mongoose.Types.ObjectId;
   isActive: boolean;
@@ -83,6 +85,14 @@ const CardSchema = new Schema<ICard>(
     currentBalance: {
       type: Number,
       default: 0,
+    },
+    spendingLimit: {
+      type: Number,
+      default: 0,
+    },
+    spendingLimitAlert: {
+      type: Boolean,
+      default: true,
     },
     linkedBankId: {
       type: Schema.Types.ObjectId,

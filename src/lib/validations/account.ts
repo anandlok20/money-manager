@@ -7,6 +7,8 @@ export const bankAccountSchema = z.object({
   upiId: z.string().max(100, 'UPI ID is too long').optional(),
   ifscCode: z.string().max(20, 'IFSC code is too long').optional(),
   openingBalance: z.number(),
+  minimumBalance: z.number().min(0).optional(),
+  minimumBalanceAlert: z.boolean().optional(),
   linkedMemberIds: z.array(z.string()).optional(),
 });
 
@@ -27,6 +29,8 @@ export const cardSchema = z.object({
   pin: z.string().min(4).max(6).optional().or(z.literal('')),
   billingCycleDay: z.number().int().min(1).max(31).optional(),
   creditLimit: z.number().positive().optional(),
+  spendingLimit: z.number().min(0).optional(),
+  spendingLimitAlert: z.boolean().optional(),
   linkedBankId: z.string().optional(),
   linkedMemberId: z.string().optional(),
 });

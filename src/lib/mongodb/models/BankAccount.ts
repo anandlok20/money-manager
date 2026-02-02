@@ -10,6 +10,8 @@ export interface IBankAccount extends Document {
   ifscCode?: string;
   openingBalance: number;
   currentBalance: number;
+  minimumBalance?: number;
+  minimumBalanceAlert: boolean;
   linkedMemberIds: mongoose.Types.ObjectId[];
   isActive: boolean;
   createdAt: Date;
@@ -55,6 +57,14 @@ const BankAccountSchema = new Schema<IBankAccount>(
       type: Number,
       required: true,
       default: 0,
+    },
+    minimumBalance: {
+      type: Number,
+      default: 0,
+    },
+    minimumBalanceAlert: {
+      type: Boolean,
+      default: true,
     },
     linkedMemberIds: [{
       type: Schema.Types.ObjectId,

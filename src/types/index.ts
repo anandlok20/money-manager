@@ -76,6 +76,8 @@ export interface BankAccount extends BaseDocument {
   accountNumber?: string;
   openingBalance: number;
   currentBalance: number;
+  minimumBalance?: number;
+  minimumBalanceAlert: boolean;
   linkedMemberIds: string[];
   isActive: boolean;
 }
@@ -86,6 +88,8 @@ export interface Card extends BaseDocument {
   last4Digits?: string;
   billingCycleDay?: number;
   currentBalance: number;
+  spendingLimit?: number;
+  spendingLimitAlert: boolean;
   linkedBankId?: string;
   linkedMemberId?: string;
   isActive: boolean;

@@ -6,7 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Loader2, Eye, EyeOff, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { updateCardSchema, type UpdateCardInput } from '@/lib/validations/account';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -35,6 +36,8 @@ interface CardAccount {
   pin?: string;
   billingCycleDay?: number;
   creditLimit?: number;
+  spendingLimit?: number;
+  spendingLimitAlert?: boolean;
   linkedBankId?: string;
   linkedMemberId?: string;
 }
@@ -134,6 +137,7 @@ export default function EditCardPage() {
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useForm<UpdateCardInput>({
@@ -150,12 +154,15 @@ export default function EditCardPage() {
       pin: card.pin,
       billingCycleDay: card.billingCycleDay,
       creditLimit: card.creditLimit,
+      spendingLimit: card.spendingLimit ?? 0,
+      spendingLimitAlert: card.spendingLimitAlert ?? true,
       linkedBankId: card.linkedBankId,
       linkedMemberId: card.linkedMemberId,
     } : undefined,
   });
 
   const cardType = watch('cardType');
+  const spendingLimitAlert = watch('spendingLimitAlert');
 
   const mutation = useMutation({
     mutationFn: (data: UpdateCardInput) => updateCard(id, data),
@@ -412,6 +419,42 @@ export default function EditCardPage() {
                 />
               </div>
             )}
+
+            {/* Spending Limit Alert Section */}
+            <div className="border rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="spendingLimitAlert" className="flex items-center gap-2">
+                    <Bell className="h-4 w-4" />
+                    Spending Limit Alert
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Get notified when spending exceeds limit
+                  </p>
+                </div>
+                <Switch
+                  id="spendingLimitAlert"
+                  checked={spendingLimitAlert}
+                  onCheckedChange={(checked) => setValue('spendingLimitAlert', checked)}
+                />
+              </div>
+              
+              {spendingLimitAlert && (
+                <div className="space-y-2">
+                  <Label htmlFor="spendingLimit">Monthly Spending Limit</Label>
+                  <Input
+                    id="spendingLimit"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    {...register('spendingLimit', { valueAsNumber: true })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    You&apos;ll be alerted when your monthly spending exceeds this amount
+                  </p>
+                </div>
+              )}
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="linkedBankId">Linked Bank Account</Label>
