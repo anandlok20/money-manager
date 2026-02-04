@@ -42,6 +42,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatCurrency } from '@/lib/utils/currency';
 
+interface TripTraveler {
+  name: string;
+  phone?: string;
+  email?: string;
+  memberId?: string;
+  isOrganizer?: boolean;
+}
+
 interface Trip {
   _id: string;
   name: string;
@@ -53,7 +61,7 @@ interface Trip {
   status: 'planned' | 'ongoing' | 'completed' | 'cancelled';
   totalExpenses: number;
   totalIncome: number;
-  travelers?: string[];
+  travelers?: (string | TripTraveler)[];
   coverImage?: string;
 }
 
@@ -250,7 +258,7 @@ export default function TripsPage() {
                       {trip.travelers && trip.travelers.length > 0 && (
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Users className="h-3 w-3" />
-                          {trip.travelers.join(', ')}
+                          {trip.travelers.map(t => typeof t === 'string' ? t : t.name).join(', ')}
                         </div>
                       )}
 

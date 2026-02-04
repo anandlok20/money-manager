@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -134,11 +134,15 @@ async function createTransaction(data: TransactionInput) {
 
 export default function NewTransactionPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [transactionType, setTransactionType] = useState<TransactionType>(
     TransactionType.EXPENSE
   );
   const [tags, setTags] = useState<string[]>([]);
+  
+  // Get tripId from URL params
+  const initialTripId = searchParams.get('tripId');
 
   const {
     register,
@@ -155,8 +159,16 @@ export default function NewTransactionPage() {
       amount: 0,
       sourceType: AccountType.BANK,
       tags: [],
+      tripId: initialTripId || undefined,
     },
   });
+
+  // Set tripId from URL params on mount
+  useEffect(() => {
+    if (initialTripId) {
+      setValue('tripId', initialTripId);
+    }
+  }, [initialTripId, setValue]);
 
   const watchSourceType = watch('sourceType');
   const watchDestinationType = watch('destinationType');
@@ -217,7 +229,15 @@ export default function NewTransactionPage() {
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
       queryClient.invalidateQueries({ queryKey: ['cards'] });
-      router.push('/transactions');
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      
+      // Navigate back to trip if coming from trip page
+      if (initialTripId) {
+        router.push(`/trips/${initialTripId}`);
+      } else {
+        router.push('/transactions');
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message);
