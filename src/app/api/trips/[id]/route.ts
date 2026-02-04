@@ -8,13 +8,17 @@ import { TransactionType } from '@/types';
 import { z } from 'zod';
 import { TripStatus } from '@/lib/mongodb/models/Trip';
 
-const travelerSchema = z.object({
-  name: z.string().min(1),
-  phone: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  memberId: z.string().optional(),
-  isOrganizer: z.boolean().optional(),
-});
+// Traveler can be either a string (just name) or a full object
+const travelerSchema = z.union([
+  z.string().min(1),
+  z.object({
+    name: z.string().min(1),
+    phone: z.string().optional(),
+    email: z.string().email().optional().or(z.literal('')),
+    memberId: z.string().optional(),
+    isOrganizer: z.boolean().optional(),
+  }),
+]);
 
 const ticketSchema = z.object({
   type: z.enum(['flight', 'train', 'bus', 'other']),
@@ -181,6 +185,12 @@ export async function PUT(
     }
     if (validatedData.endDate) {
       updateData.endDate = new Date(validatedData.endDate);
+    }
+    // Normalize travelers - convert strings to objects
+    if (validatedData.travelers) {
+      updateData.travelers = validatedData.travelers.map((t) => 
+        typeof t === 'string' ? { name: t } : t
+      );
     }
 
     const trip = await Trip.findOneAndUpdate(
