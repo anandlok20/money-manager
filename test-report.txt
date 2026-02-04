@@ -1,0 +1,114 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/Users/anandlok/Claude Apps/money-manager[39m
+
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mNet Worth Calculation[2m > [22mshould calculate positive net worth correctly[32m 1[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mNet Worth Calculation[2m > [22mshould handle zero values[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mNet Worth Calculation[2m > [22mshould calculate negative net worth (debt)[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mNet Worth Calculation[2m > [22mshould handle large balances[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mSavings Rate Calculation[2m > [22mshould calculate positive savings rate[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mSavings Rate Calculation[2m > [22mshould calculate zero savings rate when income equals expense[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mSavings Rate Calculation[2m > [22mshould calculate negative savings rate when overspending[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mSavings Rate Calculation[2m > [22mshould return 0 when income is zero[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mSavings Rate Calculation[2m > [22mshould calculate 100% savings rate when no expenses[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mScheduled Payment Next Run Date[2m > [22mshould calculate daily frequency correctly[32m 1[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mScheduled Payment Next Run Date[2m > [22mshould calculate weekly frequency correctly[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mScheduled Payment Next Run Date[2m > [22mshould calculate monthly frequency correctly[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mScheduled Payment Next Run Date[2m > [22mshould calculate quarterly frequency correctly[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mScheduled Payment Next Run Date[2m > [22mshould calculate yearly frequency correctly[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mScheduled Payment Next Run Date[2m > [22mshould handle month rollover[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mBudget Calculations[2m > [22mshould detect exceeded budget[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mBudget Calculations[2m > [22mshould detect within budget[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mBudget Calculations[2m > [22mshould detect exactly at budget[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mBudget Calculations[2m > [22mshould calculate budget percentage correctly[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mBudget Calculations[2m > [22mshould cap percentage at 100[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mFinancial Calculations[2m > [22mBudget Calculations[2m > [22mshould return 0 for zero budget[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mTransaction Type Handling[2m > [22mshould have all required transaction types[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mTransaction Type Handling[2m > [22mshould have all required account types[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mTransaction Type Handling[2m > [22mshould have all required frequencies[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mBalance Update Logic[2m > [22mshould increase balance for income[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mBalance Update Logic[2m > [22mshould decrease balance for expense[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mBalance Update Logic[2m > [22mshould decrease source balance for transfer[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mBalance Update Logic[2m > [22mshould increase destination balance for transfer[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mBalance Update Logic[2m > [22mshould decrease source for investment contribution[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/business-logic.test.ts[2m > [22mBalance Update Logic[2m > [22mshould increase investment for contribution[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mMember Validation Schema[2m > [22mmemberSchema[2m > [22mshould validate a valid member with minimum fields[32m 1[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mMember Validation Schema[2m > [22mmemberSchema[2m > [22mshould validate a member with all optional fields[32m 1[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mMember Validation Schema[2m > [22mmemberSchema[2m > [22mshould reject member with name too short[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mMember Validation Schema[2m > [22mmemberSchema[2m > [22mshould reject member with invalid email[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mMember Validation Schema[2m > [22mmemberSchema[2m > [22mshould accept empty string for optional email[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mMember Validation Schema[2m > [22mmemberSchema[2m > [22mshould reject invalid member type[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mMember Validation Schema[2m > [22mupdateMemberSchema[2m > [22mshould allow partial updates[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mMember Validation Schema[2m > [22mupdateMemberSchema[2m > [22mshould allow empty update[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionSchema[2m > [22mshould validate expense transaction with category[32m 1[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionSchema[2m > [22mshould validate income transaction with category[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionSchema[2m > [22mshould reject transaction with negative amount[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionSchema[2m > [22mshould reject transaction with zero amount[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionSchema[2m > [22mshould reject expense without category[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionSchema[2m > [22mshould validate transaction with optional note[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionSchema[2m > [22mshould reject note exceeding 500 characters[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionSchema[2m > [22mshould validate transaction with tags[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionSchema[2m > [22mshould reject more than 10 tags[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionFiltersSchema[2m > [22mshould accept empty filters with defaults[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionFiltersSchema[2m > [22mshould validate date range filters[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionFiltersSchema[2m > [22mshould validate amount range filters[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mTransaction Validation Schema[2m > [22mtransactionFiltersSchema[2m > [22mshould reject negative amounts in filters[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mInvestment Validation Schema[2m > [22mshould validate investment with minimum fields[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mInvestment Validation Schema[2m > [22mshould reject investment with short name[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mInvestment Validation Schema[2m > [22mshould reject negative current value[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mInvestment Validation Schema[2m > [22mshould accept zero current value[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mCategory Validation Schema[2m > [22mshould validate category with minimum fields[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mCategory Validation Schema[2m > [22mshould validate category with icon and color[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mCategory Validation Schema[2m > [22mshould reject category with empty name[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mAccount Validation Schemas[2m > [22mbankAccountSchema[2m > [22mshould validate bank account with minimum fields[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mAccount Validation Schemas[2m > [22mbankAccountSchema[2m > [22mshould reject bank account without bank name[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mAccount Validation Schemas[2m > [22mbankAccountSchema[2m > [22mshould allow negative opening balance (overdraft)[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mAccount Validation Schemas[2m > [22mcardSchema[2m > [22mshould validate credit card with minimum fields[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mAccount Validation Schemas[2m > [22mcardSchema[2m > [22mshould validate card with all optional fields[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mAccount Validation Schemas[2m > [22mcardSchema[2m > [22mshould reject invalid card type[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/validations.test.ts[2m > [22mAccount Validation Schemas[2m > [22mcardSchema[2m > [22mshould reject billing cycle day > 31[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mCurrency Utilities[2m > [22mformatCurrency[2m > [22mshould format INR currency correctly[32m 28[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mCurrency Utilities[2m > [22mformatCurrency[2m > [22mshould format USD currency correctly[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mCurrency Utilities[2m > [22mformatCurrency[2m > [22mshould handle zero amount[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mCurrency Utilities[2m > [22mformatCurrency[2m > [22mshould handle negative amounts[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mCurrency Utilities[2m > [22mformatCurrency[2m > [22mshould handle decimal amounts[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mCurrency Utilities[2m > [22mformatCurrency[2m > [22mshould handle large amounts[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mCurrency Utilities[2m > [22mformatCurrency[2m > [22mshould default to INR when no currency specified[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mCurrency Utilities[2m > [22mformatCurrency[2m > [22mshould format EUR currency correctly[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mCurrency Utilities[2m > [22mformatCurrency[2m > [22mshould format GBP currency correctly[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mCurrency Utilities[2m > [22mformatCurrency[2m > [22mshould format JPY currency correctly[32m 1[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mformatRelativeDate[2m > [22mshould format today as "Today"[32m 1[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mformatRelativeDate[2m > [22mshould format yesterday correctly[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mformatRelativeDate[2m > [22mshould format date string input[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mformatRelativeDate[2m > [22mshould handle ISO date strings[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mformatDate[2m > [22mshould format date with default format[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mformatDate[2m > [22mshould format date with custom format[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mformatDate[2m > [22mshould handle string date input[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mformatDateTime[2m > [22mshould format date and time[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mformatTimeAgo[2m > [22mshould format recent time[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mformatTimeAgo[2m > [22mshould format hours ago[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mgetMonthName[2m > [22mshould return month and year[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/utilities.test.ts[2m > [22mDate Utilities[2m > [22mtoISODateString[2m > [22mshould convert date to ISO string format[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mBasic Operations[2m > [22mshould store and retrieve values[32m 1[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mBasic Operations[2m > [22mshould return undefined for non-existent keys[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mBasic Operations[2m > [22mshould overwrite existing values[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mBasic Operations[2m > [22mshould delete values[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mBasic Operations[2m > [22mshould return false when deleting non-existent key[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mBasic Operations[2m > [22mshould clear all values[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mLRU Eviction[2m > [22mshould evict oldest item when at capacity[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mLRU Eviction[2m > [22mshould update LRU order on get[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mTTL Expiration[2m > [22mshould return undefined for expired items[32m 101[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mTTL Expiration[2m > [22mshould use default TTL when not specified[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mPattern Invalidation[2m > [22mshould invalidate keys matching pattern[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mPattern Invalidation[2m > [22mshould return 0 when no keys match pattern[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mLRU Cache[2m > [22mStats[2m > [22mshould return correct stats[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mCache Helper Functions[2m > [22muserCacheKey[2m > [22mshould generate correct cache key[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mCache Helper Functions[2m > [22muserCacheKey[2m > [22mshould handle single param[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mCache Helper Functions[2m > [22minvalidateUserCaches[2m > [22mshould invalidate all user caches[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mGlobal Cache Instances[2m > [22mcategoriesCache should be available[32m 0[2mms[22m[39m
+ [32m✓[39m __tests__/cache.test.ts[2m > [22mGlobal Cache Instances[2m > [22mmembersCache should be available[32m 0[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[32m105 passed[39m[22m[90m (105)[39m
+[2m   Start at [22m 23:23:58
+[2m   Duration [22m 278ms[2m (transform 191ms, setup 0ms, import 318ms, tests 150ms, environment 0ms)[22m
+

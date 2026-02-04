@@ -101,7 +101,11 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
   // Sync travelers state with form
   useState(() => {
     if (trip?.travelers) {
-      setTravelers(trip.travelers);
+      // Handle both string and object travelers
+      const travelerNames = trip.travelers.map((t: string | { name: string }) => 
+        typeof t === 'string' ? t : t.name
+      );
+      setTravelers(travelerNames);
     }
   });
 

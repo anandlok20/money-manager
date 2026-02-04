@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import {
   ArrowLeft,
   Edit,
@@ -27,6 +28,8 @@ import {
   User,
   CheckCircle2,
   X,
+  Receipt,
+  IndianRupee,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,7 +40,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -155,9 +160,22 @@ interface Trip {
   }>;
 }
 
+interface Category {
+  _id: string;
+  name: string;
+  type: string;
+}
+
 async function fetchTrip(id: string): Promise<Trip> {
   const response = await fetch(`/api/trips/${id}`);
   if (!response.ok) throw new Error('Failed to fetch trip');
+  const result = await response.json();
+  return result.data;
+}
+
+async function fetchExpenseCategories(): Promise<Category[]> {
+  const response = await fetch('/api/categories?type=EXPENSE');
+  if (!response.ok) throw new Error('Failed to fetch categories');
   const result = await response.json();
   return result.data;
 }
@@ -178,10 +196,29 @@ async function updateTrip(id: string, data: Partial<Trip>) {
   return response.json();
 }
 
+async function createTransaction(data: {
+  type: string;
+  amount: number;
+  dateTime: Date;
+  note: string;
+  categoryId?: string;
+  tripId: string;
+}) {
+  const response = await fetch('/api/transactions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Failed to create transaction');
+  return response.json();
+}
+
 export default function TripDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  const currency = (session?.user as unknown as { currency?: string })?.currency || 'INR';
   const [activeTab, setActiveTab] = useState('overview');
   
   // Dialog states
@@ -190,6 +227,19 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
   const [hotelDialog, setHotelDialog] = useState(false);
   const [placeDialog, setPlaceDialog] = useState(false);
   const [cabDialog, setCabDialog] = useState(false);
+  const [quickExpenseDialog, setQuickExpenseDialog] = useState(false);
+  
+  // Auto-create transaction toggle states
+  const [createTicketTransaction, setCreateTicketTransaction] = useState(true);
+  const [createHotelTransaction, setCreateHotelTransaction] = useState(true);
+  const [createCabTransaction, setCreateCabTransaction] = useState(true);
+  
+  // Quick expense form
+  const [quickExpense, setQuickExpense] = useState({
+    amount: 0,
+    note: '',
+    categoryId: '',
+  });
   
   // Form states
   const [newTraveler, setNewTraveler] = useState<TripTraveler>({ name: '' });
@@ -202,6 +252,19 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
     queryKey: ['trip', id],
     queryFn: () => fetchTrip(id),
   });
+
+  const { data: expenseCategories } = useQuery({
+    queryKey: ['expense-categories'],
+    queryFn: fetchExpenseCategories,
+  });
+
+  // Find travel category for auto-creating transactions
+  const travelCategory = expenseCategories?.find(
+    (c) => c.name.toLowerCase().includes('travel') || c.name.toLowerCase().includes('transport')
+  );
+  const accommodationCategory = expenseCategories?.find(
+    (c) => c.name.toLowerCase().includes('hotel') || c.name.toLowerCase().includes('accommodation') || c.name.toLowerCase().includes('stay')
+  );
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteTrip(id),
@@ -223,6 +286,56 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
     onError: () => toast.error('Failed to update trip'),
   });
 
+  const transactionMutation = useMutation({
+    mutationFn: createTransaction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trip', id] });
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
+
+  // Create expense transaction helper
+  const createExpenseForTrip = async (amount: number, note: string, categoryId?: string) => {
+    if (!amount || amount <= 0) return;
+    
+    try {
+      await transactionMutation.mutateAsync({
+        type: 'EXPENSE',
+        amount,
+        dateTime: new Date(),
+        note,
+        categoryId: categoryId || travelCategory?._id,
+        tripId: id,
+      });
+    } catch {
+      // Silently fail - the item is still added, just no transaction created
+      console.error('Failed to create transaction for trip expense');
+    }
+  };
+
+  // Quick expense handler
+  const handleAddQuickExpense = async () => {
+    if (!quickExpense.amount || quickExpense.amount <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+    if (!quickExpense.categoryId) {
+      toast.error('Please select a category');
+      return;
+    }
+    
+    await createExpenseForTrip(
+      quickExpense.amount,
+      quickExpense.note || `Expense for ${trip?.name}`,
+      quickExpense.categoryId
+    );
+    
+    setQuickExpense({ amount: 0, note: '', categoryId: '' });
+    setQuickExpenseDialog(false);
+    toast.success('Expense added successfully');
+  };
+
   const handleAddTraveler = () => {
     if (!newTraveler.name.trim()) {
       toast.error('Please enter a name');
@@ -239,13 +352,23 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
     updateMutation.mutate({ travelers });
   };
 
-  const handleAddTicket = () => {
+  const handleAddTicket = async () => {
     if (!newTicket.title.trim() || !newTicket.departureLocation || !newTicket.arrivalLocation) {
       toast.error('Please fill required fields');
       return;
     }
     const tickets = [...(trip?.tickets || []), newTicket];
     updateMutation.mutate({ tickets });
+    
+    // Auto-create transaction if price is provided and toggle is on
+    if (createTicketTransaction && newTicket.price && newTicket.price > 0) {
+      await createExpenseForTrip(
+        newTicket.price,
+        `${newTicket.type.toUpperCase()} - ${newTicket.title}: ${newTicket.departureLocation} → ${newTicket.arrivalLocation}`,
+        travelCategory?._id
+      );
+    }
+    
     setNewTicket({ type: 'flight', title: '', departureLocation: '', arrivalLocation: '' });
     setTicketDialog(false);
   };
@@ -255,13 +378,23 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
     updateMutation.mutate({ tickets });
   };
 
-  const handleAddHotel = () => {
+  const handleAddHotel = async () => {
     if (!newHotel.name.trim() || !newHotel.checkIn || !newHotel.checkOut) {
       toast.error('Please fill required fields');
       return;
     }
     const hotels = [...(trip?.hotels || []), newHotel];
     updateMutation.mutate({ hotels });
+    
+    // Auto-create transaction if price is provided and toggle is on
+    if (createHotelTransaction && newHotel.price && newHotel.price > 0) {
+      await createExpenseForTrip(
+        newHotel.price,
+        `Hotel: ${newHotel.name}${newHotel.roomType ? ` (${newHotel.roomType})` : ''}`,
+        accommodationCategory?._id || travelCategory?._id
+      );
+    }
+    
     setNewHotel({ name: '', checkIn: '', checkOut: '' });
     setHotelDialog(false);
   };
@@ -294,9 +427,20 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
     updateMutation.mutate({ placesToVisit });
   };
 
-  const handleAddCab = () => {
+  const handleAddCab = async () => {
     const cabs = [...(trip?.cabs || []), newCab];
     updateMutation.mutate({ cabs });
+    
+    // Auto-create transaction if price is provided and toggle is on
+    if (createCabTransaction && newCab.price && newCab.price > 0) {
+      const cabNote = `Cab (${newCab.type.replace('-', ' ')})${newCab.pickupLocation && newCab.dropLocation ? `: ${newCab.pickupLocation} → ${newCab.dropLocation}` : ''}`;
+      await createExpenseForTrip(
+        newCab.price,
+        cabNote,
+        travelCategory?._id
+      );
+    }
+    
     setNewCab({ type: 'local' });
     setCabDialog(false);
   };
@@ -406,7 +550,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Budget</p>
-                <p className="text-lg font-bold">{formatCurrency(trip.budget)}</p>
+                <p className="text-lg font-bold">{formatCurrency(trip.budget, currency)}</p>
               </div>
               <Wallet className="h-6 w-6 text-muted-foreground opacity-50" />
             </div>
@@ -417,7 +561,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Expenses</p>
-                <p className="text-lg font-bold text-red-600">{formatCurrency(trip.totalExpenses)}</p>
+                <p className="text-lg font-bold text-red-600">{formatCurrency(trip.totalExpenses, currency)}</p>
               </div>
               <TrendingDown className="h-6 w-6 text-red-500 opacity-50" />
             </div>
@@ -428,7 +572,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground">Income</p>
-                <p className="text-lg font-bold text-green-600">{formatCurrency(trip.totalIncome)}</p>
+                <p className="text-lg font-bold text-green-600">{formatCurrency(trip.totalIncome, currency)}</p>
               </div>
               <TrendingUp className="h-6 w-6 text-green-500 opacity-50" />
             </div>
@@ -440,7 +584,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
               <div>
                 <p className="text-xs text-muted-foreground">Remaining</p>
                 <p className={`text-lg font-bold ${remainingBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(remainingBudget)}
+                  {formatCurrency(remainingBudget, currency)}
                 </p>
               </div>
               <Plane className="h-6 w-6 text-muted-foreground opacity-50" />
@@ -449,10 +593,27 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
         </Card>
       </div>
 
+      {/* Quick Actions */}
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => setQuickExpenseDialog(true)} variant="outline" size="sm">
+          <IndianRupee className="h-4 w-4 mr-2" />
+          Quick Expense
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/transactions/new?tripId=${id}`}>
+            <Receipt className="h-4 w-4 mr-2" />
+            Add Transaction
+          </Link>
+        </Button>
+      </div>
+
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto">
           <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="expenses" className="text-xs md:text-sm">
+            Expenses {trip.transactions?.length ? `(${trip.transactions.length})` : ''}
+          </TabsTrigger>
           <TabsTrigger value="travelers" className="text-xs md:text-sm">
             Travelers {trip.travelers?.length ? `(${trip.travelers.length})` : ''}
           </TabsTrigger>
@@ -520,6 +681,59 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
             </CardContent>
           </Card>
 
+          {/* Booking Costs Summary */}
+          {((trip.tickets?.length || 0) > 0 || (trip.hotels?.length || 0) > 0 || (trip.cabs?.length || 0) > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Booking Costs Summary</CardTitle>
+                <CardDescription>Estimated costs from your bookings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <Plane className="h-4 w-4 text-blue-500" />
+                      <span className="text-sm">Tickets</span>
+                    </div>
+                    <span className="font-mono text-sm">
+                      {formatCurrency(trip.tickets?.reduce((sum, t) => sum + (t.price || 0), 0) || 0, currency)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <Hotel className="h-4 w-4 text-amber-500" />
+                      <span className="text-sm">Hotels</span>
+                    </div>
+                    <span className="font-mono text-sm">
+                      {formatCurrency(trip.hotels?.reduce((sum, h) => sum + (h.price || 0), 0) || 0, currency)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <Car className="h-4 w-4 text-green-500" />
+                      <span className="text-sm">Cabs</span>
+                    </div>
+                    <span className="font-mono text-sm">
+                      {formatCurrency(trip.cabs?.reduce((sum, c) => sum + (c.price || 0), 0) || 0, currency)}
+                    </span>
+                  </div>
+                </div>
+                <Separator className="my-3" />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Total Booking Costs</span>
+                  <span className="font-mono font-bold">
+                    {formatCurrency(
+                      (trip.tickets?.reduce((sum, t) => sum + (t.price || 0), 0) || 0) +
+                      (trip.hotels?.reduce((sum, h) => sum + (h.price || 0), 0) || 0) +
+                      (trip.cabs?.reduce((sum, c) => sum + (c.price || 0), 0) || 0),
+                      currency
+                    )}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Transactions */}
           <Card>
             <CardHeader>
@@ -552,11 +766,94 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                           <p className="text-sm text-muted-foreground">{format(new Date(txn.dateTime), 'MMM dd')}</p>
                         </div>
                         <span className={`font-mono ${txn.type === 'EXPENSE' ? 'text-red-600' : 'text-green-600'}`}>
-                          {txn.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(txn.amount)}
+                          {txn.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(txn.amount, currency)}
                         </span>
                       </div>
                     </Link>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Expenses Tab */}
+        <TabsContent value="expenses">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Trip Expenses</CardTitle>
+                <Button asChild>
+                  <Link href={`/transactions/new?tripId=${trip._id}`}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Expense
+                  </Link>
+                </Button>
+              </div>
+              <CardDescription>All transactions linked to this trip</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!trip.transactions?.length ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No expenses recorded yet</p>
+                  <p className="text-sm mt-1">Add transactions and link them to this trip</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {trip.transactions.map((txn) => (
+                    <Link 
+                      key={txn._id}
+                      href={`/transactions/${txn._id}`}
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {txn.categoryId && (
+                          <div 
+                            className="h-8 w-8 rounded-full flex items-center justify-center text-white"
+                            style={{ backgroundColor: txn.categoryId.color || '#6B7280' }}
+                          >
+                            <span className="text-sm">{txn.categoryId.icon || '📦'}</span>
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium">{txn.note || txn.categoryId?.name || 'Transaction'}</p>
+                          <p className="text-sm text-muted-foreground">{format(new Date(txn.dateTime), 'MMM dd, yyyy')}</p>
+                        </div>
+                      </div>
+                      <span className={`font-mono font-medium ${txn.type === 'EXPENSE' ? 'text-red-600' : 'text-green-600'}`}>
+                        {txn.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(txn.amount, currency)}
+                      </span>
+                    </Link>
+                  ))}
+                  
+                  {/* Expense Summary */}
+                  {trip.transactions.length > 0 && (
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Total Expenses</span>
+                        <span className="font-mono font-bold text-red-600">
+                          {formatCurrency(trip.totalExpenses, currency)}
+                        </span>
+                      </div>
+                      {trip.totalIncome > 0 && (
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="font-medium">Total Income</span>
+                          <span className="font-mono font-bold text-green-600">
+                            {formatCurrency(trip.totalIncome, currency)}
+                          </span>
+                        </div>
+                      )}
+                      {trip.travelers && trip.travelers.length > 1 && (
+                        <div className="flex justify-between items-center mt-2 pt-2 border-t">
+                          <span className="text-sm text-muted-foreground">Per Person (÷{trip.travelers.length})</span>
+                          <span className="font-mono text-sm">
+                            {formatCurrency(trip.totalExpenses / trip.travelers.length, currency)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -644,7 +941,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                       <div className="flex items-center justify-between mb-2">
                         <Badge variant="outline">{ticket.type.toUpperCase()}</Badge>
                         <div className="flex items-center gap-2">
-                          {ticket.price && <span className="font-mono text-sm">{formatCurrency(ticket.price)}</span>}
+                          {ticket.price && <span className="font-mono text-sm">{formatCurrency(ticket.price, currency)}</span>}
                           <Button variant="ghost" size="icon" onClick={() => handleRemoveTicket(index)}>
                             <X className="h-4 w-4" />
                           </Button>
@@ -707,7 +1004,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                         <span>Check-out: {format(new Date(hotel.checkOut), 'MMM dd')}</span>
                       </div>
                       {hotel.roomType && <p className="text-xs text-muted-foreground mt-1">Room: {hotel.roomType}</p>}
-                      {hotel.price && <p className="font-mono text-sm mt-1">{formatCurrency(hotel.price)}</p>}
+                      {hotel.price && <p className="font-mono text-sm mt-1">{formatCurrency(hotel.price, currency)}</p>}
                       {hotel.phone && (
                         <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                           <Phone className="h-3 w-3" /> {hotel.phone}
@@ -766,7 +1063,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                           )}
                         </div>
                         {place.estimatedCost && (
-                          <p className="text-xs text-muted-foreground mt-1">Est. {formatCurrency(place.estimatedCost)}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Est. {formatCurrency(place.estimatedCost, currency)}</p>
                         )}
                         {place.notes && <p className="text-xs text-muted-foreground mt-1">{place.notes}</p>}
                       </div>
@@ -815,7 +1112,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                       <div className="flex items-center justify-between mb-2">
                         <Badge variant="outline">{cab.type.replace('-', ' ').toUpperCase()}</Badge>
                         <div className="flex items-center gap-2">
-                          {cab.price && <span className="font-mono text-sm">{formatCurrency(cab.price)}</span>}
+                          {cab.price && <span className="font-mono text-sm">{formatCurrency(cab.price, currency)}</span>}
                           <Button variant="ghost" size="icon" onClick={() => handleRemoveCab(index)}>
                             <X className="h-4 w-4" />
                           </Button>
@@ -972,6 +1269,18 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 />
               </div>
             </div>
+            {newTicket.price && newTicket.price > 0 && (
+              <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/50">
+                <Label htmlFor="create-ticket-txn" className="text-sm cursor-pointer">
+                  Also create expense transaction
+                </Label>
+                <Switch
+                  id="create-ticket-txn"
+                  checked={createTicketTransaction}
+                  onCheckedChange={setCreateTicketTransaction}
+                />
+              </div>
+            )}
             <Button onClick={handleAddTicket} className="w-full" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Ticket'}
             </Button>
@@ -1051,6 +1360,18 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setNewHotel({ ...newHotel, bookingReference: e.target.value })}
               />
             </div>
+            {newHotel.price && newHotel.price > 0 && (
+              <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/50">
+                <Label htmlFor="create-hotel-txn" className="text-sm cursor-pointer">
+                  Also create expense transaction
+                </Label>
+                <Switch
+                  id="create-hotel-txn"
+                  checked={createHotelTransaction}
+                  onCheckedChange={setCreateHotelTransaction}
+                />
+              </div>
+            )}
             <Button onClick={handleAddHotel} className="w-full" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Hotel'}
             </Button>
@@ -1215,8 +1536,71 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setNewCab({ ...newCab, price: parseFloat(e.target.value) || undefined })}
               />
             </div>
+            {newCab.price && newCab.price > 0 && (
+              <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/50">
+                <Label htmlFor="create-cab-txn" className="text-sm cursor-pointer">
+                  Also create expense transaction
+                </Label>
+                <Switch
+                  id="create-cab-txn"
+                  checked={createCabTransaction}
+                  onCheckedChange={setCreateCabTransaction}
+                />
+              </div>
+            )}
             <Button onClick={handleAddCab} className="w-full" disabled={updateMutation.isPending}>
               {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Cab'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick Expense Dialog */}
+      <Dialog open={quickExpenseDialog} onOpenChange={setQuickExpenseDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Quick Expense</DialogTitle>
+            <DialogDescription>Quickly add an expense for this trip</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Amount *</Label>
+              <Input 
+                type="number"
+                value={quickExpense.amount || ''} 
+                onChange={(e) => setQuickExpense({ ...quickExpense, amount: parseFloat(e.target.value) || 0 })}
+                placeholder="0.00"
+                className="text-lg"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Category *</Label>
+              <Select 
+                value={quickExpense.categoryId} 
+                onValueChange={(v) => setQuickExpense({ ...quickExpense, categoryId: v })}
+              >
+                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectContent>
+                  {expenseCategories?.map((cat) => (
+                    <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Note</Label>
+              <Textarea
+                value={quickExpense.note}
+                onChange={(e) => setQuickExpense({ ...quickExpense, note: e.target.value })}
+                placeholder="What was this expense for?"
+              />
+            </div>
+            <Button 
+              onClick={handleAddQuickExpense} 
+              className="w-full" 
+              disabled={transactionMutation.isPending}
+            >
+              {transactionMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Expense'}
             </Button>
           </div>
         </DialogContent>
