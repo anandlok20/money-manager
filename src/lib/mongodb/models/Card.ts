@@ -114,6 +114,7 @@ const CardSchema = new Schema<ICard>(
 
 // Indexes
 CardSchema.index({ userId: 1, isActive: 1 });
+CardSchema.index({ userId: 1, cardType: 1 });
 
 const Card: Model<ICard> = mongoose.models.Card || mongoose.model<ICard>('Card', CardSchema);
 

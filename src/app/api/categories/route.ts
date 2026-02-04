@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Category from '@/lib/mongodb/models/Category';
 import { categorySchema } from '@/lib/validations/category';
+import { categoriesCache, userCacheKey } from '@/lib/cache/lru-cache';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,11 +16,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await connectToDatabase();
-
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
     const includeInactive = searchParams.get('includeInactive') === 'true';
+
+    // Check cache first
+    const cacheKey = userCacheKey(session.user.id, 'categories', type || 'all', String(includeInactive));
+    const cached = categoriesCache.get(cacheKey);
+    if (cached) {
+      return NextResponse.json(
+        { success: true, data: cached },
+        {
+          headers: {
+            'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+            'X-Cache': 'HIT',
+          },
+        }
+      );
+    }
+
+    await connectToDatabase();
 
     const query: Record<string, unknown> = { userId: session.user.id };
     if (type) {
@@ -33,10 +49,20 @@ export async function GET(request: NextRequest) {
       .sort({ name: 1 })
       .lean();
 
-    return NextResponse.json({
-      success: true,
-      data: categories.map((c) => ({ ...c, _id: c._id.toString() })),
-    });
+    const data = categories.map((c) => ({ ...c, _id: c._id.toString() }));
+    
+    // Store in cache
+    categoriesCache.set(cacheKey, data);
+
+    return NextResponse.json(
+      { success: true, data },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+          'X-Cache': 'MISS',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json(
@@ -66,6 +92,9 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       isActive: true,
     });
+
+    // Invalidate user's category cache
+    categoriesCache.invalidatePattern(session.user.id);
 
     return NextResponse.json(
       {

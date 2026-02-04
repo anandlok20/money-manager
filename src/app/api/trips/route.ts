@@ -119,41 +119,53 @@ export async function GET(request: NextRequest) {
       .sort({ startDate: -1 })
       .lean();
 
-    // Calculate expenses for each trip if requested
-    if (includeStats) {
-      const tripsWithStats = await Promise.all(
-        trips.map(async (trip) => {
-          const transactions = await Transaction.aggregate([
-            {
-              $match: {
-                userId: { $eq: session.user.id },
-                tripId: trip._id,
-                type: { $in: [TransactionType.EXPENSE, TransactionType.INCOME] },
-              },
-            },
-            {
-              $group: {
-                _id: '$type',
-                total: { $sum: '$amount' },
-              },
-            },
-          ]);
+    // Calculate expenses for each trip if requested - using single aggregation query
+    if (includeStats && trips.length > 0) {
+      const tripIds = trips.map(t => t._id);
+      
+      // Single aggregation query for all trips instead of N queries
+      const tripStats = await Transaction.aggregate([
+        {
+          $match: {
+            userId: session.user.id,
+            tripId: { $in: tripIds },
+            type: { $in: [TransactionType.EXPENSE, TransactionType.INCOME] },
+          },
+        },
+        {
+          $group: {
+            _id: { tripId: '$tripId', type: '$type' },
+            total: { $sum: '$amount' },
+          },
+        },
+      ]);
 
-          let totalExpenses = 0;
-          let totalIncome = 0;
-          transactions.forEach((t) => {
-            if (t._id === TransactionType.EXPENSE) totalExpenses = t.total;
-            if (t._id === TransactionType.INCOME) totalIncome = t.total;
-          });
+      // Build a map of trip stats for O(1) lookup
+      const statsMap = new Map<string, { expenses: number; income: number }>();
+      tripStats.forEach((stat) => {
+        const tripIdStr = stat._id.tripId.toString();
+        if (!statsMap.has(tripIdStr)) {
+          statsMap.set(tripIdStr, { expenses: 0, income: 0 });
+        }
+        const tripStat = statsMap.get(tripIdStr)!;
+        if (stat._id.type === TransactionType.EXPENSE) {
+          tripStat.expenses = stat.total;
+        } else if (stat._id.type === TransactionType.INCOME) {
+          tripStat.income = stat.total;
+        }
+      });
 
-          return {
-            ...trip,
-            _id: trip._id.toString(),
-            totalExpenses,
-            totalIncome,
-          };
-        })
-      );
+      // Map trips with their stats
+      const tripsWithStats = trips.map((trip) => {
+        const tripIdStr = trip._id.toString();
+        const stats = statsMap.get(tripIdStr) || { expenses: 0, income: 0 };
+        return {
+          ...trip,
+          _id: tripIdStr,
+          totalExpenses: stats.expenses,
+          totalIncome: stats.income,
+        };
+      });
 
       return NextResponse.json({ success: true, data: tripsWithStats });
     }

@@ -33,15 +33,22 @@ export async function GET(request: NextRequest) {
     // Calculate total balance
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.currentBalance, 0);
 
-    return NextResponse.json({
-      success: true,
-      data: accounts.map((a) => ({
-        ...a,
-        _id: a._id.toString(),
-        displayName: `${a.bankName} (${a.accountHolderName})`,
-      })),
-      totalBalance,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: accounts.map((a) => ({
+          ...a,
+          _id: a._id.toString(),
+          displayName: `${a.bankName} (${a.accountHolderName})`,
+        })),
+        totalBalance,
+      },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching bank accounts:', error);
     return NextResponse.json(

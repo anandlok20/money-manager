@@ -32,11 +32,18 @@ export async function GET(request: NextRequest) {
     // Calculate total value
     const totalValue = investments.reduce((sum, inv) => sum + inv.currentValue, 0);
 
-    return NextResponse.json({
-      success: true,
-      data: investments.map((i) => ({ ...i, _id: i._id.toString() })),
-      totalValue,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: investments.map((i) => ({ ...i, _id: i._id.toString() })),
+        totalValue,
+      },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching investments:', error);
     return NextResponse.json(

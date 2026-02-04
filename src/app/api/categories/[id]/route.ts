@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Category from '@/lib/mongodb/models/Category';
 import { updateCategorySchema } from '@/lib/validations/category';
+import { categoriesCache } from '@/lib/cache/lru-cache';
 
 export async function GET(
   request: NextRequest,
@@ -78,6 +79,9 @@ export async function PUT(
       );
     }
 
+    // Invalidate user's category cache
+    categoriesCache.invalidatePattern(session.user.id);
+
     return NextResponse.json({
       success: true,
       data: { ...category, _id: category._id.toString() },
@@ -129,6 +133,9 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    // Invalidate user's category cache
+    categoriesCache.invalidatePattern(session.user.id);
 
     return NextResponse.json({
       success: true,
