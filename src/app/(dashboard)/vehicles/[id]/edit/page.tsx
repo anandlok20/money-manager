@@ -57,7 +57,7 @@ const vehicleSchema = z.object({
   model: z.string().min(1, 'Model is required'),
   variant: z.string().optional(),
   year: z.number().min(1900).max(new Date().getFullYear() + 1),
-  color: z.string().min(1, 'Color is required'),
+  color: z.string().optional(),
   registrationNumber: z.string().min(1, 'Registration number is required'),
   registrationDate: z.string().optional(),
   registrationValidUntil: z.string().optional(),

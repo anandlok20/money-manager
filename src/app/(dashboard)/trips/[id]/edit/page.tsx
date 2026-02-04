@@ -34,7 +34,7 @@ const formSchema = z.object({
   destination: z.string().min(1, 'Destination is required'),
   startDate: z.date({ error: 'Start date is required' }),
   endDate: z.date({ error: 'End date is required' }),
-  budget: z.number().positive('Budget must be positive'),
+  budget: z.number().positive('Budget must be positive').optional(),
   status: z.enum(['planned', 'ongoing', 'completed', 'cancelled']),
   travelers: z.array(z.string()).optional(),
   notes: z.string().optional(),

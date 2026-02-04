@@ -77,7 +77,7 @@ const tripSchema = z.object({
   destination: z.string().min(1),
   startDate: z.string().or(z.date()),
   endDate: z.string().or(z.date()),
-  budget: z.number().positive(),
+  budget: z.number().positive().optional(),
   status: z.nativeEnum(TripStatus).optional(),
   coverImage: z.string().optional(),
   travelers: z.array(travelerSchema).optional(),

@@ -18,16 +18,16 @@ export const transactionSchema = z.object({
   destinationInvestmentId: z.string().optional(),
   tags: z.array(z.string().max(50)).max(10).optional(),
 }).refine((data) => {
-  // For EXPENSE and INCOME, require category and source
+  // For EXPENSE and INCOME, category is required but source is optional
   if (data.type === TransactionType.EXPENSE || data.type === TransactionType.INCOME) {
     if (!data.categoryId) return false;
-    if (!data.sourceType) return false;
+    // Source account is now optional - only validate if sourceType is provided
     if (data.sourceType === AccountType.BANK && !data.sourceBankId) return false;
     if (data.sourceType === AccountType.CARD && !data.sourceCardId) return false;
   }
   return true;
 }, {
-  message: 'Category and source account are required for income/expense transactions',
+  message: 'Category is required for income/expense transactions',
 }).refine((data) => {
   // For TRANSFER_SELF, require source and destination
   if (data.type === TransactionType.TRANSFER_SELF) {
