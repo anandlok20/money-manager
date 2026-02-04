@@ -7,13 +7,17 @@ import Transaction from '@/lib/mongodb/models/Transaction';
 import { TransactionType } from '@/types';
 import { z } from 'zod';
 
-const travelerSchema = z.object({
-  name: z.string().min(1),
-  phone: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  memberId: z.string().optional(),
-  isOrganizer: z.boolean().optional(),
-});
+// Traveler can be either a string (just name) or a full object
+const travelerSchema = z.union([
+  z.string().min(1),
+  z.object({
+    name: z.string().min(1),
+    phone: z.string().optional(),
+    email: z.string().email().optional().or(z.literal('')),
+    memberId: z.string().optional(),
+    isOrganizer: z.boolean().optional(),
+  }),
+]);
 
 const ticketSchema = z.object({
   type: z.enum(['flight', 'train', 'bus', 'other']),
@@ -198,8 +202,14 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase();
 
+    // Normalize travelers - convert strings to objects
+    const normalizedTravelers = validatedData.travelers?.map((t) => 
+      typeof t === 'string' ? { name: t } : t
+    );
+
     const trip = await Trip.create({
       ...validatedData,
+      travelers: normalizedTravelers,
       userId: session.user.id,
       startDate: new Date(validatedData.startDate),
       endDate: new Date(validatedData.endDate),
