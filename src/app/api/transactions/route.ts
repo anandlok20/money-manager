@@ -19,12 +19,15 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
 
     const { searchParams } = new URL(request.url);
+    const startDateParam = searchParams.get('startDate');
+    const endDateParam = searchParams.get('endDate');
+    
     const filters = transactionFiltersSchema.parse({
       type: searchParams.get('type') || undefined,
       categoryId: searchParams.get('categoryId') || undefined,
       memberId: searchParams.get('memberId') || undefined,
-      startDate: searchParams.get('startDate') || undefined,
-      endDate: searchParams.get('endDate') || undefined,
+      startDate: startDateParam ? new Date(startDateParam) : undefined,
+      endDate: endDateParam ? new Date(endDateParam) : undefined,
       minAmount: searchParams.get('minAmount') ? Number(searchParams.get('minAmount')) : undefined,
       maxAmount: searchParams.get('maxAmount') ? Number(searchParams.get('maxAmount')) : undefined,
       page: searchParams.get('page') ? Number(searchParams.get('page')) : 1,
@@ -113,7 +116,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validatedData = transactionSchema.parse(body);
+    
+    // Convert dateTime string to Date before validation
+    const dataToValidate = {
+      ...body,
+      dateTime: body.dateTime ? new Date(body.dateTime) : undefined,
+    };
+    
+    const validatedData = transactionSchema.parse(dataToValidate);
 
     await connectToDatabase();
 

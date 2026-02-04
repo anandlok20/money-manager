@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Member from '@/lib/mongodb/models/Member';
 import { updateMemberSchema } from '@/lib/validations/member';
+import { membersCache } from '@/lib/cache/lru-cache';
 
 export async function GET(
   request: NextRequest,
@@ -78,6 +79,9 @@ export async function PUT(
       );
     }
 
+    // Invalidate user's members cache
+    membersCache.invalidatePattern(session.user.id);
+
     return NextResponse.json({
       success: true,
       data: { ...member, _id: member._id.toString() },
@@ -133,6 +137,9 @@ export async function DELETE(
         );
       }
 
+      // Invalidate user's members cache
+      membersCache.invalidatePattern(session.user.id);
+
       return NextResponse.json({
         success: true,
         message: 'Member permanently deleted',
@@ -151,6 +158,9 @@ export async function DELETE(
           { status: 404 }
         );
       }
+
+      // Invalidate user's members cache
+      membersCache.invalidatePattern(session.user.id);
 
       return NextResponse.json({
         success: true,

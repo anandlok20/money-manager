@@ -70,7 +70,14 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const validatedData = transactionSchema.parse(body);
+    
+    // Convert dateTime string to Date before validation
+    const dataToValidate = {
+      ...body,
+      dateTime: body.dateTime ? new Date(body.dateTime) : undefined,
+    };
+    
+    const validatedData = transactionSchema.parse(dataToValidate);
 
     await connectToDatabase();
 

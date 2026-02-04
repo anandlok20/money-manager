@@ -59,7 +59,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validatedData = scheduledPaymentSchema.parse(body);
+    
+    // Convert startDate string to Date before validation
+    const dataToValidate = {
+      ...body,
+      startDate: body.startDate ? new Date(body.startDate) : undefined,
+    };
+    
+    const validatedData = scheduledPaymentSchema.parse(dataToValidate);
 
     await connectToDatabase();
 

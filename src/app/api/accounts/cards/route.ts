@@ -34,11 +34,18 @@ export async function GET(request: NextRequest) {
     // Calculate total balance
     const totalBalance = cards.reduce((sum, card) => sum + card.currentBalance, 0);
 
-    return NextResponse.json({
-      success: true,
-      data: cards.map((c) => ({ ...c, _id: c._id.toString() })),
-      totalBalance,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: cards.map((c) => ({ ...c, _id: c._id.toString() })),
+        totalBalance,
+      },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching cards:', error);
     return NextResponse.json(

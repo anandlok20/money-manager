@@ -69,7 +69,14 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const validatedData = updateScheduledPaymentSchema.parse(body);
+    
+    // Convert startDate string to Date before validation
+    const dataToValidate = {
+      ...body,
+      startDate: body.startDate ? new Date(body.startDate) : undefined,
+    };
+    
+    const validatedData = updateScheduledPaymentSchema.parse(dataToValidate);
 
     await connectToDatabase();
 
