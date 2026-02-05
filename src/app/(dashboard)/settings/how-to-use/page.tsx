@@ -193,8 +193,8 @@ const additionalFeatures: Step[] = [
 
 const faqItems = [
   {
-    question: 'How do I import bank statements?',
-    answer: 'Go to Transactions → Import (top right button). Upload your bank statement PDF and our AI will extract and categorize transactions automatically.',
+    question: 'How do I add transactions?',
+    answer: 'Go to Transactions → click the Add Transaction button (top right). Fill in the amount, category, and other details.',
   },
   {
     question: 'How do I edit or delete a transaction?',

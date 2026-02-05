@@ -18,7 +18,6 @@ import {
   Download,
   X,
   Calendar,
-  FileUp,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -322,12 +321,6 @@ export default function TransactionsPage() {
               </div>
             </PopoverContent>
           </Popover>
-          <Link href="/transactions/import">
-            <Button variant="outline" className="gap-2 rounded-xl">
-              <FileUp className="h-4 w-4" />
-              Import
-            </Button>
-          </Link>
           <Link href="/transactions/new">
             <Button className="gap-2 shadow-lg shadow-primary/25">
               <Plus className="h-4 w-4" />
