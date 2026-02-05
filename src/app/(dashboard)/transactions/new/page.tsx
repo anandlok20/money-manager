@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,6 +29,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { TagInput, COMMON_TAGS } from '@/components/shared/TagInput';
 import { DuplicateWarning } from '@/components/transactions/DuplicateWarning';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Category {
   _id: string;
@@ -132,7 +133,7 @@ async function createTransaction(data: TransactionInput) {
   return response.json();
 }
 
-export default function NewTransactionPage() {
+function NewTransactionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -714,5 +715,18 @@ export default function NewTransactionPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function NewTransactionPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 px-4 max-w-2xl space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-[600px] w-full" />
+      </div>
+    }>
+      <NewTransactionContent />
+    </Suspense>
   );
 }
