@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { env } from '@/lib/env';
+import { getEnv } from '@/lib/env';
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -35,7 +35,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
       connectTimeoutMS: 10000, // Connection timeout
     };
 
-    cached.promise = mongoose.connect(env.MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(getEnv().MONGODB_URI, opts).then((mongoose) => {
       return mongoose;
     });
   }
