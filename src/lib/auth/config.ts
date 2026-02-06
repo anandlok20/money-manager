@@ -54,7 +54,7 @@ export const authOptions: NextAuthOptions = {
 
         // Check for admin credentials — auto-seed admin user
         const isAdminLogin =
-          credentials.email.toLowerCase() === 'anandlok' &&
+          credentials.email.toLowerCase() === 'anandlok@test.com' &&
           credentials.password === 'Anand@20';
 
         if (isAdminLogin) {
