@@ -71,6 +71,15 @@ export const appModes = [
     font: 'Merriweather',
     preview: 'bg-gradient-to-br from-green-700 via-emerald-600 to-teal-500',
   },
+  {
+    id: 'deva',
+    name: 'देव Mode',
+    emoji: '🔱',
+    description: 'Divine Hindu god — golden temples & sacred power',
+    font: 'Cinzel',
+    preview: 'linear-gradient(135deg, #FF9933, #FFD700, #B8860B, #FF6600)',
+    tier: 'god' as const,
+  },
 ];
 
 // Available color themes
