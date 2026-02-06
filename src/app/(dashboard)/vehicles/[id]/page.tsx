@@ -41,6 +41,23 @@ import {
 } from '@/components/ui/alert-dialog';
 import { formatCurrency } from '@/lib/utils/currency';
 
+const vehicleTypeLabels: Record<string, string> = {
+  two_wheeler: 'Two Wheeler',
+  three_wheeler: 'Three Wheeler',
+  four_wheeler: 'Four Wheeler',
+  commercial: 'Commercial',
+  heavy_vehicle: 'Heavy Vehicle',
+};
+
+const fuelTypeLabels: Record<string, string> = {
+  petrol: 'Petrol',
+  diesel: 'Diesel',
+  cng: 'CNG',
+  lpg: 'LPG',
+  electric: 'Electric',
+  hybrid: 'Hybrid',
+};
+
 interface Vehicle {
   _id: string;
   vehicleType: string;
@@ -205,42 +222,42 @@ export default function VehicleDetailsPage({ params }: { params: Promise<{ id: s
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
+    <div className="container mx-auto py-6 px-4 max-w-4xl space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/vehicles">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <Button variant="ghost" size="icon" asChild className="flex-shrink-0 mt-1">
+            <Link href="/vehicles" aria-label="Back to vehicles">
               <ArrowLeft className="h-5 w-5" />
             </Link>
           </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold break-words">
                 {vehicle.year} {vehicle.make} {vehicle.model}
               </h1>
               <Badge className={getStatusColor(vehicle.status)}>
                 {vehicle.status.charAt(0).toUpperCase() + vehicle.status.slice(1)}
               </Badge>
             </div>
-            <p className="text-muted-foreground flex items-center gap-1">
-              <Car className="h-4 w-4" />
-              {vehicle.registrationNumber}
+            <p className="text-muted-foreground flex items-center gap-1 text-sm">
+              <Car className="h-4 w-4 flex-shrink-0" />
+              <span className="font-mono">{vehicle.registrationNumber}</span>
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
+        <div className="flex gap-2 ml-10 sm:ml-0">
+          <Button variant="outline" size="sm" asChild>
             <Link href={`/vehicles/${id}/edit`}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
+              <Edit className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Edit</span>
             </Link>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Delete</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -288,13 +305,15 @@ export default function VehicleDetailsPage({ params }: { params: Promise<{ id: s
       </Card>
 
       <Tabs defaultValue="details" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="insurance">Insurance</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          {vehicle.hasLoan && <TabsTrigger value="loan">Loan</TabsTrigger>}
-          <TabsTrigger value="service">Service</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4">
+          <TabsList className="inline-flex w-auto min-w-full sm:w-full">
+            <TabsTrigger value="details" className="flex-shrink-0">Details</TabsTrigger>
+            <TabsTrigger value="insurance" className="flex-shrink-0">Insurance</TabsTrigger>
+            <TabsTrigger value="documents" className="flex-shrink-0">Documents</TabsTrigger>
+            {vehicle.hasLoan && <TabsTrigger value="loan" className="flex-shrink-0">Loan</TabsTrigger>}
+            <TabsTrigger value="service" className="flex-shrink-0">Service</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="details">
           <Card>
@@ -305,7 +324,7 @@ export default function VehicleDetailsPage({ params }: { params: Promise<{ id: s
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Vehicle Type</p>
-                  <p className="font-medium capitalize">{vehicle.vehicleType.toLowerCase()}</p>
+                  <p className="font-medium">{vehicleTypeLabels[vehicle.vehicleType] || vehicle.vehicleType}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Color</p>
@@ -321,7 +340,7 @@ export default function VehicleDetailsPage({ params }: { params: Promise<{ id: s
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Fuel className="h-4 w-4" /> Fuel Type
                   </p>
-                  <p className="font-medium capitalize">{vehicle.fuelType.toLowerCase()}</p>
+                  <p className="font-medium">{fuelTypeLabels[vehicle.fuelType] || vehicle.fuelType}</p>
                 </div>
                 {vehicle.engineNumber && (
                   <div className="space-y-1">
