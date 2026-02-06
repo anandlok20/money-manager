@@ -41,7 +41,7 @@ function ColorThemeApplier() {
     // Remove all mode classes
     const modeClasses = [
       'mode-anime', 'mode-harry-potter', 'mode-cartoon', 'mode-cyberpunk',
-      'mode-retro', 'mode-minimalist', 'mode-nature'
+      'mode-retro', 'mode-minimalist', 'mode-nature', 'mode-deva'
     ];
     document.documentElement.classList.remove(...modeClasses);
     

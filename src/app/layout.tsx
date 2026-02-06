@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Nunito, Crimson_Text, Baloo_2, Orbitron, Press_Start_2P, IBM_Plex_Sans, Merriweather } from 'next/font/google';
+import { Inter, Nunito, Crimson_Text, Baloo_2, Orbitron, Press_Start_2P, IBM_Plex_Sans, Merriweather, Cinzel } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers/Providers';
 
@@ -54,6 +54,13 @@ const merriweather = Merriweather({
   display: 'swap',
 });
 
+const cinzel = Cinzel({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-cinzel',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: {
     default: 'Family Expense Manager',
@@ -90,7 +97,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${nunito.variable} ${crimsonText.variable} ${baloo2.variable} ${orbitron.variable} ${pressStart2P.variable} ${ibmPlexSans.variable} ${merriweather.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${nunito.variable} ${crimsonText.variable} ${baloo2.variable} ${orbitron.variable} ${pressStart2P.variable} ${ibmPlexSans.variable} ${merriweather.variable} ${cinzel.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
