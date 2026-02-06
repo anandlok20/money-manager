@@ -66,6 +66,10 @@ export interface Member extends BaseDocument {
   userId: string;
   name: string;
   type: MemberType;
+  phone?: string;
+  email?: string;
+  dateOfBirth?: Date;
+  relation?: string;
   isActive: boolean;
 }
 
@@ -79,6 +83,7 @@ export interface BankAccount extends BaseDocument {
   minimumBalance?: number;
   minimumBalanceAlert: boolean;
   linkedMemberIds: string[];
+  isDefault?: boolean;
   isActive: boolean;
 }
 
@@ -92,6 +97,8 @@ export interface Card extends BaseDocument {
   spendingLimitAlert: boolean;
   linkedBankId?: string;
   linkedMemberId?: string;
+  cvvHash?: string;
+  pinHash?: string;
   isActive: boolean;
 }
 
@@ -108,10 +115,14 @@ export interface Transaction extends BaseDocument {
   userId: string;
   dateTime: Date;
   amount: number;
+  currency?: string;
+  originalAmount?: number;
+  originalCurrency?: string;
   note?: string;
   type: TransactionType;
   categoryId?: string;
   memberId?: string;
+  tripId?: string;
   sourceType?: AccountType;
   sourceBankId?: string;
   sourceCardId?: string;
@@ -119,6 +130,9 @@ export interface Transaction extends BaseDocument {
   destinationBankId?: string;
   destinationCardId?: string;
   destinationInvestmentId?: string;
+  receiptUrl?: string;
+  receiptFileName?: string;
+  tags?: string[];
 }
 
 export interface Investment extends BaseDocument {

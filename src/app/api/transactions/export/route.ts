@@ -29,14 +29,14 @@ export async function GET(request: NextRequest) {
     // Build query
     const query: Record<string, unknown> = { userId: session.user.id };
     if (startDate || endDate) {
-      query.date = {};
-      if (startDate) (query.date as Record<string, unknown>).$gte = new Date(startDate);
-      if (endDate) (query.date as Record<string, unknown>).$lte = new Date(endDate);
+      query.dateTime = {};
+      if (startDate) (query.dateTime as Record<string, unknown>).$gte = new Date(startDate);
+      if (endDate) (query.dateTime as Record<string, unknown>).$lte = new Date(endDate);
     }
 
-    // Fetch all needed data
+    // Fetch all needed data — cap at 10,000 to prevent OOM
     const [transactions, categories, members, bankAccounts, cards] = await Promise.all([
-      Transaction.find(query).sort({ date: -1 }).lean(),
+      Transaction.find(query).sort({ dateTime: -1 }).limit(10000).lean(),
       Category.find({ userId: session.user.id }).lean(),
       Member.find({ userId: session.user.id }).lean(),
       BankAccount.find({ userId: session.user.id }).lean(),

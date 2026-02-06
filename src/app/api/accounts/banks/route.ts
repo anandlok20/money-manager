@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import BankAccount from '@/lib/mongodb/models/BankAccount';
 import { bankAccountSchema } from '@/lib/validations/account';
+import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,11 +71,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = bankAccountSchema.parse(body);
+    const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
 
     const account = await BankAccount.create({
-      ...validatedData,
+      ...sanitizedData,
       userId: session.user.id,
       currentBalance: validatedData.openingBalance,
       isActive: true,
@@ -93,18 +95,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating bank account:', error);
-
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: 'Failed to create bank account' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to create bank account');
   }
 }

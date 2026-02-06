@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Budget from '@/lib/mongodb/models/Budget';
 import { updateBudgetSchema } from '@/lib/validations/budget';
+import { sanitizeTextFields, validateObjectId, handleApiError } from '@/lib/utils/api';
 
 export async function GET(
   request: NextRequest,
@@ -19,6 +20,9 @@ export async function GET(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     await connectToDatabase();
 
     const budget = await Budget.findOne({
@@ -62,14 +66,18 @@ export async function PUT(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     const body = await request.json();
     const validatedData = updateBudgetSchema.parse(body);
+    const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
 
     const budget = await Budget.findOneAndUpdate(
       { _id: id, userId: session.user.id },
-      { $set: validatedData },
+      { $set: sanitizedData },
       { new: true }
     ).lean();
 
@@ -86,11 +94,7 @@ export async function PUT(
       message: 'Budget updated successfully',
     });
   } catch (error) {
-    console.error('Error updating budget:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to update budget' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to update budget');
   }
 }
 
@@ -108,6 +112,9 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     await connectToDatabase();
 
     const budget = await Budget.findOneAndDelete({

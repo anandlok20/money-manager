@@ -195,6 +195,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate base64 image size (max 5MB decoded)
+    if (image) {
+      const base64Length = image.length;
+      // Base64 encodes 3 bytes into 4 chars, so decoded size ≈ base64Length * 3/4
+      const estimatedBytes = Math.ceil(base64Length * 3 / 4);
+      const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+      if (estimatedBytes > MAX_IMAGE_SIZE) {
+        return NextResponse.json(
+          { success: false, error: 'Image too large. Maximum size is 5MB.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate manual text length
+    if (manualText && manualText.length > 50000) {
+      return NextResponse.json(
+        { success: false, error: 'Text too long. Maximum 50,000 characters.' },
+        { status: 400 }
+      );
+    }
+
     await connectToDatabase();
 
     // Get user's categories for matching

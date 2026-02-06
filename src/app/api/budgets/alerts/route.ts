@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Budget from '@/lib/mongodb/models/Budget';
@@ -76,10 +77,11 @@ export async function GET() {
     );
 
     // Single query to get all spending by category
+    const userObjectId = new mongoose.Types.ObjectId(userId);
     const spendingByCategory = await Transaction.aggregate([
       {
         $match: {
-          userId: { $eq: userId },
+          userId: { $eq: userObjectId },
           type: TransactionType.EXPENSE,
           dateTime: { $gte: monthStart, $lte: monthEnd },
           categoryId: { $in: budgetCategoryIds },

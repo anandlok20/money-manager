@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Card from '@/lib/mongodb/models/Card';
 import { cardSchema } from '@/lib/validations/account';
+import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,11 +68,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = cardSchema.parse(body);
+    const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
 
     const card = await Card.create({
-      ...validatedData,
+      ...sanitizedData,
       userId: session.user.id,
       currentBalance: 0,
       isActive: true,
@@ -86,18 +88,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating card:', error);
-
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: 'Failed to create card' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to create card');
   }
 }

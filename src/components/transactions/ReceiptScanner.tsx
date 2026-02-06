@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,6 +80,16 @@ export default function ReceiptScanner({ bankAccounts, cards, categories }: Prop
 
   const [extractedData, setExtractedData] = useState<ExtractedReceiptData | null>(null);
   const [manualText, setManualText] = useState('');
+
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (videoRef.current?.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach((track) => track.stop());
+      }
+    };
+  }, []);
 
   // Editable form fields
   const [merchantName, setMerchantName] = useState('');

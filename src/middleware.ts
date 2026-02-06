@@ -24,10 +24,13 @@ const protectedRoutes = [
 // Routes that should redirect to dashboard if already authenticated
 const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
 
-// API routes that need rate limiting (handled separately)
-const rateLimitedApiRoutes = [
+// API routes with stricter rate limiting
+const strictRateLimitedRoutes = [
   '/api/auth/register',
   '/api/auth/[...nextauth]',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/settings/sensitive-password',
 ];
 
 // Simple in-memory rate limiter for edge runtime
@@ -78,9 +81,11 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
     'max-age=63072000; includeSubDomains; preload'
   );
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // CSP: Remove unsafe-eval, keep unsafe-inline for Next.js style injection
+  // In production, use nonce-based CSP for scripts when migrating to Auth.js v5
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';"
   );
   return response;
 }
@@ -97,11 +102,14 @@ export async function middleware(request: NextRequest) {
 
   // Rate limit API routes
   if (pathname.startsWith('/api/')) {
-    // Stricter rate limiting for auth routes
-    const isAuthRoute = rateLimitedApiRoutes.some(route => pathname.includes(route.replace('[...nextauth]', '')));
-    const limit = isAuthRoute ? 10 : 100; // 10 requests per minute for auth, 100 for others
+    // Stricter rate limiting for auth routes (5 per minute)
+    const isStrictRoute = strictRateLimitedRoutes.some(route => 
+      pathname.includes(route.replace('[...nextauth]', ''))
+    );
+    const limit = isStrictRoute ? 5 : 100; // 5 for auth, 100 for others
+    const windowMs = isStrictRoute ? 60000 : 60000;
     
-    if (isRateLimited(ip, limit)) {
+    if (isRateLimited(ip, limit, windowMs)) {
       const rateLimitResponse = NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429, headers: { 'Retry-After': '60' } }

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Budget from '@/lib/mongodb/models/Budget';
 import { budgetSchema } from '@/lib/validations/budget';
+import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = budgetSchema.parse(body);
+    const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
 
@@ -75,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       // Update existing budget
-      existing.amount = validatedData.amount;
+      existing.amount = (sanitizedData as typeof validatedData).amount;
       await existing.save();
       
       return NextResponse.json({
@@ -87,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     // Create new budget
     const budget = await Budget.create({
-      ...validatedData,
+      ...sanitizedData,
       userId: session.user.id,
       isActive: true,
     });
@@ -101,10 +103,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating budget:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to create budget' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to create budget');
   }
 }

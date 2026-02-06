@@ -3,8 +3,13 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Member from '@/lib/mongodb/models/Member';
+import Transaction from '@/lib/mongodb/models/Transaction';
+import ScheduledPayment from '@/lib/mongodb/models/ScheduledPayment';
+import BankAccount from '@/lib/mongodb/models/BankAccount';
+import Card from '@/lib/mongodb/models/Card';
 import { updateMemberSchema } from '@/lib/validations/member';
 import { membersCache } from '@/lib/cache/lru-cache';
+import { sanitizeTextFields, validateObjectId, handleApiError } from '@/lib/utils/api';
 
 export async function GET(
   request: NextRequest,
@@ -20,6 +25,9 @@ export async function GET(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     await connectToDatabase();
 
     const member = await Member.findOne({
@@ -61,14 +69,18 @@ export async function PUT(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     const body = await request.json();
     const validatedData = updateMemberSchema.parse(body);
+    const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
 
     const member = await Member.findOneAndUpdate(
       { _id: id, userId: session.user.id },
-      { $set: validatedData },
+      { $set: sanitizedData },
       { new: true }
     ).lean();
 
@@ -88,19 +100,7 @@ export async function PUT(
       message: 'Member updated successfully',
     });
   } catch (error) {
-    console.error('Error updating member:', error);
-
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: 'Failed to update member' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to update member');
   }
 }
 
@@ -118,6 +118,9 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     const { searchParams } = new URL(request.url);
     const permanent = searchParams.get('permanent') === 'true';
 
@@ -136,6 +139,26 @@ export async function DELETE(
           { status: 404 }
         );
       }
+
+      // Clean up orphaned references
+      await Promise.all([
+        Transaction.updateMany(
+          { userId: session.user.id, memberId: id },
+          { $unset: { memberId: 1 } }
+        ),
+        ScheduledPayment.updateMany(
+          { userId: session.user.id, memberId: id },
+          { $unset: { memberId: 1 } }
+        ),
+        BankAccount.updateMany(
+          { userId: session.user.id, linkedMemberIds: id },
+          { $pull: { linkedMemberIds: id } }
+        ),
+        Card.updateMany(
+          { userId: session.user.id, linkedMemberId: id },
+          { $unset: { linkedMemberId: 1 } }
+        ),
+      ]);
 
       // Invalidate user's members cache
       membersCache.invalidatePattern(session.user.id);

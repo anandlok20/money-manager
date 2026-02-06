@@ -148,9 +148,9 @@ export async function POST(
     const taxPayable = Math.max(0, totalTaxLiability - totalTaxPaid);
     const refundDue = Math.max(0, totalTaxPaid - totalTaxLiability);
 
-    // Update profile with calculated values
-    const updatedProfile = await TaxProfile.findByIdAndUpdate(
-      id,
+    // Update profile with calculated values (include userId for ownership)
+    const updatedProfile = await TaxProfile.findOneAndUpdate(
+      { _id: id, userId: session.user.id },
       {
         $set: {
           grossTotalIncome,
@@ -170,9 +170,16 @@ export async function POST(
       { new: true }
     ).lean();
 
+    if (!updatedProfile) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to update tax profile' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      data: { ...updatedProfile, _id: updatedProfile!._id.toString() },
+      data: { ...updatedProfile, _id: updatedProfile._id.toString() },
       message: 'Tax calculated successfully',
       calculation: {
         grossTotalIncome,

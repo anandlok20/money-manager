@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { z } from 'zod';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import User from '@/lib/mongodb/models/User';
@@ -28,9 +29,12 @@ export async function GET(request: NextRequest) {
 
     await connectToDatabase();
 
+    // Hash the user-provided token to match stored hash
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
     // Find valid token
     const resetToken = await PasswordResetToken.findOne({
-      token,
+      token: tokenHash,
       used: false,
       expiresAt: { $gt: new Date() },
     });
@@ -52,9 +56,12 @@ export async function POST(request: NextRequest) {
 
     await connectToDatabase();
 
+    // Hash the user-provided token to match stored hash
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
     // Find valid token
     const resetToken = await PasswordResetToken.findOne({
-      token,
+      token: tokenHash,
       used: false,
       expiresAt: { $gt: new Date() },
     });

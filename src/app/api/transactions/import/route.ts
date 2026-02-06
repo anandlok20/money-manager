@@ -927,6 +927,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
+    // Validate file size (max 10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'File too large. Maximum size is 10MB.' },
+        { status: 400 }
+      );
+    }
+
     // Check file type
     const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     
@@ -1086,7 +1095,14 @@ export async function POST(request: Request) {
 
 // GET - Return supported bank formats
 export async function GET() {
-  // No auth required - this is a static list of supported formats
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   return NextResponse.json({
     formats: [
       { id: 'generic', name: 'Auto Detect', description: 'Automatically detect bank statement format' },
