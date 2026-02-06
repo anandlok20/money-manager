@@ -1,11 +1,57 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Nunito, Crimson_Text, Baloo_2, Orbitron, Press_Start_2P, IBM_Plex_Sans, Merriweather } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers/Providers';
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+});
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  variable: '--font-nunito',
+  display: 'swap',
+});
+
+const crimsonText = Crimson_Text({
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+  variable: '--font-crimson-text',
+  display: 'swap',
+});
+
+const baloo2 = Baloo_2({
+  subsets: ['latin'],
+  variable: '--font-baloo-2',
+  display: 'swap',
+});
+
+const orbitron = Orbitron({
+  subsets: ['latin'],
+  variable: '--font-orbitron',
+  display: 'swap',
+});
+
+const pressStart2P = Press_Start_2P({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-press-start-2p',
+  display: 'swap',
+});
+
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-ibm-plex-sans',
+  display: 'swap',
+});
+
+const merriweather = Merriweather({
+  subsets: ['latin'],
+  weight: ['300', '400', '700'],
+  variable: '--font-merriweather',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -44,7 +90,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${nunito.variable} ${crimsonText.variable} ${baloo2.variable} ${orbitron.variable} ${pressStart2P.variable} ${ibmPlexSans.variable} ${merriweather.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

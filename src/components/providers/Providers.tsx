@@ -20,6 +20,7 @@ interface ProvidersProps {
 
 function ColorThemeApplier() {
   const colorTheme = useUIStore((state) => state.colorTheme);
+  const appMode = useUIStore((state) => state.appMode);
   
   useEffect(() => {
     // Remove all theme classes
@@ -35,6 +36,20 @@ function ColorThemeApplier() {
       document.documentElement.classList.add(colorTheme);
     }
   }, [colorTheme]);
+
+  useEffect(() => {
+    // Remove all mode classes
+    const modeClasses = [
+      'mode-anime', 'mode-harry-potter', 'mode-cartoon', 'mode-cyberpunk',
+      'mode-retro', 'mode-minimalist', 'mode-nature'
+    ];
+    document.documentElement.classList.remove(...modeClasses);
+    
+    // Add the new mode class if not default
+    if (appMode && appMode !== 'default') {
+      document.documentElement.classList.add(`mode-${appMode}`);
+    }
+  }, [appMode]);
   
   return null;
 }
