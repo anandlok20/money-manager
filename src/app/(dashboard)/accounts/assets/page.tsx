@@ -148,7 +148,7 @@ export default function AssetsPage() {
           {isLoading ? (
             <Skeleton className="h-10 w-48" />
           ) : (
-            <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+            <p className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">
               {formatCurrency(data?.totalValue || 0, currency)}
             </p>
           )}

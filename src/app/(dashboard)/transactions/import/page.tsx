@@ -48,7 +48,7 @@ export default async function ImportTransactionsPage() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-5xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Import Transactions</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Import Transactions</h1>
         <p className="text-muted-foreground mt-2">
           Import transactions from bank statements or scan receipts
         </p>
