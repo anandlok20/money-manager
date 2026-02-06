@@ -7,6 +7,7 @@ import Member from '@/lib/mongodb/models/Member';
 import { memberSchema } from '@/lib/validations/member';
 import { membersCache, userCacheKey } from '@/lib/cache/lru-cache';
 import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
+import { canCreateResource } from '@/lib/utils/subscription';
 
 export async function GET(request: NextRequest) {
   try {
@@ -85,6 +86,16 @@ export async function POST(request: NextRequest) {
     const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
+
+    // Check subscription limits
+    const currentCount = await Member.countDocuments({ userId: session.user.id, isActive: true });
+    const limitCheck = await canCreateResource(session.user.id, 'members', currentCount);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { success: false, error: limitCheck.message },
+        { status: 403 }
+      );
+    }
 
     // Convert null dateOfBirth to undefined for MongoDB
     const memberData = {

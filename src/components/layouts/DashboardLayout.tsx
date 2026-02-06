@@ -36,6 +36,9 @@ import {
   Bell,
   Search,
   ChevronLeft,
+  Lock,
+  Crown,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -50,6 +53,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface NavChild {
   name: string;
@@ -62,6 +66,7 @@ interface NavItem {
   href: string;
   icon: LucideIcon;
   children?: NavChild[];
+  gatedFeature?: string; // Feature ID for subscription gating
 }
 
 const navigation: NavItem[] = [
@@ -85,15 +90,15 @@ const navigation: NavItem[] = [
     ],
   },
   { name: 'Categories', href: '/categories', icon: Tag },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
+  { name: 'Reports', href: '/reports', icon: BarChart3, gatedFeature: 'reports' },
   { name: 'Budgets', href: '/budgets', icon: PiggyBank },
   { name: 'Goals', href: '/goals', icon: Target },
-  { name: 'Trips', href: '/trips', icon: Plane },
-  { name: 'Documents', href: '/documents', icon: FileText },
-  { name: 'Tax', href: '/tax', icon: Receipt },
-  { name: 'Vehicles', href: '/vehicles', icon: Car },
+  { name: 'Trips', href: '/trips', icon: Plane, gatedFeature: 'trips' },
+  { name: 'Documents', href: '/documents', icon: FileText, gatedFeature: 'documents' },
+  { name: 'Tax', href: '/tax', icon: Receipt, gatedFeature: 'tax' },
+  { name: 'Vehicles', href: '/vehicles', icon: Car, gatedFeature: 'vehicles' },
   { name: 'Members', href: '/members', icon: Users },
-  { name: 'Scheduled', href: '/scheduled-payments', icon: CalendarClock },
+  { name: 'Scheduled', href: '/scheduled-payments', icon: CalendarClock, gatedFeature: 'scheduled-payments' },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
@@ -108,6 +113,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+  const { canAccessFeature } = useSubscription();
+
+  const isAdmin = session?.user?.role === 'admin';
 
   // Check if we're on the home page
   const isHomePage = pathname === '/';
@@ -257,7 +265,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     isActive(item.href)
                       ? 'bg-primary/10 text-primary shadow-sm'
                       : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-                    collapsed && 'justify-center px-2'
+                    collapsed && 'justify-center px-2',
+                    item.gatedFeature && !canAccessFeature(item.gatedFeature) && 'opacity-60'
                   )}
                 >
                   <div className={cn(
@@ -266,11 +275,33 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   )}>
                     <Icon className="h-4 w-4" />
                   </div>
-                  {!collapsed && item.name}
+                  {!collapsed && (
+                    <span className="flex items-center gap-2 flex-1">
+                      {item.name}
+                      {item.gatedFeature && !canAccessFeature(item.gatedFeature) && (
+                        <Lock className="h-3 w-3 text-muted-foreground ml-auto" />
+                      )}
+                    </span>
+                  )}
                 </Link>
               </li>
             );
           })}
+          {/* Admin Link */}
+          {isAdmin && !collapsed && (
+            <li>
+              <Link
+                href="/admin"
+                onClick={closeSidebar}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-all duration-200"
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-500/10">
+                  <Shield className="h-4 w-4" />
+                </div>
+                Admin Panel
+              </Link>
+            </li>
+          )}
         </ul>
       </div>
 

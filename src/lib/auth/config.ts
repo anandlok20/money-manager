@@ -6,7 +6,9 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import User from '@/lib/mongodb/models/User';
 import Member from '@/lib/mongodb/models/Member';
 import Category from '@/lib/mongodb/models/Category';
+import Subscription from '@/lib/mongodb/models/Subscription';
 import { MemberType, CategoryType } from '@/types';
+import { seedAdminUser, seedDefaultPricing } from '@/lib/mongodb/seed/pricing';
 
 // Default categories to create for new users
 const defaultCategories = [
@@ -47,6 +49,27 @@ export const authOptions: NextAuthOptions = {
 
         await connectToDatabase();
 
+        // Seed default pricing config on first auth attempt
+        await seedDefaultPricing();
+
+        // Check for admin credentials — auto-seed admin user
+        const isAdminLogin =
+          credentials.email.toLowerCase() === 'anandlok' &&
+          credentials.password === 'Anand@20';
+
+        if (isAdminLogin) {
+          const adminUser = await seedAdminUser();
+          return {
+            id: adminUser._id.toString(),
+            email: adminUser.email,
+            name: adminUser.name,
+            currency: adminUser.currency,
+            lockEnabled: adminUser.lockEnabled,
+            role: adminUser.role as 'admin',
+            hasSelectedPlan: true,
+          };
+        }
+
         const user = await User.findOne({ email: credentials.email.toLowerCase() });
 
         if (!user) {
@@ -65,6 +88,8 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           currency: user.currency,
           lockEnabled: user.lockEnabled,
+          role: (user.role || 'user') as 'user' | 'admin',
+          hasSelectedPlan: user.hasSelectedPlan || false,
         };
       },
     }),
@@ -77,6 +102,8 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.currency = (user as unknown as { currency: string }).currency;
         token.lockEnabled = (user as unknown as { lockEnabled: boolean }).lockEnabled;
+        token.role = (user as unknown as { role: 'user' | 'admin' }).role || 'user';
+        token.hasSelectedPlan = (user as unknown as { hasSelectedPlan: boolean }).hasSelectedPlan || false;
       }
 
       // Handle updates to the session
@@ -84,6 +111,9 @@ export const authOptions: NextAuthOptions = {
         token.name = session.name ?? token.name;
         token.currency = session.currency ?? token.currency;
         token.lockEnabled = session.lockEnabled ?? token.lockEnabled;
+        if (session.hasSelectedPlan !== undefined) {
+          token.hasSelectedPlan = session.hasSelectedPlan;
+        }
       }
 
       return token;
@@ -95,6 +125,8 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name as string;
         (session.user as unknown as { currency: string }).currency = token.currency as string;
         (session.user as unknown as { lockEnabled: boolean }).lockEnabled = token.lockEnabled as boolean;
+        session.user.role = (token.role as 'user' | 'admin') || 'user';
+        session.user.hasSelectedPlan = (token.hasSelectedPlan as boolean) || false;
       }
       return session;
     },
@@ -135,7 +167,23 @@ export async function registerUser(name: string, email: string, password: string
           passwordHash,
           name,
           currency: process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || 'INR',
+          role: 'user',
+          hasSelectedPlan: false,
           lockEnabled: false,
+        },
+      ],
+      { session }
+    );
+
+    // Create default free subscription
+    await Subscription.create(
+      [
+        {
+          userId: user._id,
+          plan: 'free',
+          status: 'active',
+          addons: [],
+          startDate: new Date(),
         },
       ],
       { session }

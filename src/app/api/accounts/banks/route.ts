@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import BankAccount from '@/lib/mongodb/models/BankAccount';
 import { bankAccountSchema } from '@/lib/validations/account';
 import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
+import { canCreateResource } from '@/lib/utils/subscription';
 
 export async function GET(request: NextRequest) {
   try {
@@ -74,6 +75,16 @@ export async function POST(request: NextRequest) {
     const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
+
+    // Check subscription limits
+    const currentCount = await BankAccount.countDocuments({ userId: session.user.id, isActive: true });
+    const limitCheck = await canCreateResource(session.user.id, 'banks', currentCount);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { success: false, error: limitCheck.message },
+        { status: 403 }
+      );
+    }
 
     const account = await BankAccount.create({
       ...sanitizedData,

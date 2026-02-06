@@ -6,6 +6,7 @@ import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { useUIStore } from '@/stores/uiStore';
+import { CommandPalette } from '@/components/shared/CommandPalette';
 
 // Lazy-load devtools — only included in dev bundles
 const ReactQueryDevtools = lazy(() =>
@@ -81,6 +82,7 @@ export function Providers({ children }: ProvidersProps) {
           disableTransitionOnChange
         >
           <ColorThemeApplier />
+          <CommandPalette />
           {children}
           <Toaster position="top-right" richColors closeButton />
         </ThemeProvider>

@@ -57,6 +57,17 @@ export function sanitizeTextFields<T extends Record<string, unknown>>(obj: T): T
  * Standard error handler for API routes.
  * Handles ZodError → 400, everything else → 500.
  */
+/**
+ * Wraps an async API handler with standard error handling.
+ */
+export async function withErrorHandler(handler: () => Promise<NextResponse>): Promise<NextResponse> {
+  try {
+    return await handler();
+  } catch (error) {
+    return handleApiError(error, 'An unexpected error occurred');
+  }
+}
+
 export function handleApiError(error: unknown, fallbackMessage: string): NextResponse {
   console.error(fallbackMessage + ':', error);
 

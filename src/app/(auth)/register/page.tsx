@@ -56,7 +56,7 @@ export default function RegisterPage() {
       if (signInResult?.error) {
         router.push('/login');
       } else {
-        router.push('/');
+        router.push('/select-plan');
         router.refresh();
       }
     } catch {

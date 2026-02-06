@@ -1,11 +1,15 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+export type UserRole = 'user' | 'admin';
+
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   email: string;
   passwordHash: string;
   name: string;
   currency: string;
+  role: UserRole;
+  hasSelectedPlan: boolean;
   lockEnabled: boolean;
   pinHash?: string;
   sensitiveDataPasswordHash?: string; // Password to view sensitive info like CVV/PIN
@@ -34,6 +38,15 @@ const UserSchema = new Schema<IUser>(
     currency: {
       type: String,
       default: 'INR',
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+    hasSelectedPlan: {
+      type: Boolean,
+      default: false,
     },
     lockEnabled: {
       type: Boolean,
