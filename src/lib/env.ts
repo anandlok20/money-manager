@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /**
  * Environment variable validation schema
- * Validates required environment variables at build/startup time
+ * Validates required environment variables at runtime
  */
 const envSchema = z.object({
   // Database
@@ -30,38 +30,42 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
+// Cache for validated env
+let cachedEnv: Env | null = null;
+
 /**
- * Validate environment variables
- * Throws an error if validation fails
+ * Get validated environment variables (lazy validation)
+ * Only validates when first accessed at runtime, not at build time
  */
-function validateEnv(): Env {
+export function getEnv(): Env {
+  if (cachedEnv) {
+    return cachedEnv;
+  }
+
   try {
-    return envSchema.parse(process.env);
+    cachedEnv = envSchema.parse(process.env);
+    return cachedEnv;
   } catch (error) {
     if (error instanceof z.ZodError) {
       const missingVars = error.issues.map((e) => `${e.path.join('.')}: ${e.message}`);
       console.error('❌ Invalid environment variables:');
       missingVars.forEach((msg) => console.error(`   - ${msg}`));
-      
-      // In development, just warn. In production, throw.
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error(`Missing or invalid environment variables:\n${missingVars.join('\n')}`);
-      }
+      throw new Error(`Missing or invalid environment variables:\n${missingVars.join('\n')}`);
     }
     throw error;
   }
 }
 
-// Validate and export environment variables
-// This will run at module load time
-export const env = validateEnv();
-
 /**
  * Helper to check if a feature is enabled based on env vars
+ * Uses lazy evaluation to avoid build-time errors
  */
 export const features = {
-  hasOpenAI: Boolean(env.OPENAI_API_KEY),
-  hasGoogleAI: Boolean(env.GOOGLE_AI_API_KEY),
-  hasCloudinary: Boolean(env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET),
-  hasCronSecret: Boolean(env.CRON_SECRET),
+  get hasOpenAI() { return Boolean(getEnv().OPENAI_API_KEY); },
+  get hasGoogleAI() { return Boolean(getEnv().GOOGLE_AI_API_KEY); },
+  get hasCloudinary() { 
+    const e = getEnv();
+    return Boolean(e.CLOUDINARY_CLOUD_NAME && e.CLOUDINARY_API_KEY && e.CLOUDINARY_API_SECRET); 
+  },
+  get hasCronSecret() { return Boolean(getEnv().CRON_SECRET); },
 };
