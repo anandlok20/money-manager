@@ -33,13 +33,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const vehicleTypes = [
-  { value: 'car', label: 'Car' },
-  { value: 'bike', label: 'Motorcycle' },
-  { value: 'scooter', label: 'Scooter' },
-  { value: 'auto', label: 'Auto Rickshaw' },
-  { value: 'truck', label: 'Truck' },
-  { value: 'bus', label: 'Bus' },
-  { value: 'other', label: 'Other' },
+  { value: 'two_wheeler', label: 'Two Wheeler (Bike/Scooter)' },
+  { value: 'three_wheeler', label: 'Three Wheeler (Auto)' },
+  { value: 'four_wheeler', label: 'Four Wheeler (Car)' },
+  { value: 'commercial', label: 'Commercial Vehicle' },
+  { value: 'heavy_vehicle', label: 'Heavy Vehicle (Truck/Bus)' },
 ];
 
 const fuelTypes = [
@@ -58,7 +56,7 @@ const insuranceTypes = [
 ];
 
 const vehicleSchema = z.object({
-  type: z.enum(['car', 'bike', 'scooter', 'auto', 'truck', 'bus', 'other']),
+  type: z.enum(['two_wheeler', 'three_wheeler', 'four_wheeler', 'commercial', 'heavy_vehicle']),
   make: z.string().min(1, 'Make is required'),
   model: z.string().min(1, 'Model is required'),
   variant: z.string().optional(),
@@ -125,7 +123,7 @@ export default function NewVehiclePage() {
   const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
-      type: 'car',
+      type: 'four_wheeler',
       make: '',
       model: '',
       year: new Date().getFullYear(),
@@ -161,10 +159,16 @@ export default function NewVehiclePage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: VehicleFormValues & { images: string[] }) => {
+      // Map form fields to API schema
+      const { type, ...rest } = data;
+      const apiPayload = {
+        ...rest,
+        vehicleType: type,
+      };
       const response = await fetch('/api/vehicles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(apiPayload),
       });
       if (!response.ok) throw new Error('Failed to create vehicle');
       return response.json();
@@ -722,7 +726,7 @@ export default function NewVehiclePage() {
                 </Card>
 
                 {/* Fitness (for commercial vehicles) */}
-                {['auto', 'truck', 'bus'].includes(vehicleType) && (
+                {['three_wheeler', 'commercial', 'heavy_vehicle'].includes(vehicleType) && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Fitness Certificate</CardTitle>
@@ -760,7 +764,7 @@ export default function NewVehiclePage() {
                 )}
 
                 {/* Permit (for commercial vehicles) */}
-                {['auto', 'truck', 'bus'].includes(vehicleType) && (
+                {['three_wheeler', 'commercial', 'heavy_vehicle'].includes(vehicleType) && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Permit Details</CardTitle>

@@ -33,26 +33,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 
 const vehicleTypes = [
-  { value: 'CAR', label: 'Car' },
-  { value: 'BIKE', label: 'Motorcycle' },
-  { value: 'SCOOTER', label: 'Scooter' },
-  { value: 'AUTO', label: 'Auto Rickshaw' },
-  { value: 'TRUCK', label: 'Truck' },
-  { value: 'BUS', label: 'Bus' },
-  { value: 'OTHER', label: 'Other' },
+  { value: 'two_wheeler', label: 'Two Wheeler (Bike/Scooter)' },
+  { value: 'three_wheeler', label: 'Three Wheeler (Auto)' },
+  { value: 'four_wheeler', label: 'Four Wheeler (Car)' },
+  { value: 'commercial', label: 'Commercial Vehicle' },
+  { value: 'heavy_vehicle', label: 'Heavy Vehicle (Truck/Bus)' },
 ];
 
 const fuelTypes = [
-  { value: 'PETROL', label: 'Petrol' },
-  { value: 'DIESEL', label: 'Diesel' },
-  { value: 'CNG', label: 'CNG' },
-  { value: 'LPG', label: 'LPG' },
-  { value: 'ELECTRIC', label: 'Electric' },
-  { value: 'HYBRID', label: 'Hybrid' },
+  { value: 'petrol', label: 'Petrol' },
+  { value: 'diesel', label: 'Diesel' },
+  { value: 'cng', label: 'CNG' },
+  { value: 'lpg', label: 'LPG' },
+  { value: 'electric', label: 'Electric' },
+  { value: 'hybrid', label: 'Hybrid' },
 ];
 
 const vehicleSchema = z.object({
-  vehicleType: z.string().min(1),
+  vehicleType: z.enum(['two_wheeler', 'three_wheeler', 'four_wheeler', 'commercial', 'heavy_vehicle']),
   make: z.string().min(1, 'Make is required'),
   model: z.string().min(1, 'Model is required'),
   variant: z.string().optional(),
@@ -64,7 +62,7 @@ const vehicleSchema = z.object({
   rtoCode: z.string().optional(),
   engineNumber: z.string().optional(),
   chassisNumber: z.string().optional(),
-  fuelType: z.string().min(1),
+  fuelType: z.enum(['petrol', 'diesel', 'cng', 'lpg', 'electric', 'hybrid']),
   purchaseDate: z.string().optional(),
   purchasePrice: z.number().min(0).optional(),
   currentValue: z.number().min(0).optional(),
@@ -145,13 +143,13 @@ export default function EditVehiclePage({ params }: { params: Promise<{ id: stri
   const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
-      vehicleType: 'CAR',
+      vehicleType: 'four_wheeler',
       make: '',
       model: '',
       year: new Date().getFullYear(),
       color: '',
       registrationNumber: '',
-      fuelType: 'PETROL',
+      fuelType: 'petrol',
       status: 'active',
       hasLoan: false,
     },
