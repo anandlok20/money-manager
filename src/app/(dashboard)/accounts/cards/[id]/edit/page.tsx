@@ -204,7 +204,7 @@ export default function EditCardPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/accounts/cards">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" aria-label="Go back">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
@@ -365,6 +365,7 @@ export default function EditCardPage() {
                     size="icon"
                     className="absolute right-0 top-0 h-full"
                     onClick={() => setShowCvv(!showCvv)}
+                    aria-label={showCvv ? "Hide CVV" : "Show CVV"}
                   >
                     {showCvv ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
@@ -390,6 +391,7 @@ export default function EditCardPage() {
                     size="icon"
                     className="absolute right-0 top-0 h-full"
                     onClick={() => setShowPin(!showPin)}
+                    aria-label={showPin ? "Hide PIN" : "Show PIN"}
                   >
                     {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>

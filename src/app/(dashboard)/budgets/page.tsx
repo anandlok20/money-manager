@@ -344,13 +344,13 @@ export default function BudgetsPage() {
 
       {/* Month Navigator */}
       <div className="flex items-center justify-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)}>
+        <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)} aria-label="Previous month">
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <h2 className="text-xl font-semibold min-w-48 text-center">
           {monthNames[currentMonth - 1]} {currentYear}
         </h2>
-        <Button variant="outline" size="icon" onClick={() => navigateMonth(1)}>
+        <Button variant="outline" size="icon" onClick={() => navigateMonth(1)} aria-label="Next month">
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

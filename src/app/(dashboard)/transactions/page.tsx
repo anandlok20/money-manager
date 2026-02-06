@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -196,7 +196,7 @@ export default function TransactionsPage() {
   });
 
   // Export handler
-  const handleExport = async (exportFormat: 'csv' | 'json') => {
+  const handleExport = useCallback(async (exportFormat: 'csv' | 'json') => {
     setIsExporting(true);
     try {
       const params = new URLSearchParams({ format: exportFormat });
@@ -234,10 +234,10 @@ export default function TransactionsPage() {
     } finally {
       setIsExporting(false);
     }
-  };
+  }, [startDate, endDate]);
 
   // Clear filters
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setTypeFilter('ALL');
     setCategoryFilter('ALL');
     setMemberFilter('ALL');
@@ -247,12 +247,12 @@ export default function TransactionsPage() {
     setMinAmount('');
     setMaxAmount('');
     setPage(1);
-  };
+  }, []);
 
   const hasActiveFilters = typeFilter !== 'ALL' || categoryFilter !== 'ALL' || 
     memberFilter !== 'ALL' || searchQuery || startDate || endDate || minAmount || maxAmount;
 
-  const getTransactionIcon = (type: TransactionType) => {
+  const getTransactionIcon = useCallback((type: TransactionType) => {
     switch (type) {
       case TransactionType.INCOME:
         return <ArrowDownLeft className="h-5 w-5 text-green-600 dark:text-green-400" />;
@@ -262,9 +262,9 @@ export default function TransactionsPage() {
       case TransactionType.INVESTMENT_CONTRIBUTION:
         return <ArrowLeftRight className="h-5 w-5 text-blue-600 dark:text-blue-400" />;
     }
-  };
+  }, []);
 
-  const getTransactionColor = (type: TransactionType) => {
+  const getTransactionColor = useCallback((type: TransactionType) => {
     switch (type) {
       case TransactionType.INCOME:
         return 'bg-green-100 dark:bg-green-900/20';
@@ -274,7 +274,7 @@ export default function TransactionsPage() {
       case TransactionType.INVESTMENT_CONTRIBUTION:
         return 'bg-blue-100 dark:bg-blue-900/20';
     }
-  };
+  }, []);
 
   if (error) {
     return (
@@ -498,7 +498,7 @@ export default function TransactionsPage() {
             </Sheet>
 
             {hasActiveFilters && (
-              <Button variant="ghost" size="icon" onClick={clearFilters}>
+              <Button variant="ghost" size="icon" onClick={clearFilters} aria-label="Clear filters">
                 <X className="h-4 w-4" />
               </Button>
             )}

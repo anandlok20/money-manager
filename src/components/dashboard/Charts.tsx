@@ -13,6 +13,7 @@ import {
   YAxis,
   CartesianGrid,
 } from 'recharts';
+import type { Payload } from 'recharts/types/component/DefaultTooltipContent';
 import { formatCurrency } from '@/lib/utils/currency';
 
 const COLORS = [
@@ -46,8 +47,7 @@ function PieTooltipContent({
   currency = 'INR'
 }: { 
   active?: boolean; 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload?: readonly any[];
+  payload?: readonly Payload<number, string>[];
   currency?: string;
 }) {
   if (active && payload && payload.length) {
@@ -55,7 +55,7 @@ function PieTooltipContent({
       <div className="bg-popover border rounded-lg shadow-lg p-3">
         <p className="font-medium">{payload[0].name}</p>
         <p className="text-sm text-muted-foreground">
-          {formatCurrency(payload[0].value, currency)}
+          {formatCurrency(payload[0].value ?? 0, currency)}
         </p>
       </div>
     );
@@ -71,8 +71,7 @@ function BarTooltipContent({
   currency = 'INR'
 }: { 
   active?: boolean; 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload?: readonly any[];
+  payload?: readonly Payload<number, string>[];
   label?: string | number;
   currency?: string;
 }) {
@@ -82,7 +81,7 @@ function BarTooltipContent({
         <p className="font-medium mb-2">{label}</p>
         {payload.map((entry, index) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
-            {entry.name}: {formatCurrency(entry.value, currency)}
+            {entry.name}: {formatCurrency(entry.value ?? 0, currency)}
           </p>
         ))}
       </div>
@@ -100,8 +99,7 @@ function BudgetTooltipContent({
   currency = 'INR'
 }: { 
   active?: boolean; 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload?: readonly any[];
+  payload?: readonly Payload<number, string>[];
   label?: string | number;
   data: BudgetData[];
   currency?: string;
