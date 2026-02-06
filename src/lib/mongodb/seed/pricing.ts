@@ -5,7 +5,7 @@ import PricingConfig from '@/lib/mongodb/models/PricingConfig';
 import Subscription from '@/lib/mongodb/models/Subscription';
 
 // Admin credentials — used only for initial seeding
-const ADMIN_EMAIL = 'anandlok';
+const ADMIN_EMAIL = 'anandlok@test.com';
 const ADMIN_PASSWORD = 'Anand@20';
 const ADMIN_NAME = 'AnandLok';
 
