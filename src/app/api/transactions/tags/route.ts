@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Transaction from '@/lib/mongodb/models/Transaction';
@@ -17,10 +18,11 @@ export async function GET() {
     await connectToDatabase();
 
     // Get all unique tags used by this user
+    const userObjectId = new mongoose.Types.ObjectId(session.user.id);
     const result = await Transaction.aggregate([
       {
         $match: {
-          userId: { $eq: session.user.id },
+          userId: { $eq: userObjectId },
           tags: { $exists: true, $ne: [] },
         },
       },

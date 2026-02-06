@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import BankAccount from '@/lib/mongodb/models/BankAccount';
@@ -15,7 +16,7 @@ export async function GET() {
 
     await connectToDatabase();
 
-    const userId = session.user.id;
+    const userId = new mongoose.Types.ObjectId(session.user.id);
 
     // Get all bank accounts with minimumBalanceAlert enabled
     const bankAccounts = await BankAccount.find({
@@ -36,7 +37,7 @@ export async function GET() {
       spendingLimit: { $gt: 0 },
     }).select('cardName cardType spendingLimit spendingLimitAlert');
 
-    // Calculate current month spending for each card
+    // Calculate current month spending for ALL cards in a single aggregation (fix N+1)
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -44,43 +45,50 @@ export async function GET() {
     const endOfMonth = new Date(startOfMonth);
     endOfMonth.setMonth(endOfMonth.getMonth() + 1);
 
-    const overSpendingCards = [];
+    const cardIds = cards.map((c) => c._id);
 
-    for (const card of cards) {
-      // Get expenses for this card in current month
-      const expenses = await Transaction.aggregate([
-        {
-          $match: {
-            userId: { $eq: userId },
-            sourceCardId: { $eq: card._id },
-            type: 'EXPENSE',
-            dateTime: {
-              $gte: startOfMonth,
-              $lt: endOfMonth,
-            },
+    // Single aggregation query grouped by sourceCardId instead of N queries
+    const spendingByCard = await Transaction.aggregate([
+      {
+        $match: {
+          userId: { $eq: userId },
+          sourceCardId: { $in: cardIds },
+          type: 'EXPENSE',
+          dateTime: {
+            $gte: startOfMonth,
+            $lt: endOfMonth,
           },
         },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: '$amount' },
-          },
+      },
+      {
+        $group: {
+          _id: '$sourceCardId',
+          total: { $sum: '$amount' },
         },
-      ]);
+      },
+    ]);
 
-      const currentSpending = expenses[0]?.total || 0;
+    // Create O(1) lookup map
+    const spendingMap = new Map(
+      spendingByCard.map((s) => [s._id?.toString(), s.total])
+    );
 
-      if (currentSpending > (card.spendingLimit || 0)) {
-        overSpendingCards.push({
-          _id: card._id,
-          cardName: card.cardName,
-          displayName: card.cardName,
-          currentSpending,
-          spendingLimit: card.spendingLimit,
-          spendingLimitAlert: card.spendingLimitAlert,
-        });
-      }
-    }
+    const overSpendingCards = cards
+      .map((card) => {
+        const currentSpending = spendingMap.get(card._id.toString()) || 0;
+        if (currentSpending > (card.spendingLimit || 0)) {
+          return {
+            _id: card._id,
+            cardName: card.cardName,
+            displayName: card.cardName,
+            currentSpending,
+            spendingLimit: card.spendingLimit,
+            spendingLimitAlert: card.spendingLimitAlert,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
 
     return NextResponse.json({
       success: true,

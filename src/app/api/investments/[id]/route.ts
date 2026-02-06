@@ -5,7 +5,9 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Investment from '@/lib/mongodb/models/Investment';
 import Transaction from '@/lib/mongodb/models/Transaction';
+import ScheduledPayment from '@/lib/mongodb/models/ScheduledPayment';
 import { updateInvestmentSchema } from '@/lib/validations/investment';
+import { sanitizeTextFields, validateObjectId, handleApiError } from '@/lib/utils/api';
 
 export async function GET(
   request: NextRequest,
@@ -21,6 +23,9 @@ export async function GET(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     await connectToDatabase();
 
     const investment = await Investment.findOne({
@@ -78,14 +83,18 @@ export async function PUT(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     const body = await request.json();
     const validatedData = updateInvestmentSchema.parse(body);
+    const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
 
     const investment = await Investment.findOneAndUpdate(
       { _id: id, userId: session.user.id },
-      { $set: validatedData },
+      { $set: sanitizedData },
       { new: true }
     ).lean();
 
@@ -102,19 +111,7 @@ export async function PUT(
       message: 'Investment updated successfully',
     });
   } catch (error) {
-    console.error('Error updating investment:', error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error.issues.map((i: { message: string }) => i.message) },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: 'Failed to update investment' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to update investment');
   }
 }
 
@@ -132,6 +129,9 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     await connectToDatabase();
 
     // Check if there are any transactions linked to this investment
@@ -147,13 +147,24 @@ export async function DELETE(
         { $set: { isActive: false } }
       );
 
+      // Deactivate linked scheduled payments
+      await ScheduledPayment.updateMany(
+        { userId: session.user.id, destinationInvestmentId: id },
+        { $set: { isActive: false } }
+      );
+
       return NextResponse.json({
         success: true,
         message: 'Investment deactivated (has linked transactions)',
       });
     }
 
-    // Hard delete if no transactions
+    // Hard delete — also clean up references
+    await ScheduledPayment.updateMany(
+      { userId: session.user.id, destinationInvestmentId: id },
+      { $set: { isActive: false } }
+    );
+
     const result = await Investment.findOneAndDelete({
       _id: id,
       userId: session.user.id,

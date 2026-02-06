@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import { createTransaction } from '@/services/transactionService';
 import { TransactionType, AccountType } from '@/types';
 import { z } from 'zod';
+import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
 
 const bulkTransactionSchema = z.object({
   transactions: z.array(z.object({
@@ -23,7 +24,7 @@ const bulkTransactionSchema = z.object({
     destinationCardId: z.string().optional(),
     destinationInvestmentId: z.string().optional(),
     tags: z.array(z.string()).optional(),
-  })),
+  })).max(200, 'Maximum 200 transactions per bulk request'),
 });
 
 export async function POST(request: NextRequest) {
@@ -37,7 +38,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { transactions } = bulkTransactionSchema.parse(body);
+    const parsed = bulkTransactionSchema.parse(body);
+    const sanitizedParsed = sanitizeTextFields(parsed as Record<string, unknown>);
+    const { transactions } = sanitizedParsed as typeof parsed;
 
     await connectToDatabase();
 
@@ -88,18 +91,6 @@ export async function POST(request: NextRequest) {
       message: `Created ${results.success.length} transactions, ${results.failed.length} failed`,
     });
   } catch (error) {
-    console.error('Error creating bulk transactions:', error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error.issues },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: 'Failed to create transactions' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to create transactions');
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ArrowRight, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,6 +46,8 @@ export function CurrencyConverter({
   const [amount, setAmount] = useState(defaultAmount.toString());
   const [convertedAmount, setConvertedAmount] = useState(0);
   const [rate, setRate] = useState(0);
+  const onConvertRef = useRef(onConvert);
+  onConvertRef.current = onConvert;
 
   useEffect(() => {
     const numAmount = parseFloat(amount) || 0;
@@ -55,14 +57,14 @@ export function CurrencyConverter({
     setConvertedAmount(converted);
     setRate(exchangeRate);
     
-    onConvert?.({
+    onConvertRef.current?.({
       fromAmount: numAmount,
       toAmount: converted,
       fromCurrency,
       toCurrency,
       rate: exchangeRate,
     });
-  }, [amount, fromCurrency, toCurrency, onConvert]);
+  }, [amount, fromCurrency, toCurrency]);
 
   const handleSwap = () => {
     const tempCurrency = fromCurrency;

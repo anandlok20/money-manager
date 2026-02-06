@@ -145,6 +145,10 @@ TransactionSchema.index({ userId: 1, type: 1, dateTime: -1, categoryId: 1 });
 TransactionSchema.index({ note: 'text', tags: 'text' });
 // Index for trip-based queries
 TransactionSchema.index({ userId: 1, tripId: 1, dateTime: -1 });
+// Indexes for account-specific queries (dashboard alerts, cascade lookups)
+TransactionSchema.index({ userId: 1, sourceBankId: 1 });
+TransactionSchema.index({ userId: 1, sourceCardId: 1 });
+TransactionSchema.index({ userId: 1, destinationInvestmentId: 1 });
 
 const Transaction: Model<ITransaction> = mongoose.models.Transaction || mongoose.model<ITransaction>('Transaction', TransactionSchema);
 

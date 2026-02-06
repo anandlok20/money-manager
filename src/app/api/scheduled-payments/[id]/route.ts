@@ -6,6 +6,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import ScheduledPayment from '@/lib/mongodb/models/ScheduledPayment';
 import { updateScheduledPaymentSchema } from '@/lib/validations/scheduled-payment';
 import { calculateNextRunDate } from '@/services/scheduledPaymentService';
+import { sanitizeTextFields, validateObjectId, handleApiError } from '@/lib/utils/api';
 
 export async function GET(
   request: NextRequest,
@@ -21,6 +22,9 @@ export async function GET(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     await connectToDatabase();
 
     const payment = await ScheduledPayment.findOne({
@@ -69,6 +73,9 @@ export async function PUT(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     const body = await request.json();
     
     // Convert startDate string to Date before validation
@@ -78,6 +85,7 @@ export async function PUT(
     };
     
     const validatedData = updateScheduledPaymentSchema.parse(dataToValidate);
+    const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
 
@@ -94,7 +102,7 @@ export async function PUT(
       );
     }
 
-    let updateData: Record<string, unknown> = { ...validatedData };
+    let updateData: Record<string, unknown> = { ...sanitizedData };
 
     // Recalculate nextRunDate if frequency or startDate changed
     if (
@@ -133,19 +141,7 @@ export async function PUT(
       message: 'Scheduled payment updated successfully',
     });
   } catch (error) {
-    console.error('Error updating scheduled payment:', error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error.issues.map((i: { message: string }) => i.message) },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: 'Failed to update scheduled payment' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to update scheduled payment');
   }
 }
 
@@ -163,7 +159,18 @@ export async function PATCH(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     const body = await request.json();
+
+    // Validate isActive is a boolean
+    if (typeof body.isActive !== 'boolean') {
+      return NextResponse.json(
+        { success: false, error: 'isActive must be a boolean' },
+        { status: 400 }
+      );
+    }
 
     await connectToDatabase();
 
@@ -216,6 +223,9 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     await connectToDatabase();
 
     // Soft delete - set isActive to false

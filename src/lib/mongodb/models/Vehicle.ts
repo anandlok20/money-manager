@@ -32,7 +32,7 @@ export interface IVehicleDocument {
   reminderDays: number;
 }
 
-export interface IVehicle {
+export interface IVehicle extends Omit<Document, 'model'> {
   _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   

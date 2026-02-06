@@ -6,6 +6,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import Member from '@/lib/mongodb/models/Member';
 import { memberSchema } from '@/lib/validations/member';
 import { membersCache, userCacheKey } from '@/lib/cache/lru-cache';
+import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -81,13 +82,14 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = memberSchema.parse(body);
+    const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
 
     // Convert null dateOfBirth to undefined for MongoDB
     const memberData = {
-      ...validatedData,
-      dateOfBirth: validatedData.dateOfBirth ?? undefined,
+      ...sanitizedData,
+      dateOfBirth: (sanitizedData as typeof validatedData).dateOfBirth ?? undefined,
       userId: session.user.id,
       isActive: true,
     };

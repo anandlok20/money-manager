@@ -34,12 +34,13 @@ export async function POST(request: NextRequest) {
 
     // Generate secure token
     const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    // Save token to database
+    // Save hashed token to database
     await PasswordResetToken.create({
       userId: user._id,
-      token,
+      token: tokenHash,
       expiresAt,
       used: false,
     });
@@ -76,8 +77,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'If an account exists with this email, you will receive reset instructions.',
-      // Include token in response for development (remove in production)
-      ...(process.env.NODE_ENV === 'development' && { devResetUrl: resetUrl }),
     });
   } catch (error) {
     console.error('Forgot password error:', error);

@@ -4,7 +4,9 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Card from '@/lib/mongodb/models/Card';
 import Transaction from '@/lib/mongodb/models/Transaction';
+import ScheduledPayment from '@/lib/mongodb/models/ScheduledPayment';
 import { updateCardSchema } from '@/lib/validations/account';
+import { sanitizeTextFields, validateObjectId, handleApiError } from '@/lib/utils/api';
 
 export async function GET(
   request: NextRequest,
@@ -20,6 +22,9 @@ export async function GET(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     await connectToDatabase();
 
     const card = await Card.findOne({
@@ -81,14 +86,18 @@ export async function PUT(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     const body = await request.json();
     const validatedData = updateCardSchema.parse(body);
+    const sanitizedData = sanitizeTextFields(validatedData as Record<string, unknown>);
 
     await connectToDatabase();
 
     const card = await Card.findOneAndUpdate(
       { _id: id, userId: session.user.id },
-      { $set: validatedData },
+      { $set: sanitizedData },
       { new: true }
     )
       .populate('linkedBankId', 'bankName accountHolderName')
@@ -108,19 +117,7 @@ export async function PUT(
       message: 'Card updated successfully',
     });
   } catch (error) {
-    console.error('Error updating card:', error);
-
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: 'Failed to update card' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to update card');
   }
 }
 
@@ -138,6 +135,9 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    const invalidId = validateObjectId(id);
+    if (invalidId) return invalidId;
+
     await connectToDatabase();
 
     // Check if there are any transactions linked to this card
@@ -153,13 +153,24 @@ export async function DELETE(
         { $set: { isActive: false } }
       );
 
+      // Deactivate linked scheduled payments
+      await ScheduledPayment.updateMany(
+        { userId: session.user.id, $or: [{ sourceCardId: id }, { destinationCardId: id }] },
+        { $set: { isActive: false } }
+      );
+
       return NextResponse.json({
         success: true,
         message: 'Card deactivated (has linked transactions)',
       });
     }
 
-    // Hard delete if no transactions
+    // Hard delete — also clean up references
+    await ScheduledPayment.updateMany(
+      { userId: session.user.id, $or: [{ sourceCardId: id }, { destinationCardId: id }] },
+      { $set: { isActive: false } }
+    );
+
     const result = await Card.findOneAndDelete({
       _id: id,
       userId: session.user.id,
