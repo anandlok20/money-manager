@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import BankAccount from '@/lib/mongodb/models/BankAccount';
@@ -30,7 +31,7 @@ export async function GET() {
 
     await connectToDatabase();
 
-    const userId = session.user.id;
+    const userId = new mongoose.Types.ObjectId(session.user.id);
     const now = new Date();
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);

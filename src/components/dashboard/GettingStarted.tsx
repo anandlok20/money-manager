@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import {
   Users,
   Building2,
   CreditCard,
-  Wallet,
   PiggyBank,
   Target,
   Tag,
@@ -15,6 +14,7 @@ import {
   ChevronRight,
   X,
   Rocket,
+  KeyRound,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,6 +59,15 @@ const setupSteps: SetupStep[] = [
     checkKey: 'hasCards',
   },
   {
+    id: 'sensitive-password',
+    title: 'Set Security Password',
+    description: 'Protect sensitive card info like CVV and PIN',
+    icon: <KeyRound className="h-5 w-5" />,
+    href: '/settings',
+    checkKey: 'hasSensitivePassword',
+    required: true,
+  },
+  {
     id: 'categories',
     title: 'Customize Categories',
     description: 'Set up income and expense categories',
@@ -88,6 +97,7 @@ interface SetupStatus {
   hasMembers: boolean;
   hasBankAccounts: boolean;
   hasCards: boolean;
+  hasSensitivePassword: boolean;
   hasCategories: boolean;
   hasInvestments: boolean;
   hasGoals: boolean;
@@ -95,15 +105,13 @@ interface SetupStatus {
 }
 
 export function GettingStarted() {
-  const [dismissed, setDismissed] = useState(false);
-
-  // Check if user has dismissed the getting started guide
-  useEffect(() => {
-    const isDismissed = localStorage.getItem('getting-started-dismissed');
-    if (isDismissed === 'true') {
-      setDismissed(true);
+  // Initialize dismissed from localStorage synchronously to avoid flash
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('getting-started-dismissed') === 'true';
     }
-  }, []);
+    return false;
+  });
 
   // Fetch setup status
   const { data: status, isLoading } = useQuery<SetupStatus>({
