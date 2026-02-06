@@ -6,6 +6,7 @@ import { Transaction, BankAccount } from '@/lib/mongodb/models';
 import Card from '@/lib/mongodb/models/Card';
 import { parse, isValid } from 'date-fns';
 import { TransactionType, AccountType } from '@/types';
+import { createTransaction } from '@/services/transactionService';
 
 interface ImportTransaction {
   date: string;
@@ -88,6 +89,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No transactions provided' }, { status: 400 });
     }
 
+    // Cap import batch size to prevent DoS
+    const MAX_IMPORT_BATCH = 500;
+    if (transactions.length > MAX_IMPORT_BATCH) {
+      return NextResponse.json(
+        { error: `Too many transactions. Maximum ${MAX_IMPORT_BATCH} per import.` },
+        { status: 400 }
+      );
+    }
+
     await connectToDatabase();
 
     // Verify account access
@@ -156,29 +166,47 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Create transaction
-        const transactionData: Record<string, unknown> = {
+        // Create transaction using service layer (handles balance updates atomically)
+        const baseParams = {
           userId: session.user.id,
           type: mapTransactionType(txn.type),
           amount: Math.abs(txn.amount),
           dateTime: parsedDate,
           note: txn.description,
-          categoryId: txn.categoryId || null,
-          reference: txn.reference,
-          narration: txn.narration,
-          importSource: txn.source || 'bank_statement_import',
+          categoryId: txn.categoryId || undefined,
+          sourceType: undefined as AccountType | undefined,
+          sourceBankId: undefined as string | undefined,
+          sourceCardId: undefined as string | undefined,
         };
 
-        // Set source account
-        if (bankAccountId) {
-          transactionData.sourceType = AccountType.BANK;
-          transactionData.sourceBankId = bankAccountId;
-        } else if (creditCardId) {
-          transactionData.sourceType = AccountType.CARD;
-          transactionData.sourceCardId = creditCardId;
+        // Set source account - verify ownership per transaction
+        if (txn.bankAccountId) {
+          const account = await BankAccount.findOne({
+            _id: txn.bankAccountId,
+            userId: session.user.id,
+          });
+          if (!account) {
+            skipped++;
+            errors.push(`Bank account not found for: ${txn.description}`);
+            continue;
+          }
+          baseParams.sourceType = AccountType.BANK;
+          baseParams.sourceBankId = txn.bankAccountId;
+        } else if (txn.creditCardId) {
+          const card = await Card.findOne({
+            _id: txn.creditCardId,
+            userId: session.user.id,
+          });
+          if (!card) {
+            skipped++;
+            errors.push(`Credit card not found for: ${txn.description}`);
+            continue;
+          }
+          baseParams.sourceType = AccountType.CARD;
+          baseParams.sourceCardId = txn.creditCardId;
         }
 
-        await Transaction.create(transactionData);
+        await createTransaction(baseParams);
         imported++;
       } catch (error) {
         console.error('Error importing transaction:', error);

@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import User from '@/lib/mongodb/models/User';
 import PasswordResetToken from '@/lib/mongodb/models/PasswordResetToken';
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password is too long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+});
 
 // GET - Validate token
 export async function GET(request: NextRequest) {
@@ -36,22 +48,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { token, password } = body;
-
-    if (!token || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Token and password are required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate password strength
-    if (password.length < 8) {
-      return NextResponse.json(
-        { success: false, error: 'Password must be at least 8 characters' },
-        { status: 400 }
-      );
-    }
+    const { token, password } = resetPasswordSchema.parse(body);
 
     await connectToDatabase();
 
@@ -85,10 +82,7 @@ export async function POST(request: NextRequest) {
     // Update user password
     await User.findByIdAndUpdate(user._id, { passwordHash });
 
-    // Mark token as used
-    await PasswordResetToken.findByIdAndUpdate(resetToken._id, { used: true });
-
-    // Delete all tokens for this user (cleanup)
+    // Delete all tokens for this user (cleanup — mark used + delete)
     await PasswordResetToken.deleteMany({ userId: user._id });
 
     return NextResponse.json({
@@ -96,6 +90,12 @@ export async function POST(request: NextRequest) {
       message: 'Password reset successfully',
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: error.issues[0]?.message || 'Validation failed' },
+        { status: 400 }
+      );
+    }
     console.error('Password reset error:', error);
     return NextResponse.json(
       { success: false, error: 'An error occurred. Please try again.' },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Member from '@/lib/mongodb/models/Member';
@@ -107,9 +108,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating member:', error);
 
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error },
+        { success: false, error: 'Validation failed', details: error.issues.map((i: { message: string }) => i.message) },
         { status: 400 }
       );
     }

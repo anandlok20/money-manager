@@ -31,13 +31,20 @@ const rateLimitedApiRoutes = [
 ];
 
 // Simple in-memory rate limiter for edge runtime
+// Note: This is per-instance on serverless — effective for burst protection
+// but not a distributed rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const MAX_MAP_SIZE = 10000; // Prevent unbounded memory growth
 
 function isRateLimited(ip: string, limit: number = 100, windowMs: number = 60000): boolean {
   const now = Date.now();
   const record = rateLimitMap.get(ip);
 
   if (!record || now > record.resetTime) {
+    // Evict old entries if map is too large
+    if (rateLimitMap.size >= MAX_MAP_SIZE) {
+      cleanupRateLimits();
+    }
     rateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
     return false;
   }
@@ -50,7 +57,7 @@ function isRateLimited(ip: string, limit: number = 100, windowMs: number = 60000
   return false;
 }
 
-// Clean up old rate limit entries periodically
+// Clean up old rate limit entries
 function cleanupRateLimits() {
   const now = Date.now();
   for (const [ip, record] of rateLimitMap.entries()) {
@@ -60,13 +67,33 @@ function cleanupRateLimits() {
   }
 }
 
+/** Apply security headers to any response */
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set(
+    'Strict-Transport-Security',
+    'max-age=63072000; includeSubDomains; preload'
+  );
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';"
+  );
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Get client IP for rate limiting
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? 
-             request.headers.get('x-real-ip') ?? 
-             'unknown';
+  // Get client IP for rate limiting — use the last IP in x-forwarded-for
+  // (the one set by the reverse proxy closest to us) to reduce spoofing
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  const ip = forwardedFor
+    ? forwardedFor.split(',').pop()?.trim() ?? 'unknown'
+    : request.headers.get('x-real-ip') ?? 'unknown';
 
   // Rate limit API routes
   if (pathname.startsWith('/api/')) {
@@ -75,16 +102,17 @@ export async function middleware(request: NextRequest) {
     const limit = isAuthRoute ? 10 : 100; // 10 requests per minute for auth, 100 for others
     
     if (isRateLimited(ip, limit)) {
-      return NextResponse.json(
+      const rateLimitResponse = NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429, headers: { 'Retry-After': '60' } }
       );
+      return applySecurityHeaders(rateLimitResponse);
     }
     
     // Clean up occasionally
     if (Math.random() < 0.01) cleanupRateLimits();
     
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   }
 
   // Check if the route is protected
@@ -113,16 +141,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Add security headers
-  const response = NextResponse.next();
-  
-  // Security headers
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  return response;
+  // Apply security headers to all responses
+  return applySecurityHeaders(NextResponse.next());
 }
 
 export const config = {

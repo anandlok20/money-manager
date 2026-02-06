@@ -1,6 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import User from '@/lib/mongodb/models/User';
 import Member from '@/lib/mongodb/models/Member';
@@ -109,11 +110,11 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-// Helper function to register a new user
+// Helper function to register a new user (atomic — all-or-nothing)
 export async function registerUser(name: string, email: string, password: string) {
   await connectToDatabase();
 
-  // Check if user already exists
+  // Check if user already exists (before starting transaction)
   const existingUser = await User.findOne({ email: email.toLowerCase() });
   if (existingUser) {
     throw new Error('User with this email already exists');
@@ -122,37 +123,59 @@ export async function registerUser(name: string, email: string, password: string
   // Hash password
   const passwordHash = await bcrypt.hash(password, 10);
 
-  // Create user
-  const user = await User.create({
-    email: email.toLowerCase(),
-    passwordHash,
-    name,
-    currency: process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || 'INR',
-    lockEnabled: false,
-  });
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  // Create default "Self" member
-  await Member.create({
-    userId: user._id,
-    name: name,
-    type: MemberType.SELF,
-    isActive: true,
-  });
+  try {
+    // Create user
+    const [user] = await User.create(
+      [
+        {
+          email: email.toLowerCase(),
+          passwordHash,
+          name,
+          currency: process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || 'INR',
+          lockEnabled: false,
+        },
+      ],
+      { session }
+    );
 
-  // Create default categories
-  const categoriesToCreate = defaultCategories.map((cat) => ({
-    ...cat,
-    userId: user._id,
-    isActive: true,
-  }));
-  await Category.insertMany(categoriesToCreate);
+    // Create default "Self" member
+    await Member.create(
+      [
+        {
+          userId: user._id,
+          name: name,
+          type: MemberType.SELF,
+          isActive: true,
+        },
+      ],
+      { session }
+    );
 
-  return {
-    id: user._id.toString(),
-    email: user.email,
-    name: user.name,
-    currency: user.currency,
-  };
+    // Create default categories
+    const categoriesToCreate = defaultCategories.map((cat) => ({
+      ...cat,
+      userId: user._id,
+      isActive: true,
+    }));
+    await Category.insertMany(categoriesToCreate, { session });
+
+    await session.commitTransaction();
+
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      currency: user.currency,
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 }
 
 export default authOptions;

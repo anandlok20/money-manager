@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Transaction from '@/lib/mongodb/models/Transaction';
 import { transactionSchema } from '@/lib/validations/transaction';
 import { deleteTransaction, updateTransaction } from '@/services/transactionService';
+import { sanitizeText, sanitizeStringArray } from '@/lib/utils/sanitize';
 
 export async function GET(
   request: NextRequest,
@@ -71,10 +73,17 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     
+    // Sanitize text inputs (same as POST handler)
+    const sanitizedBody = {
+      ...body,
+      note: body.note ? sanitizeText(body.note) : undefined,
+      tags: body.tags ? sanitizeStringArray(body.tags) : undefined,
+    };
+    
     // Convert dateTime string to Date before validation
     const dataToValidate = {
-      ...body,
-      dateTime: body.dateTime ? new Date(body.dateTime) : undefined,
+      ...sanitizedBody,
+      dateTime: sanitizedBody.dateTime ? new Date(sanitizedBody.dateTime) : undefined,
     };
     
     const validatedData = transactionSchema.parse(dataToValidate);
@@ -94,26 +103,33 @@ export async function PUT(
       .populate('destinationInvestmentId', 'name type')
       .lean();
 
+    if (!populatedTransaction) {
+      return NextResponse.json(
+        { success: false, error: 'Transaction not found after update' },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      data: { ...populatedTransaction, _id: populatedTransaction!._id.toString() },
+      data: { ...populatedTransaction, _id: populatedTransaction._id.toString() },
       message: 'Transaction updated successfully',
     });
   } catch (error) {
     console.error('Error updating transaction:', error);
+
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: 'Validation failed' },
+        { status: 400 }
+      );
+    }
 
     if (error instanceof Error) {
       if (error.message === 'Transaction not found') {
         return NextResponse.json(
           { success: false, error: error.message },
           { status: 404 }
-        );
-      }
-
-      if (error.name === 'ZodError') {
-        return NextResponse.json(
-          { success: false, error: 'Validation failed', details: error },
-          { status: 400 }
         );
       }
     }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Investment from '@/lib/mongodb/models/Investment';
@@ -103,9 +104,9 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating investment:', error);
 
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error },
+        { success: false, error: 'Validation failed', details: error.issues.map((i: { message: string }) => i.message) },
         { status: 400 }
       );
     }

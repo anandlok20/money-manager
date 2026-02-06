@@ -302,11 +302,16 @@ export function useSensitiveDataAccess() {
   const hasAccess = !!(accessToken && expiresAt && currentTime > 0 && currentTime < expiresAt);
 
   const grantAccess = (token: string) => {
-    // Token format: base64(userId:expiresAt)
+    // Token format: base64(userId:expiresAt:hmacSignature)
     try {
       const decoded = atob(token);
-      const [, expiry] = decoded.split(':');
-      const expiryTime = parseInt(expiry, 10);
+      const parts = decoded.split(':');
+      // expiresAt is the second part (index 1)
+      const expiryTime = parseInt(parts[1], 10);
+      if (isNaN(expiryTime)) {
+        toast.error('Invalid access token');
+        return;
+      }
       setAccessToken(token);
       setExpiresAt(expiryTime);
       // Schedule time update for next frame
