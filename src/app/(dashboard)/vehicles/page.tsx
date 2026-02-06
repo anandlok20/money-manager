@@ -41,7 +41,7 @@ import { formatCurrency } from '@/lib/utils/currency';
 
 interface Vehicle {
   _id: string;
-  type: 'car' | 'bike' | 'scooter' | 'auto' | 'truck' | 'bus' | 'other';
+  vehicleType: 'two_wheeler' | 'three_wheeler' | 'four_wheeler' | 'commercial' | 'heavy_vehicle';
   make: string;
   model: string;
   variant?: string;
@@ -100,13 +100,19 @@ async function fetchVehicles(): Promise<{ data: Vehicle[]; expiringDocuments: Ex
 }
 
 const vehicleTypeIcons: Record<string, React.ElementType> = {
-  car: Car,
-  bike: Gauge,
-  scooter: Gauge,
-  auto: Car,
-  truck: Car,
-  bus: Car,
-  other: Car,
+  two_wheeler: Gauge,
+  three_wheeler: Car,
+  four_wheeler: Car,
+  commercial: Car,
+  heavy_vehicle: Car,
+};
+
+const vehicleTypeLabels: Record<string, string> = {
+  two_wheeler: 'Two Wheeler',
+  three_wheeler: 'Three Wheeler',
+  four_wheeler: 'Four Wheeler',
+  commercial: 'Commercial',
+  heavy_vehicle: 'Heavy Vehicle',
 };
 
 const fuelTypeColors: Record<string, string> = {
@@ -299,7 +305,7 @@ export default function VehiclesPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {filteredVehicles.map((vehicle) => {
-            const VehicleIcon = vehicleTypeIcons[vehicle.type] || Car;
+            const VehicleIcon = vehicleTypeIcons[vehicle.vehicleType] || Car;
             const vehicleAlerts = expiringDocuments.filter(
               (d) => d.vehicleId === vehicle._id && d.daysRemaining <= 30
             );
