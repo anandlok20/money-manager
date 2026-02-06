@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -98,8 +98,8 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
     } : undefined,
   });
 
-  // Sync travelers state with form
-  useState(() => {
+  // Sync travelers state with form when trip loads
+  useEffect(() => {
     if (trip?.travelers) {
       // Handle both string and object travelers
       const travelerNames = trip.travelers.map((t: string | { name: string }) => 
@@ -107,7 +107,7 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
       );
       setTravelers(travelerNames);
     }
-  });
+  }, [trip?.travelers]);
 
   const mutation = useMutation({
     mutationFn: (data: FormInput) => updateTrip(id, { ...data, travelers }),
