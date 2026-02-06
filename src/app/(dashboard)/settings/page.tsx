@@ -19,6 +19,9 @@ import {
   BookOpen,
   ChevronRight,
   KeyRound,
+  Wand2,
+  Eye,
+  Check,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,8 +36,9 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supportedCurrencies } from '@/lib/utils/currency';
-import { useUIStore, colorThemes } from '@/stores/uiStore';
+import { useUIStore, colorThemes, appModes } from '@/stores/uiStore';
 import { CurrencyConverter } from '@/components/shared/CurrencyConverter';
 import { SetSensitivePasswordDialog, useSensitiveDataAccess } from '@/components/shared/SensitiveDataPassword';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +47,7 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
   const { isPasswordSet } = useSensitiveDataAccess();
-  const { currency, setCurrency, colorTheme, setColorTheme } = useUIStore();
+  const { currency, setCurrency, colorTheme, setColorTheme, appMode, setAppMode } = useUIStore();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCurrencyChange = async (newCurrency: string) => {
@@ -54,6 +58,14 @@ export default function SettingsPage() {
   const handleColorThemeChange = (newTheme: string) => {
     setColorTheme(newTheme);
     toast.success(`Theme changed to ${colorThemes.find(t => t.id === newTheme)?.name || 'Default'}`);
+  };
+
+  const handleModeChange = (modeId: string) => {
+    setAppMode(modeId);
+    const mode = appModes.find(m => m.id === modeId);
+    toast.success(`Mode changed to ${mode?.name || 'Default'}`, {
+      description: mode?.description,
+    });
   };
 
   const handleSignOut = async () => {
@@ -97,90 +109,100 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Appearance Section */}
-      <Card>
-        <CardHeader>
+      {/* Look & Feel Section */}
+      <Card className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
+        <CardHeader className="relative">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Palette className="h-5 w-5 text-primary" />
+              <Wand2 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-lg">Appearance</CardTitle>
-              <CardDescription className="text-xs">Customize how the app looks</CardDescription>
+              <CardTitle className="text-lg">Look &amp; Feel</CardTitle>
+              <CardDescription className="text-xs">Transform the entire app experience</CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Currency */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-muted/30">
-            <div className="space-y-0.5">
-              <Label className="font-medium">Currency</Label>
-              <p className="text-xs text-muted-foreground">
-                Set your default currency
-              </p>
-            </div>
-            <Select value={currency} onValueChange={handleCurrencyChange}>
-              <SelectTrigger className="w-full sm:w-[200px] rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl">
-                {supportedCurrencies.map((curr) => (
-                  <SelectItem key={curr.code} value={curr.code}>
-                    {curr.symbol} {curr.code} - {curr.name}
-                  </SelectItem>
+        <CardContent className="space-y-6 relative">
+          <Tabs defaultValue="modes" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 rounded-xl h-11">
+              <TabsTrigger value="modes" className="gap-2 rounded-lg text-xs sm:text-sm">
+                <Wand2 className="h-3.5 w-3.5" />
+                Modes
+              </TabsTrigger>
+              <TabsTrigger value="themes" className="gap-2 rounded-lg text-xs sm:text-sm">
+                <Sparkles className="h-3.5 w-3.5" />
+                Themes
+              </TabsTrigger>
+              <TabsTrigger value="display" className="gap-2 rounded-lg text-xs sm:text-sm">
+                <Eye className="h-3.5 w-3.5" />
+                Display
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Modes Tab */}
+            <TabsContent value="modes" className="mt-4 space-y-4">
+              <div>
+                <p className="text-sm font-medium">App Mode</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Each mode transforms fonts, colors, buttons, cards — the entire experience
+                </p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {appModes.map((mode) => (
+                  <button
+                    key={mode.id}
+                    onClick={() => handleModeChange(mode.id)}
+                    className={`group relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
+                      appMode === mode.id
+                        ? 'border-primary shadow-lg shadow-primary/25 scale-[1.02]'
+                        : 'border-border/50 hover:border-primary/40 hover:shadow-md hover:scale-[1.01]'
+                    }`}
+                  >
+                    {/* Preview gradient background */}
+                    <div
+                      className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity"
+                      style={{ background: mode.preview }}
+                    />
+                    {/* Active check */}
+                    {appMode === mode.id && (
+                      <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                    <span className="text-3xl relative z-10 group-hover:scale-110 transition-transform">{mode.emoji}</span>
+                    <span className="text-xs font-semibold relative z-10">{mode.name}</span>
+                    <span className="text-[10px] text-muted-foreground text-center leading-tight relative z-10 line-clamp-2">
+                      {mode.description}
+                    </span>
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+              {/* Active mode indicator */}
+              {appMode !== 'default' && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
+                  <Wand2 className="h-4 w-4 text-primary shrink-0" />
+                  <p className="text-xs text-primary">
+                    <span className="font-semibold">{appModes.find(m => m.id === appMode)?.name}</span> mode is active —{' '}
+                    <button onClick={() => handleModeChange('default')} className="underline hover:no-underline font-medium">
+                      Reset to Default
+                    </button>
+                  </p>
+                </div>
+              )}
+            </TabsContent>
 
-          <Separator />
-
-          {/* Theme & Color Theme Combined */}
-          <div className="space-y-4">
-            <div className="space-y-0.5">
-              <Label className="flex items-center gap-2 font-medium">
-                <Sparkles className="h-4 w-4 text-primary" />
-                Theme
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Choose your preferred appearance
-              </p>
-            </div>
-            
-            {/* Light/Dark/System Toggle */}
-            <div className="flex items-center gap-2 p-1 bg-muted/30 rounded-xl w-fit">
-              <Button
-                variant={theme === 'light' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTheme('light')}
-                className="gap-2 rounded-lg"
-              >
-                <Sun className="h-4 w-4" />
-                Light
-              </Button>
-              <Button
-                variant={theme === 'dark' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTheme('dark')}
-                className="gap-2 rounded-lg"
-              >
-                <Moon className="h-4 w-4" />
-                Dark
-              </Button>
-              <Button
-                variant={theme === 'system' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTheme('system')}
-                className="gap-2 rounded-lg"
-              >
-                <Monitor className="h-4 w-4" />
-                System
-              </Button>
-            </div>
-            
-            {/* Color Themes */}
-            <div className="pt-2">
-              <p className="text-xs text-muted-foreground mb-3 font-medium">Color Palette</p>
+            {/* Themes Tab */}
+            <TabsContent value="themes" className="mt-4 space-y-4">
+              <div>
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-primary" />
+                  Color Palette
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Pick a color theme — works with any mode
+                </p>
+              </div>
               <ScrollArea className="w-full whitespace-nowrap">
                 <div className="flex gap-3 pb-3">
                   {colorThemes.map((t) => (
@@ -200,8 +222,74 @@ export default function SettingsPage() {
                 </div>
                 <ScrollBar orientation="horizontal" />
               </ScrollArea>
-            </div>
-          </div>
+            </TabsContent>
+
+            {/* Display Tab */}
+            <TabsContent value="display" className="mt-4 space-y-5">
+              {/* Light/Dark/System */}
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium">Appearance</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Switch between light, dark, or system theme
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 p-1 bg-muted/30 rounded-xl w-fit">
+                  <Button
+                    variant={theme === 'light' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setTheme('light')}
+                    className="gap-2 rounded-lg"
+                  >
+                    <Sun className="h-4 w-4" />
+                    Light
+                  </Button>
+                  <Button
+                    variant={theme === 'dark' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setTheme('dark')}
+                    className="gap-2 rounded-lg"
+                  >
+                    <Moon className="h-4 w-4" />
+                    Dark
+                  </Button>
+                  <Button
+                    variant={theme === 'system' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setTheme('system')}
+                    className="gap-2 rounded-lg"
+                  >
+                    <Monitor className="h-4 w-4" />
+                    System
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Currency */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="space-y-0.5">
+                  <Label className="font-medium">Currency</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Set your default currency
+                  </p>
+                </div>
+                <Select value={currency} onValueChange={handleCurrencyChange}>
+                  <SelectTrigger className="w-full sm:w-[200px] rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {supportedCurrencies.map((curr) => (
+                      <SelectItem key={curr.code} value={curr.code}>
+                        {curr.symbol} {curr.code} - {curr.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
