@@ -115,6 +115,15 @@ const vehicleTypeLabels: Record<string, string> = {
   heavy_vehicle: 'Heavy Vehicle',
 };
 
+const fuelTypeLabels: Record<string, string> = {
+  petrol: 'Petrol',
+  diesel: 'Diesel',
+  cng: 'CNG',
+  lpg: 'LPG',
+  electric: 'Electric',
+  hybrid: 'Hybrid',
+};
+
 const fuelTypeColors: Record<string, string> = {
   petrol: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
   diesel: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
@@ -353,7 +362,7 @@ export default function VehiclesPage() {
                       <div>
                         <p className="text-muted-foreground">Fuel Type</p>
                         <Badge className={fuelTypeColors[vehicle.fuelType]}>
-                          {vehicle.fuelType}
+                          {fuelTypeLabels[vehicle.fuelType] || vehicle.fuelType}
                         </Badge>
                       </div>
                     </div>

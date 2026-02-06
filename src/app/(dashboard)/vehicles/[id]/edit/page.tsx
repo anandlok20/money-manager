@@ -266,13 +266,15 @@ export default function EditVehiclePage({ params }: { params: Promise<{ id: stri
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <Tabs defaultValue="basic" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="basic">Basic</TabsTrigger>
-              <TabsTrigger value="registration">Registration</TabsTrigger>
-              <TabsTrigger value="insurance">Insurance</TabsTrigger>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-              <TabsTrigger value="other">Other</TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto -mx-4 px-4 pb-2">
+              <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-5">
+                <TabsTrigger value="basic" className="flex-shrink-0 px-4">Basic</TabsTrigger>
+                <TabsTrigger value="registration" className="flex-shrink-0 px-4">Registration</TabsTrigger>
+                <TabsTrigger value="insurance" className="flex-shrink-0 px-4">Insurance</TabsTrigger>
+                <TabsTrigger value="documents" className="flex-shrink-0 px-4">Documents</TabsTrigger>
+                <TabsTrigger value="other" className="flex-shrink-0 px-4">Other</TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="basic">
               <Card>
