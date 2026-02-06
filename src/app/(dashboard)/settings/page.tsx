@@ -18,6 +18,7 @@ import {
   Sparkles,
   BookOpen,
   ChevronRight,
+  KeyRound,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,10 +36,13 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { supportedCurrencies } from '@/lib/utils/currency';
 import { useUIStore, colorThemes } from '@/stores/uiStore';
 import { CurrencyConverter } from '@/components/shared/CurrencyConverter';
+import { SetSensitivePasswordDialog, useSensitiveDataAccess } from '@/components/shared/SensitiveDataPassword';
+import { Badge } from '@/components/ui/badge';
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
+  const { isPasswordSet } = useSensitiveDataAccess();
   const { currency, setCurrency, colorTheme, setColorTheme } = useUIStore();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -215,6 +219,35 @@ export default function SettingsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Sensitive Data Password */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-muted/30">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Label className="font-medium flex items-center gap-2">
+                  <KeyRound className="h-4 w-4 text-primary" />
+                  Sensitive Data Password
+                </Label>
+                {isPasswordSet && (
+                  <Badge variant="secondary" className="text-xs">Active</Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Protect CVV, PIN, and other sensitive card information
+              </p>
+            </div>
+            <SetSensitivePasswordDialog 
+              isUpdate={isPasswordSet}
+              trigger={
+                <Button variant={isPasswordSet ? "outline" : "default"} size="sm" className="gap-2">
+                  <KeyRound className="h-4 w-4" />
+                  {isPasswordSet ? 'Change' : 'Set Password'}
+                </Button>
+              }
+            />
+          </div>
+
+          <Separator />
+
           <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
             <div className="space-y-0.5">
               <Label className="font-medium">App Lock</Label>

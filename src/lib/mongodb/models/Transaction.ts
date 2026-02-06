@@ -141,6 +141,10 @@ TransactionSchema.index({ userId: 1, categoryId: 1 });
 TransactionSchema.index({ userId: 1, memberId: 1 });
 // Optimized compound index for dashboard summary and budget queries
 TransactionSchema.index({ userId: 1, type: 1, dateTime: -1, categoryId: 1 });
+// Text index for search functionality
+TransactionSchema.index({ note: 'text', tags: 'text' });
+// Index for trip-based queries
+TransactionSchema.index({ userId: 1, tripId: 1, dateTime: -1 });
 
 const Transaction: Model<ITransaction> = mongoose.models.Transaction || mongoose.model<ITransaction>('Transaction', TransactionSchema);
 

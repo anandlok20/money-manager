@@ -8,6 +8,7 @@ import Card from '@/lib/mongodb/models/Card';
 import Category from '@/lib/mongodb/models/Category';
 import Investment from '@/lib/mongodb/models/Investment';
 import Goal from '@/lib/mongodb/models/Goal';
+import User from '@/lib/mongodb/models/User';
 
 export async function GET() {
   try {
@@ -32,6 +33,7 @@ export async function GET() {
       categoryCount,
       investmentCount,
       goalCount,
+      user,
     ] = await Promise.all([
       Member.countDocuments({ userId, isActive: true }),
       BankAccount.countDocuments({ userId, isActive: true }),
@@ -39,6 +41,7 @@ export async function GET() {
       Category.countDocuments({ userId, isActive: true }),
       Investment.countDocuments({ userId, isActive: true }),
       Goal.countDocuments({ userId, isActive: true }),
+      User.findById(userId).select('sensitiveDataPasswordHash').lean(),
     ]);
 
     return NextResponse.json({
@@ -47,6 +50,7 @@ export async function GET() {
         hasMembers: memberCount > 0,
         hasBankAccounts: bankAccountCount > 0,
         hasCards: cardCount > 0,
+        hasSensitivePassword: !!user?.sensitiveDataPasswordHash,
         hasCategories: categoryCount > 0,
         hasInvestments: investmentCount > 0,
         hasGoals: goalCount > 0,

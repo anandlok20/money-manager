@@ -9,12 +9,12 @@ export interface ICard extends Document {
   cardName: string;
   cardType: CardType;
   cardNetwork?: CardNetwork;
-  cardNumber?: string; // Stored encrypted/masked
+  cardNumber?: string; // Stored masked (e.g., **** **** **** 1234)
   last4Digits?: string;
   expiryMonth?: number;
   expiryYear?: number;
-  cvv?: string; // Stored encrypted
-  pin?: string; // Stored encrypted
+  cvv?: string; // Encrypted - only viewable with sensitive data password
+  pin?: string; // Encrypted - only viewable with sensitive data password
   billingCycleDay?: number;
   creditLimit?: number;
   currentBalance: number;
@@ -67,11 +67,11 @@ const CardSchema = new Schema<ICard>(
       type: Number,
     },
     cvv: {
-      type: String,
+      type: String, // Encrypted storage - requires sensitive data password to view
       trim: true,
     },
     pin: {
-      type: String,
+      type: String, // Encrypted storage - requires sensitive data password to view
       trim: true,
     },
     billingCycleDay: {

@@ -8,6 +8,7 @@ export interface IUser extends Document {
   currency: string;
   lockEnabled: boolean;
   pinHash?: string;
+  sensitiveDataPasswordHash?: string; // Password to view sensitive info like CVV/PIN
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +40,9 @@ const UserSchema = new Schema<IUser>(
       default: false,
     },
     pinHash: {
+      type: String,
+    },
+    sensitiveDataPasswordHash: {
       type: String,
     },
   },

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import BankAccount from '@/lib/mongodb/models/BankAccount';
@@ -155,17 +156,18 @@ export async function POST() {
 }
 
 async function calculateCurrentNetWorth(userId: string) {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
   const [bankTotal, cardTotal, investmentTotal] = await Promise.all([
     BankAccount.aggregate([
-      { $match: { userId: { $eq: userId }, isActive: true } },
+      { $match: { userId: { $eq: userObjectId }, isActive: true } },
       { $group: { _id: null, total: { $sum: '$currentBalance' } } },
     ]),
     Card.aggregate([
-      { $match: { userId: { $eq: userId }, isActive: true } },
+      { $match: { userId: { $eq: userObjectId }, isActive: true } },
       { $group: { _id: null, total: { $sum: '$currentBalance' } } },
     ]),
     Investment.aggregate([
-      { $match: { userId: { $eq: userId }, isActive: true } },
+      { $match: { userId: { $eq: userObjectId }, isActive: true } },
       { $group: { _id: null, total: { $sum: '$currentValue' } } },
     ]),
   ]);

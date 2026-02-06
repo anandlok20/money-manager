@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { CreditCard, Plus, MoreVertical, Edit, Trash2, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import { CreditCard, Plus, MoreVertical, Edit, Trash2, Copy, Check, Eye, EyeOff, Lock, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatCurrency } from '@/lib/utils/currency';
+import { SensitivePasswordDialog, SetSensitivePasswordDialog, useSensitiveDataAccess } from '@/components/shared/SensitiveDataPassword';
 
 interface CardAccount {
   _id: string;
@@ -94,6 +95,7 @@ export default function CardsPage() {
   const queryClient = useQueryClient();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, Record<string, boolean>>>({});
+  const { isPasswordSet, hasAccess, grantAccess, revokeAccess, expiresAt } = useSensitiveDataAccess();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['cards'],
@@ -124,6 +126,10 @@ export default function CardsPage() {
   };
 
   const toggleVisibility = (cardId: string, field: string) => {
+    if (!hasAccess) {
+      toast.error('Please unlock sensitive data first');
+      return;
+    }
     setVisibleSecrets(prev => ({
       ...prev,
       [cardId]: {
@@ -182,6 +188,54 @@ export default function CardsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Sensitive Data Access Banner */}
+      {data?.data.some(card => card.cvv || card.pin) && (
+        <Card className={hasAccess ? "border-green-500/30 bg-green-500/5" : "border-amber-500/30 bg-amber-500/5"}>
+          <CardContent className="py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-full ${hasAccess ? 'bg-green-500/10' : 'bg-amber-500/10'}`}>
+                  {hasAccess ? (
+                    <KeyRound className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  ) : (
+                    <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-medium text-sm">
+                    {hasAccess ? 'Sensitive Data Unlocked' : 'Sensitive Data Protected'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {hasAccess 
+                      ? `Access expires in ${Math.ceil((expiresAt! - Date.now()) / 60000)} minutes`
+                      : 'CVV and PIN are protected. Unlock to view.'}
+                  </p>
+                </div>
+              </div>
+              {isPasswordSet ? (
+                hasAccess ? (
+                  <Button variant="outline" size="sm" onClick={revokeAccess} className="gap-2">
+                    <Lock className="h-4 w-4" />
+                    Lock Now
+                  </Button>
+                ) : (
+                  <SensitivePasswordDialog onVerified={grantAccess} />
+                )
+              ) : (
+                <SetSensitivePasswordDialog 
+                  trigger={
+                    <Button variant="default" size="sm" className="gap-2">
+                      <KeyRound className="h-4 w-4" />
+                      Set Security Password
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Cards List */}
       {isLoading ? (
@@ -333,9 +387,11 @@ export default function CardsPage() {
                     {card.cvv && (
                       <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
                         <div>
-                          <p className="text-xs text-muted-foreground">CVV</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            CVV {!hasAccess && <Lock className="h-3 w-3" />}
+                          </p>
                           <p className="font-mono text-sm">
-                            {visibleSecrets[card._id]?.cvv ? card.cvv : '***'}
+                            {hasAccess && visibleSecrets[card._id]?.cvv ? card.cvv : '***'}
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
@@ -344,8 +400,9 @@ export default function CardsPage() {
                             size="icon"
                             className="h-6 w-6"
                             onClick={() => toggleVisibility(card._id, 'cvv')}
+                            disabled={!hasAccess}
                           >
-                            {visibleSecrets[card._id]?.cvv ? (
+                            {hasAccess && visibleSecrets[card._id]?.cvv ? (
                               <EyeOff className="h-3 w-3" />
                             ) : (
                               <Eye className="h-3 w-3" />
@@ -355,7 +412,8 @@ export default function CardsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6"
-                            onClick={() => copyToClipboard(card.cvv || '', `${card._id}-cvv`)}
+                            onClick={() => hasAccess && copyToClipboard(card.cvv || '', `${card._id}-cvv`)}
+                            disabled={!hasAccess}
                           >
                             {copiedField === `${card._id}-cvv` ? (
                               <Check className="h-3 w-3 text-green-500" />
@@ -372,9 +430,11 @@ export default function CardsPage() {
                   {card.pin && (
                     <div className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
                       <div>
-                        <p className="text-xs text-muted-foreground">ATM PIN</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          ATM PIN {!hasAccess && <Lock className="h-3 w-3" />}
+                        </p>
                         <p className="font-mono text-sm">
-                          {visibleSecrets[card._id]?.pin ? card.pin : '****'}
+                          {hasAccess && visibleSecrets[card._id]?.pin ? card.pin : '****'}
                         </p>
                       </div>
                       <div className="flex items-center gap-1">
@@ -383,8 +443,9 @@ export default function CardsPage() {
                           size="icon"
                           className="h-7 w-7"
                           onClick={() => toggleVisibility(card._id, 'pin')}
+                          disabled={!hasAccess}
                         >
-                          {visibleSecrets[card._id]?.pin ? (
+                          {hasAccess && visibleSecrets[card._id]?.pin ? (
                             <EyeOff className="h-3.5 w-3.5" />
                           ) : (
                             <Eye className="h-3.5 w-3.5" />
@@ -394,7 +455,8 @@ export default function CardsPage() {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
-                          onClick={() => copyToClipboard(card.pin || '', `${card._id}-pin`)}
+                          onClick={() => hasAccess && copyToClipboard(card.pin || '', `${card._id}-pin`)}
+                          disabled={!hasAccess}
                         >
                           {copiedField === `${card._id}-pin` ? (
                             <Check className="h-3.5 w-3.5 text-green-500" />
