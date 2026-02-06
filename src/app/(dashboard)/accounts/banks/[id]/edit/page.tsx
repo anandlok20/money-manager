@@ -115,7 +115,7 @@ export default function EditBankAccountPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/accounts/banks">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" aria-label="Go back to bank accounts">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>

@@ -494,7 +494,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild aria-label="Go back">
             <Link href="/trips">
               <ArrowLeft className="h-5 w-5" />
             </Link>
@@ -521,7 +521,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="icon">
+              <Button variant="destructive" size="icon" aria-label="Delete trip">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>

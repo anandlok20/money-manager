@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { env } from '@/lib/env';
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -17,12 +18,6 @@ if (!global.mongoose) {
 }
 
 export async function connectToDatabase(): Promise<typeof mongoose> {
-  const MONGODB_URI = process.env.MONGODB_URI;
-
-  if (!MONGODB_URI) {
-    throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
-  }
-
   if (cached.conn) {
     return cached.conn;
   }
@@ -40,7 +35,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
       connectTimeoutMS: 10000, // Connection timeout
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(env.MONGODB_URI, opts).then((mongoose) => {
       return mongoose;
     });
   }

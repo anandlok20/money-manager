@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import Transaction from '@/lib/mongodb/models/Transaction';
 import { transactionSchema, transactionFiltersSchema } from '@/lib/validations/transaction';
 import { createTransaction } from '@/services/transactionService';
+import { sanitizeText, sanitizeStringArray } from '@/lib/utils/sanitize';
 
 export async function GET(request: NextRequest) {
   try {
@@ -117,10 +118,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     
+    // Sanitize text inputs
+    const sanitizedBody = {
+      ...body,
+      note: body.note ? sanitizeText(body.note) : undefined,
+      tags: body.tags ? sanitizeStringArray(body.tags) : undefined,
+    };
+    
     // Convert dateTime string to Date before validation
     const dataToValidate = {
-      ...body,
-      dateTime: body.dateTime ? new Date(body.dateTime) : undefined,
+      ...sanitizedBody,
+      dateTime: sanitizedBody.dateTime ? new Date(sanitizedBody.dateTime) : undefined,
     };
     
     const validatedData = transactionSchema.parse(dataToValidate);

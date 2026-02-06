@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import { Wallet } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Sign In',
+  description: 'Sign in to your Family Expense Manager account',
+};
 
 export default function AuthLayout({
   children,
