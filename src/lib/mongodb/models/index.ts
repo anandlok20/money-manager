@@ -15,8 +15,10 @@ export { default as Asset } from './Asset';
 export { default as TaxProfile } from './TaxProfile';
 export { default as StoredDocument } from './StoredDocument';
 export { default as PasswordResetToken } from './PasswordResetToken';
+export { default as Subscription } from './Subscription';
+export { default as PricingConfig } from './PricingConfig';
 
-export type { IUser } from './User';
+export type { IUser, UserRole } from './User';
 export type { IMember } from './Member';
 export type { IBankAccount } from './BankAccount';
 export type { ICard } from './Card';
@@ -34,3 +36,5 @@ export type { IAsset } from './Asset';
 export type { ITaxProfile } from './TaxProfile';
 export type { IStoredDocument } from './StoredDocument';
 export type { IPasswordResetToken } from './PasswordResetToken';
+export type { ISubscription, IAddon, PlanType, SubscriptionStatus } from './Subscription';
+export type { IPricingConfig, IAddonDefinition, IPlanLimits } from './PricingConfig';

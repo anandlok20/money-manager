@@ -58,6 +58,8 @@ export interface User extends BaseDocument {
   email: string;
   name: string;
   currency: string;
+  role: 'user' | 'admin';
+  hasSelectedPlan: boolean;
   lockEnabled: boolean;
   pinHash?: string;
 }

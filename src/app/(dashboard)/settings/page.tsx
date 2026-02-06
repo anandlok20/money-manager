@@ -22,6 +22,12 @@ import {
   Wand2,
   Eye,
   Check,
+  Crown,
+  Zap,
+  Plus,
+  Minus,
+  Loader2,
+  Lock,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,6 +55,74 @@ export default function SettingsPage() {
   const { isPasswordSet } = useSensitiveDataAccess();
   const { currency, setCurrency, colorTheme, setColorTheme, appMode, setAppMode } = useUIStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [subscription, setSubscription] = useState<{
+    plan: string;
+    monthlyCost: number;
+    planCost: number;
+    addonCost: number;
+    activeAddons: { addonId: string; quantity: number }[];
+    addonDefinitions: { id: string; name: string; emoji: string; description: string; price: number; type: string; category: string }[];
+    limits: { banks: number; cards: number; goals: number; members: number };
+  } | null>(null);
+  const [subLoading, setSubLoading] = useState(true);
+  const [subActionLoading, setSubActionLoading] = useState<string | null>(null);
+
+  // Fetch subscription data
+  useState(() => {
+    fetch('/api/subscription')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setSubscription(data.data);
+      })
+      .catch(() => {})
+      .finally(() => setSubLoading(false));
+  });
+
+  const handleAddonToggle = async (addonId: string, isActive: boolean) => {
+    setSubActionLoading(addonId);
+    try {
+      const res = await fetch('/api/subscription', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: isActive ? 'remove-addon' : 'add-addon',
+          addonId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubscription(data.data);
+        toast.success(isActive ? 'Add-on removed' : 'Add-on activated');
+      }
+    } catch {
+      toast.error('Failed to update add-on');
+    } finally {
+      setSubActionLoading(null);
+    }
+  };
+
+  const handlePlanChange = async (newPlan: 'free' | 'premium') => {
+    setSubActionLoading('plan');
+    try {
+      const res = await fetch('/api/subscription', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: newPlan === 'premium' ? 'upgrade' : 'downgrade',
+          plan: newPlan,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubscription(data.data);
+        toast.success(newPlan === 'premium' ? 'Upgraded to Premium! 🎉' : 'Downgraded to Free');
+      }
+    } catch {
+      toast.error('Failed to change plan');
+    } finally {
+      setSubActionLoading(null);
+    }
+  };
 
   const handleCurrencyChange = async (newCurrency: string) => {
     setCurrency(newCurrency);
@@ -290,6 +364,159 @@ export default function SettingsPage() {
               </div>
             </TabsContent>
           </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Subscription & Billing */}
+      <Card className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-orange-500/5" />
+        <CardHeader className="relative">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+              <Crown className="h-5 w-5 text-amber-500" />
+            </div>
+            <div className="flex-1">
+              <CardTitle className="text-lg">Subscription & Billing</CardTitle>
+              <CardDescription className="text-xs">Manage your plan and add-ons</CardDescription>
+            </div>
+            {subscription && (
+              <Badge
+                variant={subscription.plan === 'premium' ? 'default' : 'outline'}
+                className={subscription.plan === 'premium' ? 'bg-amber-500/10 text-amber-600 border-amber-500/30' : ''}
+              >
+                {subscription.plan === 'premium' ? (
+                  <><Crown className="h-3 w-3 mr-1" /> Premium</>
+                ) : (
+                  <><Zap className="h-3 w-3 mr-1" /> Free</>
+                )}
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-5 relative">
+          {subLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : subscription ? (
+            <>
+              {/* Current Plan */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
+                <div>
+                  <p className="font-semibold">
+                    {subscription.plan === 'premium' ? 'Premium Plan' : 'Free Plan'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    ₹{subscription.monthlyCost}/month total
+                  </p>
+                </div>
+                {subscription.plan === 'free' ? (
+                  <Button
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => handlePlanChange('premium')}
+                    disabled={subActionLoading === 'plan'}
+                  >
+                    {subActionLoading === 'plan' ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Crown className="h-3 w-3" />
+                    )}
+                    Upgrade
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePlanChange('free')}
+                    disabled={subActionLoading === 'plan'}
+                  >
+                    {subActionLoading === 'plan' ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : null}
+                    Downgrade
+                  </Button>
+                )}
+              </div>
+
+              {/* Limits */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Banks', value: subscription.limits.banks },
+                  { label: 'Cards', value: subscription.limits.cards },
+                  { label: 'Goals', value: subscription.limits.goals },
+                  { label: 'Members', value: subscription.limits.members },
+                ].map((item) => (
+                  <div key={item.label} className="p-3 rounded-xl bg-muted/20 text-center">
+                    <p className="text-lg font-bold">{item.value}</p>
+                    <p className="text-xs text-muted-foreground">{item.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <Separator />
+
+              {/* Add-ons */}
+              <div>
+                <p className="text-sm font-medium mb-3">Add-ons</p>
+                <div className="space-y-2">
+                  {subscription.addonDefinitions?.map((addon) => {
+                    const activeAddon = subscription.activeAddons?.find(
+                      (a) => a.addonId === addon.id
+                    );
+                    const isActive = !!activeAddon;
+
+                    return (
+                      <div
+                        key={addon.id}
+                        className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-muted/20 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{addon.emoji}</span>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {addon.name}
+                              {isActive && activeAddon && activeAddon.quantity > 1 && (
+                                <Badge variant="secondary" className="ml-2 text-xs">
+                                  ×{activeAddon.quantity}
+                                </Badge>
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{addon.description}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">₹{addon.price}/mo</span>
+                          <Button
+                            variant={isActive ? 'destructive' : 'outline'}
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => handleAddonToggle(addon.id, isActive)}
+                            disabled={subActionLoading === addon.id}
+                          >
+                            {subActionLoading === addon.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : isActive ? (
+                              'Remove'
+                            ) : (
+                              'Add'
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-sm text-muted-foreground">No subscription data available</p>
+              <Button asChild size="sm" className="mt-3">
+                <Link href="/select-plan">Choose a Plan</Link>
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

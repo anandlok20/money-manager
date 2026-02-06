@@ -19,5 +19,10 @@ export default async function ProtectedLayout({
     redirect('/login');
   }
 
+  // Redirect to plan selection if user hasn't picked a plan yet
+  if (!session.user.hasSelectedPlan && session.user.role !== 'admin') {
+    redirect('/select-plan');
+  }
+
   return <DashboardLayout>{children}</DashboardLayout>;
 }
