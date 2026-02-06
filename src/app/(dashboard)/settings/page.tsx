@@ -61,7 +61,7 @@ export default function SettingsPage() {
     <div className="space-y-8 max-w-3xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground mt-1">
           Manage your account settings and preferences
         </p>
@@ -108,7 +108,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Currency */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl bg-muted/30">
             <div className="space-y-0.5">
               <Label className="font-medium">Currency</Label>
               <p className="text-xs text-muted-foreground">
@@ -116,7 +116,7 @@ export default function SettingsPage() {
               </p>
             </div>
             <Select value={currency} onValueChange={handleCurrencyChange}>
-              <SelectTrigger className="w-[200px] rounded-xl">
+              <SelectTrigger className="w-full sm:w-[200px] rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-xl">

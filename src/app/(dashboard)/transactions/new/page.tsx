@@ -291,12 +291,14 @@ function NewTransactionContent() {
 
       {/* Transaction Type Tabs */}
       <Tabs value={transactionType} onValueChange={handleTypeChange}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value={TransactionType.EXPENSE}>Expense</TabsTrigger>
-          <TabsTrigger value={TransactionType.INCOME}>Income</TabsTrigger>
-          <TabsTrigger value={TransactionType.TRANSFER_SELF}>Transfer</TabsTrigger>
-          <TabsTrigger value={TransactionType.INVESTMENT_CONTRIBUTION}>Invest</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 pb-2">
+          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4">
+            <TabsTrigger value={TransactionType.EXPENSE} className="flex-shrink-0 px-4">Expense</TabsTrigger>
+            <TabsTrigger value={TransactionType.INCOME} className="flex-shrink-0 px-4">Income</TabsTrigger>
+            <TabsTrigger value={TransactionType.TRANSFER_SELF} className="flex-shrink-0 px-4">Transfer</TabsTrigger>
+            <TabsTrigger value={TransactionType.INVESTMENT_CONTRIBUTION} className="flex-shrink-0 px-4">Invest</TabsTrigger>
+          </TabsList>
+        </div>
       </Tabs>
 
       {/* Form */}

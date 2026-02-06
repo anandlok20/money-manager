@@ -289,7 +289,7 @@ export default function TransactionsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Transactions</h1>
           <p className="text-muted-foreground mt-1">
             View and manage all your financial transactions
           </p>
@@ -350,7 +350,7 @@ export default function TransactionsPage() {
 
             {/* Quick Type Filter */}
             <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
-              <SelectTrigger className="w-[160px] h-11 rounded-xl border-border/50">
+              <SelectTrigger className="w-full sm:w-[160px] h-11 rounded-xl border-border/50">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
@@ -362,18 +362,19 @@ export default function TransactionsPage() {
             </Select>
 
             {/* Advanced Filters */}
-            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="gap-2 h-11 rounded-xl border-border/50">
-                  <Filter className="h-4 w-4" />
-                  Filters
-                  {hasActiveFilters && (
-                    <Badge variant="secondary" className="ml-1 rounded-full">
-                      Active
-                    </Badge>
-                  )}
-                </Button>
-              </SheetTrigger>
+            <div className="flex gap-2">
+              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="gap-2 h-11 flex-1 sm:flex-none rounded-xl border-border/50">
+                    <Filter className="h-4 w-4" />
+                    <span className="sm:inline">Filters</span>
+                    {hasActiveFilters && (
+                      <Badge variant="secondary" className="ml-1 rounded-full text-xs">
+                        Active
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
               <SheetContent className="rounded-l-2xl">
                 <SheetHeader>
                   <SheetTitle className="text-xl">Advanced Filters</SheetTitle>
@@ -503,6 +504,7 @@ export default function TransactionsPage() {
               </Button>
             )}
           </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -510,39 +512,51 @@ export default function TransactionsPage() {
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-2">
           {typeFilter !== 'ALL' && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1.5 py-1.5 px-3 text-sm">
               Type: {transactionTypeLabels[typeFilter as TransactionType]}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => setTypeFilter('ALL')} />
+              <button onClick={() => setTypeFilter('ALL')} className="p-0.5 hover:bg-muted rounded-full" aria-label="Clear type filter">
+                <X className="h-4 w-4" />
+              </button>
             </Badge>
           )}
           {categoryFilter !== 'ALL' && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1.5 py-1.5 px-3 text-sm">
               Category: {categories.find(c => c._id === categoryFilter)?.name}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => setCategoryFilter('ALL')} />
+              <button onClick={() => setCategoryFilter('ALL')} className="p-0.5 hover:bg-muted rounded-full" aria-label="Clear category filter">
+                <X className="h-4 w-4" />
+              </button>
             </Badge>
           )}
           {memberFilter !== 'ALL' && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1.5 py-1.5 px-3 text-sm">
               Member: {members.find(m => m._id === memberFilter)?.name}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => setMemberFilter('ALL')} />
+              <button onClick={() => setMemberFilter('ALL')} className="p-0.5 hover:bg-muted rounded-full" aria-label="Clear member filter">
+                <X className="h-4 w-4" />
+              </button>
             </Badge>
           )}
           {startDate && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1.5 py-1.5 px-3 text-sm">
               From: {format(startDate, 'MMM dd, yyyy')}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => setStartDate(undefined)} />
+              <button onClick={() => setStartDate(undefined)} className="p-0.5 hover:bg-muted rounded-full" aria-label="Clear start date">
+                <X className="h-4 w-4" />
+              </button>
             </Badge>
           )}
           {endDate && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1.5 py-1.5 px-3 text-sm">
               To: {format(endDate, 'MMM dd, yyyy')}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => setEndDate(undefined)} />
+              <button onClick={() => setEndDate(undefined)} className="p-0.5 hover:bg-muted rounded-full" aria-label="Clear end date">
+                <X className="h-4 w-4" />
+              </button>
             </Badge>
           )}
           {searchQuery && (
-            <Badge variant="secondary" className="gap-1">
+            <Badge variant="secondary" className="gap-1.5 py-1.5 px-3 text-sm">
               Search: {searchQuery}
-              <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchQuery('')} />
+              <button onClick={() => setSearchQuery('')} className="p-0.5 hover:bg-muted rounded-full" aria-label="Clear search">
+                <X className="h-4 w-4" />
+              </button>
             </Badge>
           )}
         </div>
