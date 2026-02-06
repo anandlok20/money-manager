@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import { Transaction, Category } from '@/lib/mongodb/models';
 import { parse } from 'date-fns';
+import { createTransaction } from '@/services/transactionService';
 
 interface PDFData {
   text: string;
@@ -1038,25 +1039,19 @@ export async function POST(request: Request) {
         }
       }
 
-      // Create transaction
+      // Create transaction using service layer (handles balance updates atomically)
       try {
-        const transactionData: Record<string, unknown> = {
+        await createTransaction({
           userId: session.user.id,
-          type: txn.type,
+          type: txn.type as Parameters<typeof createTransaction>[0]['type'],
           amount: txn.amount,
           dateTime: parsedDate,
           note: txn.description,
-          categoryId,
-          sourceType: accountType,
-        };
-
-        if (accountType === 'bank' && accountId) {
-          transactionData.sourceBankId = accountId;
-        } else if (accountType === 'card' && accountId) {
-          transactionData.sourceCardId = accountId;
-        }
-
-        await Transaction.create(transactionData);
+          categoryId: categoryId || undefined,
+          sourceType: accountType as Parameters<typeof createTransaction>[0]['sourceType'],
+          ...(accountType === 'bank' && accountId ? { sourceBankId: accountId } : {}),
+          ...(accountType === 'card' && accountId ? { sourceCardId: accountId } : {}),
+        });
 
         result.imported++;
         result.transactions.push({
@@ -1091,6 +1086,7 @@ export async function POST(request: Request) {
 
 // GET - Return supported bank formats
 export async function GET() {
+  // No auth required - this is a static list of supported formats
   return NextResponse.json({
     formats: [
       { id: 'generic', name: 'Auto Detect', description: 'Automatically detect bank statement format' },

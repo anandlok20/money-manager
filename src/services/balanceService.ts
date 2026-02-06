@@ -18,29 +18,41 @@ export async function updateAccountBalance({
   session,
 }: UpdateBalanceParams): Promise<void> {
   switch (accountType) {
-    case AccountType.BANK:
-      await BankAccount.findByIdAndUpdate(
+    case AccountType.BANK: {
+      const result = await BankAccount.findByIdAndUpdate(
         accountId,
         { $inc: { currentBalance: amount } },
-        { session }
+        { session, new: true }
       );
+      if (!result) {
+        throw new Error(`Bank account ${accountId} not found — balance update failed`);
+      }
       break;
+    }
 
-    case AccountType.CARD:
-      await Card.findByIdAndUpdate(
+    case AccountType.CARD: {
+      const result = await Card.findByIdAndUpdate(
         accountId,
         { $inc: { currentBalance: amount } },
-        { session }
+        { session, new: true }
       );
+      if (!result) {
+        throw new Error(`Card ${accountId} not found — balance update failed`);
+      }
       break;
+    }
 
-    case AccountType.INVESTMENT:
-      await Investment.findByIdAndUpdate(
+    case AccountType.INVESTMENT: {
+      const result = await Investment.findByIdAndUpdate(
         accountId,
         { $inc: { currentValue: amount } },
-        { session }
+        { session, new: true }
       );
+      if (!result) {
+        throw new Error(`Investment ${accountId} not found — balance update failed`);
+      }
       break;
+    }
 
     default:
       // CASH type - no account update needed

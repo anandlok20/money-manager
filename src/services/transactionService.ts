@@ -220,9 +220,9 @@ async function applyTransactionToBalances(
           params.sourceCardId
         );
         if (sourceAccountId) {
-          // For source card (paying from card), debt decreases
-          // For source bank, balance decreases
-          const sourceChange = sourceType === AccountType.CARD ? -amount : -amount;
+          // For source card (paying off card debt), card balance decreases
+          // For source bank, bank balance decreases
+          const sourceChange = -amount;
           await updateAccountBalance({
             accountType: sourceType,
             accountId: sourceAccountId,
@@ -341,9 +341,8 @@ async function reverseTransactionFromBalances(
           transaction.sourceCardId?.toString()
         );
         if (sourceAccountId) {
-          // For card source, debt was decreased, so increase it back
-          // For bank source, balance was decreased, so increase it back
-          const reverseSourceAmount = sourceType === AccountType.CARD ? amount : amount;
+          // Reverse: source was decreased, so increase it back
+          const reverseSourceAmount = amount;
           await updateAccountBalance({
             accountType: sourceType,
             accountId: sourceAccountId,

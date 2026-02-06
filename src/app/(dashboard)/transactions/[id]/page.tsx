@@ -10,6 +10,7 @@ import { ArrowLeft, Loader2, Trash2, Receipt } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { updateTransactionSchema, type UpdateTransactionInput } from '@/lib/validations/transaction';
+import { TransactionType, AccountType } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,14 +46,14 @@ import { DuplicateWarning } from '@/components/transactions/DuplicateWarning';
 
 interface Transaction {
   _id: string;
-  type: 'INCOME' | 'EXPENSE' | 'TRANSFER_SELF';
+  type: TransactionType;
   amount: number;
   note?: string;
   dateTime: string;
-  sourceType?: string;
+  sourceType?: AccountType;
   sourceBankId?: string;
   sourceCardId?: string;
-  destinationType?: string;
+  destinationType?: AccountType;
   destinationBankId?: string;
   destinationCardId?: string;
   destinationInvestmentId?: string;
@@ -205,21 +206,6 @@ export default function TransactionDetailPage() {
   });
   const userTags = userTagsData || [];
 
-  // Helper to map API type to form type
-  const mapTransactionType = (apiType: string): 'income' | 'expense' | 'transfer' => {
-    switch (apiType) {
-      case 'INCOME': return 'income';
-      case 'EXPENSE': return 'expense';
-      case 'TRANSFER_SELF': return 'transfer';
-      default: return 'expense';
-    }
-  };
-
-  // Get the source account ID from either bank or card
-  const getSourceAccountId = (txn: Transaction): string => {
-    return txn.sourceBankId || txn.sourceCardId || txn.destinationBankId || txn.destinationCardId || '';
-  };
-
   const {
     register,
     control,
@@ -229,23 +215,27 @@ export default function TransactionDetailPage() {
   } = useForm<UpdateTransactionInput>({
     resolver: zodResolver(updateTransactionSchema),
     values: transaction ? {
-      type: mapTransactionType(transaction.type),
+      type: transaction.type,
       amount: transaction.amount,
-      description: transaction.note || '',
-      date: new Date(transaction.dateTime),
-      sourceAccountId: getSourceAccountId(transaction),
-      destinationAccountId: transaction.destinationBankId || transaction.destinationCardId,
+      note: transaction.note || '',
+      dateTime: new Date(transaction.dateTime),
+      sourceType: transaction.sourceType,
+      sourceBankId: transaction.sourceBankId || undefined,
+      sourceCardId: transaction.sourceCardId || undefined,
+      destinationType: transaction.destinationType,
+      destinationBankId: transaction.destinationBankId || undefined,
+      destinationCardId: transaction.destinationCardId || undefined,
+      destinationInvestmentId: transaction.destinationInvestmentId || undefined,
       categoryId: transaction.categoryId,
       memberId: transaction.memberId,
-      notes: transaction.note,
     } : undefined,
   });
 
   const transactionType = watch('type');
   const watchAmount = watch('amount');
-  const watchDate = watch('date');
+  const watchDate = watch('dateTime');
   const watchCategoryId = watch('categoryId');
-  const watchNotes = watch('notes');
+  const watchNote = watch('note');
 
   const updateMutation = useMutation({
     mutationFn: (data: UpdateTransactionInput) => updateTransaction(id, { ...data, tags }),
@@ -295,7 +285,7 @@ export default function TransactionDetailPage() {
   ];
 
   const filteredCategories = categories.filter((c) => 
-    transactionType === 'transfer' ? false : c.type === transactionType
+    transactionType === TransactionType.TRANSFER_SELF ? false : c.type === transactionType
   );
 
   const getTypeBadgeVariant = (type: string) => {
@@ -338,7 +328,7 @@ export default function TransactionDetailPage() {
               <h1 className="text-2xl font-bold">Transaction Details</h1>
               {transaction && (
                 <Badge variant={getTypeBadgeVariant(transaction.type)}>
-                  {mapTransactionType(transaction.type).charAt(0).toUpperCase() + mapTransactionType(transaction.type).slice(1)}
+                  {transaction.type === 'INCOME' ? 'Income' : transaction.type === 'EXPENSE' ? 'Expense' : 'Transfer'}
                 </Badge>
               )}
             </div>
@@ -395,9 +385,9 @@ export default function TransactionDetailPage() {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="income">Income</SelectItem>
-                      <SelectItem value="expense">Expense</SelectItem>
-                      <SelectItem value="transfer">Transfer</SelectItem>
+                      <SelectItem value={TransactionType.INCOME}>Income</SelectItem>
+                      <SelectItem value={TransactionType.EXPENSE}>Expense</SelectItem>
+                      <SelectItem value={TransactionType.TRANSFER_SELF}>Transfer</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -408,14 +398,14 @@ export default function TransactionDetailPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description *</Label>
+              <Label htmlFor="note">Description *</Label>
               <Input
-                id="description"
+                id="note"
                 placeholder="e.g., Monthly salary"
-                {...register('description')}
+                {...register('note')}
               />
-              {errors.description && (
-                <p className="text-sm text-destructive">{errors.description.message}</p>
+              {errors.note && (
+                <p className="text-sm text-destructive">{errors.note.message}</p>
               )}
             </div>
 
@@ -437,7 +427,7 @@ export default function TransactionDetailPage() {
             <div className="space-y-2">
               <Label>Date *</Label>
               <Controller
-                name="date"
+                name="dateTime"
                 control={control}
                 render={({ field }) => (
                   <Popover>
@@ -450,13 +440,13 @@ export default function TransactionDetailPage() {
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? format(field.value, 'PPP') : 'Pick a date'}
+                        {field.value ? format(field.value as Date, 'PPP') : 'Pick a date'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={field.value}
+                        selected={field.value as Date | undefined}
                         onSelect={field.onChange}
                         initialFocus
                       />
@@ -464,20 +454,20 @@ export default function TransactionDetailPage() {
                   </Popover>
                 )}
               />
-              {errors.date && (
-                <p className="text-sm text-destructive">{errors.date.message}</p>
+              {errors.dateTime && (
+                <p className="text-sm text-destructive">{errors.dateTime.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sourceAccountId">
-                {transactionType === 'income' ? 'Deposit To' : 'From Account'} *
+              <Label htmlFor="sourceBankId">
+                {transactionType === TransactionType.INCOME ? 'Deposit To' : 'From Account'} *
               </Label>
               <Controller
-                name="sourceAccountId"
+                name="sourceBankId"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select account" />
                     </SelectTrigger>
@@ -491,16 +481,16 @@ export default function TransactionDetailPage() {
                   </Select>
                 )}
               />
-              {errors.sourceAccountId && (
-                <p className="text-sm text-destructive">{errors.sourceAccountId.message}</p>
+              {errors.sourceBankId && (
+                <p className="text-sm text-destructive">{errors.sourceBankId.message}</p>
               )}
             </div>
 
-            {transactionType === 'transfer' && (
+            {transactionType === TransactionType.TRANSFER_SELF && (
               <div className="space-y-2">
-                <Label htmlFor="destinationAccountId">To Account *</Label>
+                <Label htmlFor="destinationBankId">To Account *</Label>
                 <Controller
-                  name="destinationAccountId"
+                  name="destinationBankId"
                   control={control}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value || ''}>
@@ -517,13 +507,13 @@ export default function TransactionDetailPage() {
                     </Select>
                   )}
                 />
-                {errors.destinationAccountId && (
-                  <p className="text-sm text-destructive">{errors.destinationAccountId.message}</p>
+                {errors.destinationBankId && (
+                  <p className="text-sm text-destructive">{errors.destinationBankId.message}</p>
                 )}
               </div>
             )}
 
-            {transactionType !== 'transfer' && (
+            {transactionType !== TransactionType.TRANSFER_SELF && (
               <div className="space-y-2">
                 <Label htmlFor="categoryId">Category</Label>
                 <Controller
@@ -572,11 +562,11 @@ export default function TransactionDetailPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="note">Notes</Label>
               <Textarea
-                id="notes"
+                id="note"
                 placeholder="Add any additional notes..."
-                {...register('notes')}
+                {...register('note')}
               />
             </div>
 
@@ -603,7 +593,7 @@ export default function TransactionDetailPage() {
                 amount={watchAmount}
                 dateTime={watchDate}
                 categoryId={watchCategoryId || undefined}
-                note={watchNotes}
+                note={watchNote}
                 excludeId={transaction._id}
               />
             )}

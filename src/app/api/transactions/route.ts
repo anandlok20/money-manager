@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Transaction from '@/lib/mongodb/models/Transaction';
@@ -60,12 +61,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (filters.minAmount || filters.maxAmount) {
+    if (filters.minAmount != null || filters.maxAmount != null) {
       query.amount = {};
-      if (filters.minAmount) {
+      if (filters.minAmount != null) {
         (query.amount as Record<string, number>).$gte = filters.minAmount;
       }
-      if (filters.maxAmount) {
+      if (filters.maxAmount != null) {
         (query.amount as Record<string, number>).$lte = filters.maxAmount;
       }
     }
@@ -152,10 +153,17 @@ export async function POST(request: NextRequest) {
       .populate('tripId', 'name status')
       .lean();
 
+    if (!populatedTransaction) {
+      return NextResponse.json(
+        { success: false, error: 'Transaction created but could not be fetched' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
       {
         success: true,
-        data: { ...populatedTransaction, _id: populatedTransaction!._id.toString() },
+        data: { ...populatedTransaction, _id: populatedTransaction._id.toString() },
         message: 'Transaction created successfully',
       },
       { status: 201 }
@@ -163,9 +171,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating transaction:', error);
 
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Validation failed', details: error },
+        { success: false, error: 'Validation failed' },
         { status: 400 }
       );
     }

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { z } from 'zod';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import User from '@/lib/mongodb/models/User';
 
 const setPasswordSchema = z.object({
-  password: z.string().min(4, 'Password must be at least 4 characters').max(32),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(32),
 });
 
 const verifyPasswordSchema = z.object({
@@ -123,9 +124,18 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Generate a simple time-based token (valid for 5 minutes)
+    // Generate an HMAC-signed time-based token (valid for 5 minutes)
     const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
-    const token = Buffer.from(`${session.user.id}:${expiresAt}`).toString('base64');
+    const secret = process.env.NEXTAUTH_SECRET;
+    if (!secret) {
+      throw new Error('NEXTAUTH_SECRET is not configured');
+    }
+    const payload = `${session.user.id}:${expiresAt}`;
+    const signature = crypto
+      .createHmac('sha256', secret)
+      .update(payload)
+      .digest('hex');
+    const token = Buffer.from(`${payload}:${signature}`).toString('base64');
 
     return NextResponse.json({
       success: true,
