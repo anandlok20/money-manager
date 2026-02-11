@@ -137,6 +137,28 @@ export async function PATCH(request: NextRequest) {
         break;
       }
 
+      case 'update-addon-quantity': {
+        if (!addonId || typeof quantity !== 'number') {
+          return NextResponse.json(
+            { success: false, error: 'addonId and quantity are required' },
+            { status: 400 }
+          );
+        }
+        if (quantity <= 0) {
+          // Remove addon if quantity is 0 or less
+          await Subscription.findOneAndUpdate(
+            { userId },
+            { $pull: { addons: { addonId } } }
+          );
+        } else {
+          await Subscription.findOneAndUpdate(
+            { userId, 'addons.addonId': addonId },
+            { $set: { 'addons.$.quantity': quantity } }
+          );
+        }
+        break;
+      }
+
       default:
         return NextResponse.json(
           { success: false, error: 'Invalid action' },
