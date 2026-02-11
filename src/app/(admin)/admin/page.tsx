@@ -11,12 +11,15 @@ import {
   Settings,
   LogOut,
   Plus,
+  Minus,
   DollarSign,
   RefreshCw,
   Home,
   MoreVertical,
   UserCircle,
   ChevronRight,
+  Trash2,
+  Package,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -196,14 +199,58 @@ function UserCard({
           {(user.subscription?.addons?.length ?? 0) > 0 && (
             <div className="pb-4">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Active Add-ons</p>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="space-y-2">
                 {user.subscription!.addons.map((a) => {
                   const def = pricing?.addons.find((d) => d.id === a.addonId);
                   return (
-                    <Badge key={a.addonId} variant="secondary" className="text-xs gap-1">
-                      {def?.emoji || '📦'} {def?.name || a.addonId}
-                      {a.quantity > 1 && ` ×${a.quantity}`}
-                    </Badge>
+                    <div key={a.addonId} className="flex items-center justify-between p-2.5 rounded-xl bg-muted/30">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{def?.emoji || '📦'}</span>
+                        <div>
+                          <p className="text-sm font-medium">{def?.name || a.addonId}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {def?.type === 'stackable' ? `Qty: ${a.quantity}` : 'Feature'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {def?.type === 'stackable' && a.quantity > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-lg"
+                            onClick={() => {
+                              onAction(user._id, 'update-addon-quantity', { addonId: a.addonId, quantity: a.quantity - 1 });
+                            }}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                        )}
+                        {def?.type === 'stackable' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-lg"
+                            onClick={() => {
+                              onAction(user._id, 'update-addon-quantity', { addonId: a.addonId, quantity: a.quantity + 1 });
+                            }}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 rounded-lg text-destructive hover:text-destructive"
+                          onClick={() => {
+                            onAction(user._id, 'remove-addon', { addonId: a.addonId });
+                            setOpen(false);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -257,29 +304,36 @@ function UserCard({
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Add Add-on</p>
             <div className="grid grid-cols-2 gap-2">
               {pricing?.addons.map((addon) => {
-                const alreadyActive = user.subscription?.addons?.some((a) => a.addonId === addon.id);
+                const activeAddon = user.subscription?.addons?.find((a) => a.addonId === addon.id);
+                const isFeatureActive = addon.type === 'feature' && !!activeAddon;
                 return (
                   <button
                     key={addon.id}
                     className={cn(
                       'flex items-center gap-2 p-2.5 rounded-xl border text-left transition-colors text-xs',
-                      alreadyActive
-                        ? 'border-primary/30 bg-primary/5 opacity-60 cursor-default'
+                      isFeatureActive
+                        ? 'border-green-500/30 bg-green-500/5 opacity-60 cursor-default'
                         : 'border-border/50 active:bg-muted/60'
                     )}
                     onClick={() => {
-                      if (!alreadyActive) {
+                      if (!isFeatureActive) {
                         onAction(user._id, 'add-addon', { addonId: addon.id });
                         setOpen(false);
                       }
                     }}
-                    disabled={alreadyActive}
+                    disabled={isFeatureActive}
                   >
                     <span className="text-base">{addon.emoji}</span>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium truncate">{addon.name}</p>
-                      <p className="text-muted-foreground">₹{addon.price}/mo</p>
+                      <div className="flex items-center gap-1">
+                        <p className="text-muted-foreground">₹{addon.price}/mo</p>
+                        <Badge variant="outline" className="text-[8px] px-1 py-0 h-3.5">
+                          {addon.type === 'feature' ? 'Once' : 'Stack'}
+                        </Badge>
+                      </div>
                     </div>
+                    {isFeatureActive && <span className="text-[10px] text-green-600">✓</span>}
                   </button>
                 );
               })}
@@ -565,14 +619,20 @@ export default function AdminPage() {
                                 </Badge>
                               </td>
                               <td className="p-4">
-                                <div className="flex gap-1 flex-wrap max-w-[200px]">
+                                <div className="flex gap-1 flex-wrap max-w-[250px]">
                                   {user.subscription?.addons?.length ? (
                                     user.subscription.addons.map((a) => {
                                       const def = pricing?.addons.find((d) => d.id === a.addonId);
                                       return (
-                                        <Badge key={a.addonId} variant="outline" className="text-xs">
+                                        <Badge 
+                                          key={a.addonId} 
+                                          variant="outline" 
+                                          className="text-xs gap-1 pr-1 group hover:bg-destructive/10 hover:border-destructive/30 transition-colors cursor-pointer"
+                                          onClick={() => handleUserAction(user._id, 'remove-addon', { addonId: a.addonId })}
+                                        >
                                           {def?.emoji || ''} {def?.name || a.addonId}
                                           {a.quantity > 1 && ` x${a.quantity}`}
+                                          <Trash2 className="h-3 w-3 ml-0.5 opacity-0 group-hover:opacity-100 text-destructive transition-opacity" />
                                         </Badge>
                                       );
                                     })
@@ -615,14 +675,50 @@ export default function AdminPage() {
                                       <DropdownMenuSubTrigger>
                                         <Plus className="h-4 w-4 mr-2" /> Add Add-on
                                       </DropdownMenuSubTrigger>
-                                      <DropdownMenuSubContent>
-                                        {pricing?.addons.map((addon) => (
-                                          <DropdownMenuItem key={addon.id} onClick={() => handleUserAction(user._id, 'add-addon', { addonId: addon.id })}>
-                                            {addon.emoji} {addon.name}
-                                          </DropdownMenuItem>
-                                        ))}
+                                      <DropdownMenuSubContent className="w-56">
+                                        {pricing?.addons.map((addon) => {
+                                          const activeAddon = user.subscription?.addons?.find((a) => a.addonId === addon.id);
+                                          const isFeatureActive = addon.type === 'feature' && !!activeAddon;
+                                          return (
+                                            <DropdownMenuItem 
+                                              key={addon.id} 
+                                              onClick={() => !isFeatureActive && handleUserAction(user._id, 'add-addon', { addonId: addon.id })}
+                                              disabled={isFeatureActive}
+                                              className={isFeatureActive ? 'opacity-50' : ''}
+                                            >
+                                              <span className="mr-2">{addon.emoji}</span>
+                                              <span className="flex-1">{addon.name}</span>
+                                              <Badge variant="outline" className="text-[9px] ml-2 px-1 py-0 h-4">
+                                                {addon.type === 'feature' ? 'Once' : '+Stack'}
+                                              </Badge>
+                                              {isFeatureActive && <span className="text-green-600 ml-1">✓</span>}
+                                            </DropdownMenuItem>
+                                          );
+                                        })}
                                       </DropdownMenuSubContent>
                                     </DropdownMenuSub>
+                                    {(user.subscription?.addons?.length ?? 0) > 0 && (
+                                      <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger className="text-destructive focus:text-destructive">
+                                          <Trash2 className="h-4 w-4 mr-2" /> Remove Add-on
+                                        </DropdownMenuSubTrigger>
+                                        <DropdownMenuSubContent>
+                                          {user.subscription?.addons?.map((a) => {
+                                            const def = pricing?.addons.find((d) => d.id === a.addonId);
+                                            return (
+                                              <DropdownMenuItem 
+                                                key={a.addonId} 
+                                                onClick={() => handleUserAction(user._id, 'remove-addon', { addonId: a.addonId })}
+                                                className="text-destructive focus:text-destructive"
+                                              >
+                                                {def?.emoji} {def?.name || a.addonId}
+                                                {a.quantity > 1 && ` (x${a.quantity})`}
+                                              </DropdownMenuItem>
+                                            );
+                                          })}
+                                        </DropdownMenuSubContent>
+                                      </DropdownMenuSub>
+                                    )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </td>
@@ -725,24 +821,65 @@ export default function AdminPage() {
                 {/* Add-ons Catalog */}
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Add-on Catalog</CardTitle>
-                    <CardDescription className="text-xs">{pricing.addons.length} add-ons configured</CardDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Package className="h-4 w-4" /> Add-on Catalog
+                        </CardTitle>
+                        <CardDescription className="text-xs">{pricing.addons.length} add-ons configured</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
                       {pricing.addons.map((addon) => (
-                        <div key={addon.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                        <div key={addon.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
                           <span className="text-xl shrink-0">{addon.emoji}</span>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{addon.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-sm truncate">{addon.name}</p>
+                              <Badge 
+                                variant={addon.type === 'feature' ? 'default' : 'secondary'} 
+                                className={cn(
+                                  'text-[9px] px-1.5 py-0 h-4',
+                                  addon.type === 'feature' 
+                                    ? 'bg-blue-500/10 text-blue-600 border-blue-500/30' 
+                                    : 'bg-purple-500/10 text-purple-600 border-purple-500/30'
+                                )}
+                              >
+                                {addon.type === 'feature' ? '🔒 Once' : '📦 Stackable'}
+                              </Badge>
+                            </div>
                             <p className="text-xs text-muted-foreground truncate">{addon.description}</p>
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Badge variant="outline" className="text-[10px] hidden sm:inline-flex">{addon.type}</Badge>
-                            <span className="font-semibold text-sm whitespace-nowrap">₹{addon.price}</span>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <Badge variant="outline" className="text-[10px] hidden sm:inline-flex">{addon.category}</Badge>
+                            <span className="font-semibold text-sm whitespace-nowrap">₹{addon.price}/mo</span>
                           </div>
                         </div>
                       ))}
+                      {pricing.addons.length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                          <p className="text-sm">No add-ons configured</p>
+                          <p className="text-xs">Add-ons are managed in the database</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Legend */}
+                    <div className="mt-4 pt-3 border-t border-border/50">
+                      <p className="text-xs text-muted-foreground mb-2">Add-on Types:</p>
+                      <div className="flex flex-wrap gap-3 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-[9px] px-1.5">🔒 Once</Badge>
+                          <span className="text-muted-foreground">Can only be added once per user</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/30 text-[9px] px-1.5">📦 Stackable</Badge>
+                          <span className="text-muted-foreground">Can add multiple quantities</span>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
