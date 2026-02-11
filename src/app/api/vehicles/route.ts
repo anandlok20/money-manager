@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Vehicle, { VehicleType, FuelType, VehicleStatus } from '@/lib/mongodb/models/Vehicle';
 import { z } from 'zod';
+import { checkFeatureAccess } from '@/lib/utils/apiFeatureGate';
 
 const vehicleSchema = z.object({
   vehicleType: z.nativeEnum(VehicleType),
@@ -70,6 +71,10 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'vehicles');
+    if (featureBlock) return featureBlock;
 
     await connectToDatabase();
 
@@ -192,6 +197,10 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'vehicles');
+    if (featureBlock) return featureBlock;
 
     const body = await request.json();
     const validatedData = vehicleSchema.parse(body);

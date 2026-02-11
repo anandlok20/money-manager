@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import StoredDocument, { DocumentType } from '@/lib/mongodb/models/StoredDocument';
 import { z } from 'zod';
+import { checkFeatureAccess } from '@/lib/utils/apiFeatureGate';
 
 const documentSchema = z.object({
   type: z.nativeEnum(DocumentType),
@@ -30,6 +31,10 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'documents');
+    if (featureBlock) return featureBlock;
 
     await connectToDatabase();
 
@@ -80,6 +85,10 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'documents');
+    if (featureBlock) return featureBlock;
 
     const body = await request.json();
     const validatedData = documentSchema.parse(body);

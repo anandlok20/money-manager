@@ -6,6 +6,7 @@ import Trip, { TripStatus } from '@/lib/mongodb/models/Trip';
 import Transaction from '@/lib/mongodb/models/Transaction';
 import { TransactionType } from '@/types';
 import { z } from 'zod';
+import { checkFeatureAccess } from '@/lib/utils/apiFeatureGate';
 
 // Traveler can be either a string (just name) or a full object
 const travelerSchema = z.union([
@@ -102,6 +103,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'trips');
+    if (featureBlock) return featureBlock;
+
     await connectToDatabase();
 
     const { searchParams } = new URL(request.url);
@@ -196,6 +201,10 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'trips');
+    if (featureBlock) return featureBlock;
 
     const body = await request.json();
     const validatedData = tripSchema.parse(body);

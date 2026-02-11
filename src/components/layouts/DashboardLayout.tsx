@@ -36,7 +36,6 @@ import {
   Bell,
   Search,
   ChevronLeft,
-  Lock,
   Crown,
   Shield,
 } from 'lucide-react';
@@ -193,6 +192,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <ul className="space-y-1">
           {navigation.map((item) => {
             const Icon = item.icon;
+
+            // Hide locked/gated features entirely — only show after purchase
+            if (item.gatedFeature && !canAccessFeature(item.gatedFeature)) {
+              return null;
+            }
+
             if (item.children && !collapsed) {
               const isExpanded = expandedMenus[item.name];
               return (
@@ -265,8 +270,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     isActive(item.href)
                       ? 'bg-primary/10 text-primary shadow-sm'
                       : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-                    collapsed && 'justify-center px-2',
-                    item.gatedFeature && !canAccessFeature(item.gatedFeature) && 'opacity-60'
+                    collapsed && 'justify-center px-2'
                   )}
                 >
                   <div className={cn(
@@ -278,9 +282,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   {!collapsed && (
                     <span className="flex items-center gap-2 flex-1">
                       {item.name}
-                      {item.gatedFeature && !canAccessFeature(item.gatedFeature) && (
-                        <Lock className="h-3 w-3 text-muted-foreground ml-auto" />
-                      )}
                     </span>
                   )}
                 </Link>

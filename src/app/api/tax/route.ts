@@ -6,6 +6,7 @@ import TaxProfile, { TaxRegime, TaxStatus, ResidentialStatus } from '@/lib/mongo
 import Transaction from '@/lib/mongodb/models/Transaction';
 import { TransactionType } from '@/types';
 import { z } from 'zod';
+import { checkFeatureAccess } from '@/lib/utils/apiFeatureGate';
 
 const taxProfileSchema = z.object({
   financialYear: z.string().regex(/^\d{4}-\d{2}$/),
@@ -86,6 +87,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'tax');
+    if (featureBlock) return featureBlock;
+
     await connectToDatabase();
 
     const { searchParams } = new URL(request.url);
@@ -122,6 +127,10 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'tax');
+    if (featureBlock) return featureBlock;
 
     const body = await request.json();
     const validatedData = taxProfileSchema.parse(body);

@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Investment from '@/lib/mongodb/models/Investment';
 import { investmentSchema } from '@/lib/validations/investment';
+import { checkFeatureAccess } from '@/lib/utils/apiFeatureGate';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,6 +16,10 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'investments');
+    if (featureBlock) return featureBlock;
 
     await connectToDatabase();
 
@@ -63,6 +68,10 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'investments');
+    if (featureBlock) return featureBlock;
 
     const body = await request.json();
     const validatedData = investmentSchema.parse(body);

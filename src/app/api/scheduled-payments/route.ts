@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import ScheduledPayment from '@/lib/mongodb/models/ScheduledPayment';
 import { scheduledPaymentSchema } from '@/lib/validations/scheduled-payment';
+import { checkFeatureAccess } from '@/lib/utils/apiFeatureGate';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,6 +16,10 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'scheduled-payments');
+    if (featureBlock) return featureBlock;
 
     await connectToDatabase();
 
@@ -59,9 +64,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check feature access
+    const featureBlock = await checkFeatureAccess(session.user.id, 'scheduled-payments');
+    if (featureBlock) return featureBlock;
+
     const body = await request.json();
-    
-    // Convert startDate string to Date before validation
     const dataToValidate = {
       ...body,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
