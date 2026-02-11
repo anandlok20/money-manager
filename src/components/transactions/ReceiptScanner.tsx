@@ -83,9 +83,10 @@ export default function ReceiptScanner({ bankAccounts, cards, categories }: Prop
 
   // Cleanup camera stream on unmount
   useEffect(() => {
+    const videoElement = videoRef.current;
     return () => {
-      if (videoRef.current?.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      if (videoElement?.srcObject) {
+        const tracks = (videoElement.srcObject as MediaStream).getTracks();
         tracks.forEach((track) => track.stop());
       }
     };

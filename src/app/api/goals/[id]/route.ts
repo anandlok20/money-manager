@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Goal, { GoalStatus } from '@/lib/mongodb/models/Goal';
 import { goalUpdateSchema, goalContributionSchema } from '@/lib/validations/goal';
-import { sanitizeTextFields, validateObjectId, handleApiError } from '@/lib/utils/api';
+import { sanitizeTextFields, validateObjectId } from '@/lib/utils/api';
 
 export async function GET(
   request: NextRequest,

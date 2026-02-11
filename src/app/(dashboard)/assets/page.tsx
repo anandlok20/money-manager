@@ -11,10 +11,8 @@ import {
   Shield,
   Wallet,
   Plus,
-  Filter,
   TrendingUp,
   TrendingDown,
-  IndianRupee,
   Calendar,
   Percent,
   PiggyBank,
@@ -26,14 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatCurrency } from '@/lib/utils/currency';
 

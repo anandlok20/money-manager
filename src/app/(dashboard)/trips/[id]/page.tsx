@@ -309,7 +309,8 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
         tripId: id,
       });
     } catch {
-      // Silently fail - the item is still added, just no transaction created
+      // Notify user that expense tracking failed but item was still added
+      toast.error('Item added but expense tracking failed. You can add the expense manually.');
       console.error('Failed to create transaction for trip expense');
     }
   };

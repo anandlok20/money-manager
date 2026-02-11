@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect } from 'react';
+import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -113,13 +113,16 @@ export default function EditDocumentPage({ params }: { params: Promise<{ id: str
   const { id } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
 
   const { data: doc, isLoading } = useQuery({
     queryKey: ['document', id],
     queryFn: () => fetchDocument(id),
   });
+
+  // Derive initial tags - use doc.tags if tags is empty and doc is loaded
+  const effectiveTags: string[] = tags.length === 0 && doc?.tags ? doc.tags : tags;
 
   const form = useForm<DocumentFormValues>({
     resolver: zodResolver(documentSchema),
@@ -135,28 +138,22 @@ export default function EditDocumentPage({ params }: { params: Promise<{ id: str
       reminderDays: 30,
       isActive: true,
     },
+    values: doc ? {
+      type: doc.type,
+      name: doc.name,
+      documentNumber: doc.documentNumber || '',
+      issuedBy: doc.issuedBy || '',
+      issuedTo: doc.issuedTo || '',
+      issueDate: formatDateForInput(doc.issueDate),
+      expiryDate: formatDateForInput(doc.expiryDate),
+      notes: doc.notes || '',
+      reminderDays: doc.reminderDays || 30,
+      isActive: doc.isActive,
+    } : undefined,
   });
 
-  useEffect(() => {
-    if (doc) {
-      form.reset({
-        type: doc.type,
-        name: doc.name,
-        documentNumber: doc.documentNumber || '',
-        issuedBy: doc.issuedBy || '',
-        issuedTo: doc.issuedTo || '',
-        issueDate: formatDateForInput(doc.issueDate),
-        expiryDate: formatDateForInput(doc.expiryDate),
-        notes: doc.notes || '',
-        reminderDays: doc.reminderDays || 30,
-        isActive: doc.isActive,
-      });
-      setTags(doc.tags || []);
-    }
-  }, [doc, form]);
-
   const mutation = useMutation({
-    mutationFn: (data: DocumentFormValues) => updateDocument(id, { ...data, tags }),
+    mutationFn: (data: DocumentFormValues) => updateDocument(id, { ...data, tags: effectiveTags }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['document', id] });
@@ -170,14 +167,14 @@ export default function EditDocumentPage({ params }: { params: Promise<{ id: str
 
   const handleAddTag = () => {
     const trimmedTag = newTag.trim();
-    if (trimmedTag && !tags.includes(trimmedTag)) {
-      setTags([...tags, trimmedTag]);
+    if (trimmedTag && !effectiveTags.includes(trimmedTag)) {
+      setTags([...effectiveTags, trimmedTag]);
       setNewTag('');
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
+    setTags(effectiveTags.filter((tag) => tag !== tagToRemove));
   };
 
   const onSubmit = (data: DocumentFormValues) => {
@@ -421,9 +418,9 @@ export default function EditDocumentPage({ params }: { params: Promise<{ id: str
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              {tags.length > 0 && (
+              {effectiveTags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
+                  {effectiveTags.map((tag) => (
                     <Badge key={tag} variant="secondary" className="gap-1">
                       {tag}
                       <button

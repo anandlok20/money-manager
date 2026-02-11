@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { ArrowLeft, Car, IndianRupee, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, IndianRupee, Upload, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -625,7 +624,7 @@ export default function NewVehiclePage() {
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
-                        <FormDescription>You'll be reminded before expiry</FormDescription>
+                        <FormDescription>You&apos;ll be reminded before expiry</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

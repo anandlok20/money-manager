@@ -182,8 +182,6 @@ export default function SelectPlanPage() {
     );
   }
 
-  const limits = selectedPlan === 'premium' ? pricing?.premiumLimits : pricing?.freeLimits;
-
   return (
     <div className="max-w-4xl mx-auto space-y-8 py-4">
       {/* Header */}

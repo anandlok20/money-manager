@@ -3,7 +3,7 @@
  * Tests for the caching layer
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import LRUCache, { 
   categoriesCache, 
   membersCache, 

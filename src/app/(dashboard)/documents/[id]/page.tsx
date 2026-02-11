@@ -4,7 +4,7 @@ import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { format, differenceInDays, isPast, isFuture } from 'date-fns';
+import { format, differenceInDays, isPast } from 'date-fns';
 import Link from 'next/link';
 import {
   ArrowLeft,

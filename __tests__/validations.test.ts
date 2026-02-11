@@ -22,7 +22,7 @@ import {
   bankAccountSchema, 
   cardSchema 
 } from '@/lib/validations/account';
-import { TransactionType, AccountType, MemberType, InvestmentType, CategoryType } from '@/types';
+import { TransactionType, MemberType, InvestmentType, CategoryType } from '@/types';
 
 describe('Member Validation Schema', () => {
   describe('memberSchema', () => {

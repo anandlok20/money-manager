@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { z } from 'zod';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import ScheduledPayment from '@/lib/mongodb/models/ScheduledPayment';
@@ -102,7 +101,7 @@ export async function PUT(
       );
     }
 
-    let updateData: Record<string, unknown> = { ...sanitizedData };
+    const updateData: Record<string, unknown> = { ...sanitizedData };
 
     // Recalculate nextRunDate if frequency or startDate changed
     if (

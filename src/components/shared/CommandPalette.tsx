@@ -4,9 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
-  Wallet,
   ArrowLeftRight,
-  TrendingUp,
   Users,
   Settings,
   Plus,
@@ -21,11 +19,9 @@ import {
   CalendarClock,
   Building2,
   CreditCard,
-  Search,
   Shield,
 } from 'lucide-react';
 import {
-  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,

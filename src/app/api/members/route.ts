@@ -6,7 +6,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import Member from '@/lib/mongodb/models/Member';
 import { memberSchema } from '@/lib/validations/member';
 import { membersCache, userCacheKey } from '@/lib/cache/lru-cache';
-import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
+import { sanitizeTextFields } from '@/lib/utils/api';
 import { canCreateResource } from '@/lib/utils/subscription';
 
 export async function GET(request: NextRequest) {

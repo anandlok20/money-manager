@@ -13,22 +13,17 @@ import {
   FileText,
   BarChart3,
   Settings,
-  LogOut,
   ChevronRight,
   Lightbulb,
   CheckCircle2,
   AlertCircle,
-  Smartphone,
-  Upload,
   Plane,
   Car,
-  Shield,
   Calculator,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useSubscription } from '@/hooks/useSubscription';
 
