@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface SetupStep {
   id: string;
@@ -29,6 +30,7 @@ interface SetupStep {
   href: string;
   checkKey: string;
   required?: boolean;
+  gatedFeature?: string;
 }
 
 const setupSteps: SetupStep[] = [
@@ -82,6 +84,7 @@ const setupSteps: SetupStep[] = [
     icon: <PiggyBank className="h-5 w-5" />,
     href: '/investments/new',
     checkKey: 'hasInvestments',
+    gatedFeature: 'investments',
   },
   {
     id: 'goals',
@@ -105,6 +108,8 @@ interface SetupStatus {
 }
 
 export function GettingStarted() {
+  const { canAccessFeature } = useSubscription();
+
   // Initialize dismissed from localStorage synchronously to avoid flash
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -139,11 +144,16 @@ export function GettingStarted() {
 
   if (isSetupComplete) return null;
 
+  // Filter out gated features the user doesn't have access to
+  const visibleSteps = setupSteps.filter(
+    (step) => !step.gatedFeature || canAccessFeature(step.gatedFeature)
+  );
+
   // Calculate progress
-  const completedSteps = setupSteps.filter(
+  const completedSteps = visibleSteps.filter(
     (step) => status?.[step.checkKey as keyof SetupStatus]
   ).length;
-  const progress = (completedSteps / setupSteps.length) * 100;
+  const progress = (completedSteps / visibleSteps.length) * 100;
 
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
@@ -172,14 +182,14 @@ export function GettingStarted() {
         <div className="mt-3 space-y-1">
           <div className="flex items-center justify-between text-xs sm:text-sm">
             <span className="text-muted-foreground">Setup Progress</span>
-            <span className="font-medium">{completedSteps}/{setupSteps.length} completed</span>
+            <span className="font-medium">{completedSteps}/{visibleSteps.length} completed</span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
       </CardHeader>
       <CardContent className="pt-0 px-3 sm:px-6">
         <div className="grid gap-2">
-          {setupSteps.map((step) => {
+          {visibleSteps.map((step) => {
             const isCompleted = status?.[step.checkKey as keyof SetupStatus];
 
             return (

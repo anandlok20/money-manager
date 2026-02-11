@@ -42,6 +42,7 @@ export function UpgradeGate({
       <div
         className="relative cursor-pointer"
         onClick={() => setShowDialog(true)}
+        data-feature={feature}
       >
         <div className="pointer-events-none opacity-50 blur-[1px]">
           {children}

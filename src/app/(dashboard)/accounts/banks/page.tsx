@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { Building2, Plus, MoreVertical, Edit, Trash2, Copy, Check } from 'lucide-react';
@@ -15,6 +15,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatCurrency } from '@/lib/utils/currency';
 
@@ -37,14 +47,37 @@ async function fetchBankAccounts(): Promise<{ data: BankAccount[]; totalBalance:
   return { data: data.data, totalBalance: data.totalBalance };
 }
 
+async function deleteBankAccount(id: string) {
+  const response = await fetch(`/api/accounts/banks/${id}`, { method: 'DELETE' });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to delete bank account');
+  }
+  return response.json();
+}
+
 export default function BankAccountsPage() {
+  const queryClient = useQueryClient();
   const { data: session } = useSession();
   const currency = (session?.user as unknown as { currency?: string })?.currency || 'INR';
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['bank-accounts'],
     queryFn: fetchBankAccounts,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteBankAccount,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+      toast.success('Bank account deleted');
+      setDeleteId(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 
   const copyToClipboard = async (text: string, fieldId: string) => {
@@ -147,7 +180,14 @@ export default function BankAccountsPage() {
                           Edit
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive gap-2">
+                      <DropdownMenuItem 
+                        className="text-destructive gap-2"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDeleteId(account._id);
+                        }}
+                      >
                         <Trash2 className="h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
@@ -251,6 +291,28 @@ export default function BankAccountsPage() {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Bank Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this bank account? This action cannot be undone.
+              All associated transactions will remain but will no longer be linked to this account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -176,7 +176,7 @@ export default function TripsPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredTrips.map((trip) => {
                 const currentStatus = getTripStatus(trip);
-                const budgetUsed = (trip.totalExpenses / trip.budget) * 100;
+                const budgetUsed = trip.budget > 0 ? (trip.totalExpenses / trip.budget) * 100 : 0;
                 const daysLeft = differenceInDays(new Date(trip.endDate), new Date());
 
                 return (

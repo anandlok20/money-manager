@@ -3,8 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import TaxProfile, { TaxRegime, TaxStatus, ResidentialStatus } from '@/lib/mongodb/models/TaxProfile';
-import Transaction from '@/lib/mongodb/models/Transaction';
-import { TransactionType } from '@/types';
 import { z } from 'zod';
 
 const updateTaxProfileSchema = z.object({
@@ -35,7 +33,8 @@ const updateTaxProfileSchema = z.object({
   notes: z.string().optional(),
 });
 
-// Tax calculation functions
+// Tax calculation functions - reserved for future tax computation feature
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function calculateTaxOldRegime(taxableIncome: number): number {
   if (taxableIncome <= 250000) return 0;
   if (taxableIncome <= 500000) return (taxableIncome - 250000) * 0.05;
@@ -43,6 +42,7 @@ function calculateTaxOldRegime(taxableIncome: number): number {
   return 12500 + 100000 + (taxableIncome - 1000000) * 0.30;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function calculateTaxNewRegime(taxableIncome: number): number {
   if (taxableIncome <= 400000) return 0;
   if (taxableIncome <= 800000) return (taxableIncome - 400000) * 0.05;
@@ -53,23 +53,8 @@ function calculateTaxNewRegime(taxableIncome: number): number {
   return 20000 + 40000 + 60000 + 80000 + 100000 + (taxableIncome - 2400000) * 0.30;
 }
 
-function calculateSurcharge(tax: number, income: number): number {
-  if (income <= 5000000) return 0;
-  if (income <= 10000000) return tax * 0.10;
-  if (income <= 20000000) return tax * 0.15;
-  if (income <= 50000000) return tax * 0.25;
-  return tax * 0.37;
-}
-
-function calculateRebate87A(taxableIncome: number, regime: TaxRegime): number {
-  if (regime === TaxRegime.NEW && taxableIncome <= 1200000) {
-    return Math.min(calculateTaxNewRegime(taxableIncome), 60000);
-  }
-  if (regime === TaxRegime.OLD && taxableIncome <= 500000) {
-    return Math.min(calculateTaxOldRegime(taxableIncome), 12500);
-  }
-  return 0;
-}
+// Note: Surcharge and Rebate 87A calculations are available in the TaxProfile model
+// They will be integrated when full tax computation is implemented
 
 export async function GET(
   request: NextRequest,

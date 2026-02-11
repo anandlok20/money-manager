@@ -66,7 +66,7 @@ async function clearData() {
         const collection = db.collection(collectionName);
         const result = await collection.deleteMany({ userId });
         console.log(`   ✅ ${collectionName}: ${result.deletedCount} documents deleted`);
-      } catch (error) {
+      } catch {
         console.log(`   ⚠️ ${collectionName}: collection may not exist`);
       }
     }

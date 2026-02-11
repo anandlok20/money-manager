@@ -15,11 +15,7 @@ import {
   IndianRupee,
   TrendingUp,
   TrendingDown,
-  Percent,
-  Calendar,
   AlertTriangle,
-  CheckCircle2,
-  RefreshCcw,
   Receipt,
   Loader2,
 } from 'lucide-react';
@@ -28,7 +24,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
   AlertDialogAction,

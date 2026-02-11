@@ -23,13 +23,14 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/utils/currency';
+import { TransactionType } from '@/types';
 
 interface Transaction {
   _id: string;
-  type: 'income' | 'expense' | 'transfer';
+  type: TransactionType;
   amount: number;
   description: string;
-  date: string;
+  dateTime: string;
   categoryId?: string;
   memberId?: string;
 }
@@ -113,11 +114,11 @@ export default function ReportsPage() {
   // Calculate stats
   const stats = useMemo(() => {
     const income = transactions
-      .filter((t) => t.type === 'income')
+      .filter((t) => t.type === TransactionType.INCOME)
       .reduce((sum, t) => sum + t.amount, 0);
     
     const expenses = transactions
-      .filter((t) => t.type === 'expense')
+      .filter((t) => t.type === TransactionType.EXPENSE)
       .reduce((sum, t) => sum + t.amount, 0);
     
     const savings = income - expenses;
@@ -128,7 +129,7 @@ export default function ReportsPage() {
 
   // Category breakdown
   const categoryBreakdown = useMemo(() => {
-    const expenseTransactions = transactions.filter((t) => t.type === 'expense');
+    const expenseTransactions = transactions.filter((t) => t.type === TransactionType.EXPENSE);
     const categoryMap = new Map<string, number>();
     
     expenseTransactions.forEach((t) => {
@@ -157,10 +158,10 @@ export default function ReportsPage() {
     const memberMap = new Map<string, { income: number; expense: number }>();
     
     transactions.forEach((t) => {
-      if (t.type === 'transfer') return;
+      if (t.type === TransactionType.TRANSFER_SELF) return;
       const key = t.memberId || 'unassigned';
       const existing = memberMap.get(key) || { income: 0, expense: 0 };
-      if (t.type === 'income') {
+      if (t.type === TransactionType.INCOME) {
         existing.income += t.amount;
       } else {
         existing.expense += t.amount;
@@ -185,10 +186,10 @@ export default function ReportsPage() {
     const dayMap = new Map<string, { income: number; expense: number }>();
     
     transactions.forEach((t) => {
-      if (t.type === 'transfer') return;
-      const day = format(parseISO(t.date), 'MMM dd');
+      if (t.type === TransactionType.TRANSFER_SELF) return;
+      const day = format(parseISO(t.dateTime), 'MMM dd');
       const existing = dayMap.get(day) || { income: 0, expense: 0 };
-      if (t.type === 'income') {
+      if (t.type === TransactionType.INCOME) {
         existing.income += t.amount;
       } else {
         existing.expense += t.amount;
@@ -204,7 +205,7 @@ export default function ReportsPage() {
   // Top expenses
   const topExpenses = useMemo(() => {
     return transactions
-      .filter((t) => t.type === 'expense')
+      .filter((t) => t.type === TransactionType.EXPENSE)
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5);
   }, [transactions]);
@@ -260,7 +261,7 @@ export default function ReportsPage() {
               {formatCurrency(stats.income)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {transactions.filter((t) => t.type === 'income').length} transactions
+              {transactions.filter((t) => t.type === TransactionType.INCOME).length} transactions
             </p>
           </CardContent>
         </Card>
@@ -275,7 +276,7 @@ export default function ReportsPage() {
               {formatCurrency(stats.expenses)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {transactions.filter((t) => t.type === 'expense').length} transactions
+              {transactions.filter((t) => t.type === TransactionType.EXPENSE).length} transactions
             </p>
           </CardContent>
         </Card>
@@ -442,7 +443,7 @@ export default function ReportsPage() {
                           <div>
                             <p className="font-medium">{expense.description}</p>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span>{format(parseISO(expense.date), 'MMM dd, yyyy')}</span>
+                              <span>{format(parseISO(expense.dateTime), 'MMM dd, yyyy')}</span>
                               {category && (
                                 <>
                                   <span>•</span>

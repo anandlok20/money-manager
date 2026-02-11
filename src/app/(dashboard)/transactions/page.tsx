@@ -205,6 +205,10 @@ export default function TransactionsPage() {
       
       const response = await fetch(`/api/transactions/export?${params}`);
       
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
       if (exportFormat === 'csv') {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);

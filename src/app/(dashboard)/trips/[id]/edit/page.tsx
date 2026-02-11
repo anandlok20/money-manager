@@ -81,7 +81,6 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
     control,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors },
   } = useForm<FormInput>({
     resolver: zodResolver(formSchema),

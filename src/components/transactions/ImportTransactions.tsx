@@ -11,7 +11,6 @@ import {
   X,
   AlertTriangle,
   Loader2,
-  Download,
 } from 'lucide-react';
 import {
   Dialog,

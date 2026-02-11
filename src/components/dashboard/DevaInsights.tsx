@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUIStore } from '@/stores/uiStore';
 
 interface DevaInsightsProps {
-  totalIncome: number;
-  totalExpenses: number;
+  // These props are kept for future detailed insights
+  totalIncome?: number;
+  totalExpenses?: number;
   savingsRate: number;
 }
 
@@ -20,7 +21,7 @@ const wisdomMessages = [
   { threshold: 0, emoji: '🔥', title: 'अग्नि (Agni)', message: 'Like sacred fire, your money burns fast. Time for financial tapas (discipline).', color: 'text-red-500' },
 ];
 
-export function DevaInsights({ totalIncome, totalExpenses, savingsRate }: DevaInsightsProps) {
+export function DevaInsights({ savingsRate }: DevaInsightsProps) {
   const appMode = useUIStore((state) => state.appMode);
 
   const insight = useMemo(() => {

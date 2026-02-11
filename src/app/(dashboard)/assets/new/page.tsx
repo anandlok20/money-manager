@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -99,8 +98,6 @@ const assetCategories = [
     ],
   },
 ];
-
-const allAssetTypes = assetCategories.flatMap((c) => c.types);
 
 const taxSections = [
   '80C', '80CCC', '80CCD(1)', '80CCD(1B)', '80CCD(2)', '80D', '80E', '10(10D)'

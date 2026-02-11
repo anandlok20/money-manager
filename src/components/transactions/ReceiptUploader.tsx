@@ -138,7 +138,8 @@ export function ReceiptUploader({
             {isPdf ? (
               <FileText className="h-8 w-8 text-red-500" />
             ) : (
-              <Image className="h-8 w-8 text-blue-500" />
+              // eslint-disable-next-line jsx-a11y/alt-text
+              <Image className="h-8 w-8 text-blue-500" aria-hidden="true" />
             )}
             <div>
               <p className="font-medium text-sm truncate max-w-[200px]">

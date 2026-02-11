@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Category from '@/lib/mongodb/models/Category';
-import { TransactionType, CategoryType } from '@/types';
 
 interface ExtractedReceiptData {
   merchantName?: string;
@@ -51,30 +50,9 @@ const MERCHANT_CATEGORIES: Record<string, string[]> = {
   ],
 };
 
-// Simple text extraction from base64 image
-// In production, you'd use OCR services like Google Vision, AWS Textract, or Tesseract
-async function extractTextFromImage(base64Image: string): Promise<string> {
-  // This is a placeholder - in production, integrate with OCR service
-  // For now, we'll return empty and rely on manual input
-  // You can integrate with:
-  // 1. Google Cloud Vision API
-  // 2. AWS Textract
-  // 3. Azure Computer Vision
-  // 4. Tesseract.js (client-side)
-  
-  // Example with Google Vision (if API key is available):
-  // const response = await fetch('https://vision.googleapis.com/v1/images:annotate?key=YOUR_API_KEY', {
-  //   method: 'POST',
-  //   body: JSON.stringify({
-  //     requests: [{
-  //       image: { content: base64Image.replace(/^data:image\/\w+;base64,/, '') },
-  //       features: [{ type: 'TEXT_DETECTION' }]
-  //     }]
-  //   })
-  // });
-  
-  return '';
-}
+// Note: OCR integration placeholder
+// In production, integrate with Google Cloud Vision, AWS Textract, or Azure Computer Vision
+// For now, text extraction is handled client-side or via manual input
 
 function parseReceiptText(text: string): Partial<ExtractedReceiptData> {
   const result: Partial<ExtractedReceiptData> = {};
@@ -225,9 +203,11 @@ export async function POST(request: NextRequest) {
 
     let extractedText = manualText || '';
     
-    // If image provided, try to extract text (OCR)
+    // If image provided but no manual text, OCR would be applied here
+    // Currently relies on client-side text input or future OCR integration
     if (image && !manualText) {
-      extractedText = await extractTextFromImage(image);
+      // OCR integration placeholder - text extraction will be done client-side or via OCR service
+      extractedText = '';
     }
 
     // Parse the receipt text

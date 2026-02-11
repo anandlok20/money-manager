@@ -358,14 +358,14 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
     }
   };
 
-  const handleSelectAll = useCallback((checked: boolean) => {
+  const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const visibleIds = filteredAndSortedTransactions.map(t => t.id);
       setSelectedTransactions(new Set(visibleIds));
     } else {
       setSelectedTransactions(new Set());
     }
-  }, []);
+  };
 
   const handleSelectTransaction = useCallback((id: string, checked: boolean) => {
     setSelectedTransactions(prev => {
@@ -536,21 +536,6 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
         return <TrendingUp className="h-4 w-4 text-purple-500" />;
       default:
         return null;
-    }
-  };
-
-  const getTypeColor = (type: ParsedTransaction["type"]) => {
-    switch (type) {
-      case "income":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-      case "expense":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-      case "transfer":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-      case "investment":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
     }
   };
 

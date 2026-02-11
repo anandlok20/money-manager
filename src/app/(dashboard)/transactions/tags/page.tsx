@@ -9,7 +9,6 @@ import {
   Plus,
   ArrowUpRight,
   TrendingUp,
-  Filter,
   BarChart3,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -18,18 +17,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { formatCurrency } from '@/lib/utils/currency';
 
 interface TagData {
   tag: string;
   count: number;
-}
-
-interface TagStats {
-  tag: string;
-  count: number;
-  totalAmount: number;
-  lastUsed?: string;
 }
 
 async function fetchTags(): Promise<TagData[]> {

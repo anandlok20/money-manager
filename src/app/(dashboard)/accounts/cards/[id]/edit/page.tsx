@@ -139,8 +139,8 @@ export default function EditCardPage() {
     watch,
     setValue,
     formState: { errors },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } = useForm<UpdateCardInput>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(updateCardSchema) as any,
     values: card ? {
       cardName: card.cardName,

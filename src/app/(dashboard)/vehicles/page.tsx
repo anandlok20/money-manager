@@ -1,15 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { format, differenceInDays, isPast, isFuture, addDays } from 'date-fns';
+import { format, isPast } from 'date-fns';
 import {
   Car,
   Plus,
   AlertTriangle,
-  CheckCircle,
   Clock,
   Shield,
   FileText,
@@ -22,13 +21,11 @@ import {
   CreditCard,
   AlertCircle,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -107,14 +104,6 @@ const vehicleTypeIcons: Record<string, React.ElementType> = {
   heavy_vehicle: Car,
 };
 
-const vehicleTypeLabels: Record<string, string> = {
-  two_wheeler: 'Two Wheeler',
-  three_wheeler: 'Three Wheeler',
-  four_wheeler: 'Four Wheeler',
-  commercial: 'Commercial',
-  heavy_vehicle: 'Heavy Vehicle',
-};
-
 const fuelTypeLabels: Record<string, string> = {
   petrol: 'Petrol',
   diesel: 'Diesel',
@@ -142,7 +131,6 @@ const statusColors: Record<string, string> = {
 export default function VehiclesPage() {
   const { data: session } = useSession();
   const currency = (session?.user as unknown as { currency?: string })?.currency || 'INR';
-  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>('active');
 
   const { data, isLoading, error } = useQuery({

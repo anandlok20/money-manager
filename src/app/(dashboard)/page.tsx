@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { BudgetAlerts } from '@/components/dashboard/BudgetAlerts';
 import { GettingStarted } from '@/components/dashboard/GettingStarted';
 import { BalanceAlerts } from '@/components/dashboard/BalanceAlerts';
+import { useSubscription } from '@/hooks/useSubscription';
 
 // Lazy load chart components for better initial page load
 const ExpensePieChart = dynamic(() => import('@/components/dashboard/Charts').then(mod => ({ default: mod.ExpensePieChart })), {
@@ -143,6 +144,7 @@ async function fetchDashboardData(): Promise<DashboardData> {
 export default function DashboardPage() {
   const { data: session } = useSession();
   const currency = (session?.user as unknown as { currency?: string })?.currency || 'INR';
+  const { canAccessFeature } = useSubscription();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard-summary'],
@@ -778,8 +780,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Investments Section */}
-      {(isLoading || (data?.investments && data.investments.length > 0)) && (
+      {/* Investments Section — only show if feature is enabled */}
+      {canAccessFeature('investments') && (isLoading || (data?.investments && data.investments.length > 0)) && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowRight, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -44,27 +44,28 @@ export function CurrencyConverter({
   const [fromCurrency, setFromCurrency] = useState(defaultFromCurrency);
   const [toCurrency, setToCurrency] = useState(defaultToCurrency);
   const [amount, setAmount] = useState(defaultAmount.toString());
-  const [convertedAmount, setConvertedAmount] = useState(0);
-  const [rate, setRate] = useState(0);
   const onConvertRef = useRef(onConvert);
-  onConvertRef.current = onConvert;
 
+  // Compute derived values directly (no useState needed)
+  const numAmount = parseFloat(amount) || 0;
+  const convertedAmount = convertCurrency(numAmount, fromCurrency, toCurrency);
+  const rate = getExchangeRate(fromCurrency, toCurrency);
+
+  // Update ref in effect instead of during render
   useEffect(() => {
-    const numAmount = parseFloat(amount) || 0;
-    const converted = convertCurrency(numAmount, fromCurrency, toCurrency);
-    const exchangeRate = getExchangeRate(fromCurrency, toCurrency);
-    
-    setConvertedAmount(converted);
-    setRate(exchangeRate);
-    
+    onConvertRef.current = onConvert;
+  }, [onConvert]);
+
+  // Call onConvert callback when values change
+  useEffect(() => {
     onConvertRef.current?.({
       fromAmount: numAmount,
-      toAmount: converted,
+      toAmount: convertedAmount,
       fromCurrency,
       toCurrency,
-      rate: exchangeRate,
+      rate,
     });
-  }, [amount, fromCurrency, toCurrency]);
+  }, [numAmount, convertedAmount, fromCurrency, toCurrency, rate]);
 
   const handleSwap = () => {
     const tempCurrency = fromCurrency;

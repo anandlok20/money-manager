@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
@@ -68,15 +68,21 @@ export default function SettingsPage() {
   const [subActionLoading, setSubActionLoading] = useState<string | null>(null);
 
   // Fetch subscription data
-  useState(() => {
-    fetch('/api/subscription')
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/subscription', { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setSubscription(data.data);
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          console.error('Failed to fetch subscription:', err);
+        }
+      })
       .finally(() => setSubLoading(false));
-  });
+    return () => controller.abort();
+  }, []);
 
   const handleAddonToggle = async (addonId: string, isActive: boolean) => {
     setSubActionLoading(addonId);

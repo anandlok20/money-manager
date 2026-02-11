@@ -38,7 +38,8 @@ const taxProfileSchema = z.object({
   notes: z.string().optional(),
 });
 
-// Tax calculation functions
+// Tax calculation functions - reserved for future tax computation feature
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function calculateTaxOldRegime(taxableIncome: number): number {
   // FY 2025-26 Old Regime Slabs
   if (taxableIncome <= 250000) return 0;
@@ -47,6 +48,7 @@ function calculateTaxOldRegime(taxableIncome: number): number {
   return 12500 + 100000 + (taxableIncome - 1000000) * 0.30;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function calculateTaxNewRegime(taxableIncome: number): number {
   // FY 2025-26 New Regime Slabs (Budget 2025)
   if (taxableIncome <= 400000) return 0;
@@ -58,24 +60,8 @@ function calculateTaxNewRegime(taxableIncome: number): number {
   return 20000 + 40000 + 60000 + 80000 + 100000 + (taxableIncome - 2400000) * 0.30;
 }
 
-function calculateSurcharge(tax: number, income: number): number {
-  if (income <= 5000000) return 0;
-  if (income <= 10000000) return tax * 0.10;
-  if (income <= 20000000) return tax * 0.15;
-  if (income <= 50000000) return tax * 0.25;
-  return tax * 0.37;
-}
-
-function calculateRebate87A(taxableIncome: number, regime: TaxRegime): number {
-  // FY 2025-26 Rebate
-  if (regime === TaxRegime.NEW && taxableIncome <= 1200000) {
-    return Math.min(calculateTaxNewRegime(taxableIncome), 60000);
-  }
-  if (regime === TaxRegime.OLD && taxableIncome <= 500000) {
-    return Math.min(calculateTaxOldRegime(taxableIncome), 12500);
-  }
-  return 0;
-}
+// Note: Surcharge and Rebate 87A calculations are available in the TaxProfile model
+// They will be integrated when full tax computation is implemented
 
 export async function GET(request: NextRequest) {
   try {
