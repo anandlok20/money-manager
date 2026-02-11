@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface Step {
   number: number;
@@ -38,6 +39,7 @@ interface Step {
   icon: React.ReactNode;
   href?: string;
   tips?: string[];
+  gatedFeature?: string;
 }
 
 const gettingStartedSteps: Step[] = [
@@ -99,6 +101,7 @@ const additionalFeatures: Step[] = [
     description: 'Add your mutual funds, stocks, fixed deposits, and other investments to track your portfolio.',
     icon: <PiggyBank className="h-5 w-5" />,
     href: '/investments/new',
+    gatedFeature: 'investments',
     tips: [
       'Track mutual funds, stocks, FDs, PPF, NPS',
       'Update current values periodically',
@@ -135,6 +138,7 @@ const additionalFeatures: Step[] = [
     description: 'Set up reminders for rent, EMIs, subscriptions, and other regular payments.',
     icon: <Calendar className="h-5 w-5" />,
     href: '/scheduled-payments/new',
+    gatedFeature: 'scheduled-payments',
     tips: [
       'Add all your recurring bills',
       'Set correct frequency (monthly, yearly)',
@@ -147,6 +151,7 @@ const additionalFeatures: Step[] = [
     description: 'Organize travel plans with budgets, tickets, hotels, and places to visit.',
     icon: <Plane className="h-5 w-5" />,
     href: '/trips/new',
+    gatedFeature: 'trips',
     tips: [
       'Set trip budget upfront',
       'Add travelers and split expenses',
@@ -159,6 +164,7 @@ const additionalFeatures: Step[] = [
     description: 'Manage your vehicles with purchase details, current value, and maintenance records.',
     icon: <Car className="h-5 w-5" />,
     href: '/vehicles/new',
+    gatedFeature: 'vehicles',
     tips: [
       'Track vehicle depreciation',
       'Store registration details',
@@ -171,6 +177,7 @@ const additionalFeatures: Step[] = [
     description: 'Keep important documents like insurance, IDs, and agreements organized.',
     icon: <FileText className="h-5 w-5" />,
     href: '/documents/new',
+    gatedFeature: 'documents',
     tips: [
       'Store insurance documents',
       'Track expiry dates',
@@ -183,6 +190,7 @@ const additionalFeatures: Step[] = [
     description: 'Track tax-saving investments and deductions to maximize savings.',
     icon: <Calculator className="h-5 w-5" />,
     href: '/tax',
+    gatedFeature: 'tax',
     tips: [
       'Track 80C investments',
       'Plan deductions in advance',
@@ -227,6 +235,13 @@ const faqItems = [
 ];
 
 export default function HowToUsePage() {
+  const { canAccessFeature } = useSubscription();
+
+  // Filter out gated features the user doesn't have access to
+  const visibleAdditionalFeatures = additionalFeatures.filter(
+    (step) => !step.gatedFeature || canAccessFeature(step.gatedFeature)
+  );
+
   return (
     <div className="space-y-6 max-w-3xl">
       {/* Header */}
@@ -345,7 +360,7 @@ export default function HowToUsePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {additionalFeatures.map((step) => (
+          {visibleAdditionalFeatures.map((step) => (
             <div key={step.number} className="flex gap-4">
               <div className="flex-shrink-0">
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-muted-foreground text-sm font-bold">
@@ -480,12 +495,6 @@ export default function HowToUsePage() {
             <Button variant="outline" className="w-full justify-start gap-2">
               <Building2 className="h-4 w-4" />
               Add Bank Account
-            </Button>
-          </Link>
-          <Link href="/investments/new">
-            <Button variant="outline" className="w-full justify-start gap-2">
-              <PiggyBank className="h-4 w-4" />
-              Add Investment
             </Button>
           </Link>
           <Link href="/goals/new">
