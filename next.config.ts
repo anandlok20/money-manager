@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV !== 'production';
+const devOrigins = process.env.ALLOWED_DEV_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean) ?? [];
+
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["192.168.1.8"],
+  ...(isDev && devOrigins.length > 0 ? { allowedDevOrigins: devOrigins } : {}),
   
   // Performance optimizations
   experimental: {

@@ -16,6 +16,8 @@ export interface ITransaction extends Document {
   memberId?: mongoose.Types.ObjectId;
   // Trip tagging
   tripId?: mongoose.Types.ObjectId;
+  // Goal contribution tracking
+  goalId?: mongoose.Types.ObjectId;
   // Source
   sourceType?: AccountType;
   sourceBankId?: mongoose.Types.ObjectId;
@@ -84,6 +86,11 @@ const TransactionSchema = new Schema<ITransaction>(
     tripId: {
       type: Schema.Types.ObjectId,
       ref: 'Trip',
+      index: true,
+    },
+    goalId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Goal',
       index: true,
     },
     sourceType: {

@@ -19,54 +19,54 @@ const protectedRoutes = [
   '/settings',
   '/investments',
   '/assets',
+  '/subscription',
 ];
 
 // Routes that should redirect to dashboard if already authenticated
 const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
 
-// API routes with stricter rate limiting
+// API routes with stricter rate limiting (5 req/min)
 const strictRateLimitedRoutes = [
   '/api/auth/register',
-  '/api/auth/[...nextauth]',
+  '/api/auth/callback',
+  '/api/auth/signin',
   '/api/auth/forgot-password',
   '/api/auth/reset-password',
   '/api/settings/sensitive-password',
 ];
 
 // Simple in-memory rate limiter for edge runtime
-// Note: This is per-instance on serverless — effective for burst protection
-// but not a distributed rate limiter
+// NOTE: This is per-instance on serverless — not a distributed limiter.
+// For production, replace with Redis via @upstash/ratelimit + UPSTASH_REDIS_REST_URL.
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const MAX_MAP_SIZE = 10000; // Prevent unbounded memory growth
+const MAX_MAP_SIZE = 10000;
 
-function isRateLimited(ip: string, limit: number = 100, windowMs: number = 60000): boolean {
+function isRateLimited(
+  key: string,
+  limit: number,
+  windowMs: number
+): { limited: boolean; remaining: number; resetTime: number } {
   const now = Date.now();
-  const record = rateLimitMap.get(ip);
+  const record = rateLimitMap.get(key);
 
   if (!record || now > record.resetTime) {
-    // Evict old entries if map is too large
-    if (rateLimitMap.size >= MAX_MAP_SIZE) {
-      cleanupRateLimits();
-    }
-    rateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
-    return false;
+    if (rateLimitMap.size >= MAX_MAP_SIZE) cleanupRateLimits();
+    rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
+    return { limited: false, remaining: limit - 1, resetTime: now + windowMs };
   }
 
   if (record.count >= limit) {
-    return true;
+    return { limited: true, remaining: 0, resetTime: record.resetTime };
   }
 
   record.count++;
-  return false;
+  return { limited: false, remaining: limit - record.count, resetTime: record.resetTime };
 }
 
-// Clean up old rate limit entries
 function cleanupRateLimits() {
   const now = Date.now();
-  for (const [ip, record] of rateLimitMap.entries()) {
-    if (now > record.resetTime) {
-      rateLimitMap.delete(ip);
-    }
+  for (const [key, record] of rateLimitMap.entries()) {
+    if (now > record.resetTime) rateLimitMap.delete(key);
   }
 }
 
@@ -76,63 +76,84 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   response.headers.set(
-    'Strict-Transport-Security',
-    'max-age=63072000; includeSubDomains; preload'
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), magnetometer=(), gyroscope=()'
   );
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  // CSP: Remove unsafe-eval, keep unsafe-inline for Next.js style injection
-  // In production, use nonce-based CSP for scripts when migrating to Auth.js v5
+  // CSP: unsafe-inline required for Next.js style injection until Auth.js v5 nonce migration
+  // unsafe-eval required in development for React devtools / Turbopack source maps
+  const isDev = process.env.NODE_ENV === 'development';
+  const scriptSrc = isDev
+    ? "'self' 'unsafe-inline' 'unsafe-eval'"
+    : "'self' 'unsafe-inline'";
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';"
+    `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';`
   );
   return response;
 }
 
+/** Extract the real client IP — take the FIRST entry in x-forwarded-for (set by the outermost proxy) */
+function getClientIP(request: NextRequest): string {
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    // First IP is the client, subsequent IPs are proxies
+    const first = forwardedFor.split(',')[0]?.trim();
+    if (first) return first;
+  }
+  return request.headers.get('x-real-ip') ?? 'unknown';
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
-  // Get client IP for rate limiting — use the last IP in x-forwarded-for
-  // (the one set by the reverse proxy closest to us) to reduce spoofing
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  const ip = forwardedFor
-    ? forwardedFor.split(',').pop()?.trim() ?? 'unknown'
-    : request.headers.get('x-real-ip') ?? 'unknown';
+  const ip = getClientIP(request);
 
   // Rate limit API routes
   if (pathname.startsWith('/api/')) {
-    // Stricter rate limiting for auth routes (5 per minute)
-    const isStrictRoute = strictRateLimitedRoutes.some(route => 
-      pathname.includes(route.replace('[...nextauth]', ''))
-    );
-    const limit = isStrictRoute ? 5 : 100; // 5 for auth, 100 for others
-    const windowMs = isStrictRoute ? 60000 : 60000;
-    
-    if (isRateLimited(ip, limit, windowMs)) {
-      const rateLimitResponse = NextResponse.json(
+    // Stricter rate limiting for auth/sensitive routes
+    const isStrict = strictRateLimitedRoutes.some((route) => pathname.startsWith(route));
+    const limit = isStrict ? 5 : 100;
+    const windowMs = 60_000;
+
+    const { limited, remaining, resetTime } = isRateLimited(`${ip}:${isStrict ? 'strict' : 'std'}`, limit, windowMs);
+
+    if (limited) {
+      const res = NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429, headers: { 'Retry-After': '60' } }
+        {
+          status: 429,
+          headers: {
+            'Retry-After': '60',
+            'X-RateLimit-Limit': String(limit),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(Math.ceil(resetTime / 1000)),
+          },
+        }
       );
-      return applySecurityHeaders(rateLimitResponse);
+      return applySecurityHeaders(res);
     }
-    
-    // Clean up occasionally
+
+    // Occasionally clean up stale entries
     if (Math.random() < 0.01) cleanupRateLimits();
-    
-    return applySecurityHeaders(NextResponse.next());
+
+    const res = NextResponse.next();
+    res.headers.set('X-RateLimit-Limit', String(limit));
+    res.headers.set('X-RateLimit-Remaining', String(remaining));
+    res.headers.set('X-RateLimit-Reset', String(Math.ceil(resetTime / 1000)));
+    return applySecurityHeaders(res);
   }
 
-  // Check if the route is protected
-  const isProtectedRoute = protectedRoutes.some(route => 
-    pathname === route || pathname.startsWith(`${route}/`)
+  // Check if the route is protected — use exact prefix match (not .includes)
+  const isProtectedRoute = protectedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
 
   // Check if it's an auth route
-  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route));
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
   // Get the session token
-  const token = await getToken({ 
+  const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
@@ -149,20 +170,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Apply security headers to all responses
   return applySecurityHeaders(NextResponse.next());
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public folder)
-     * - manifest.json, sw.js (PWA files)
-     */
     '/((?!_next/static|_next/image|favicon.ico|icons|manifest.json|sw.js).*)',
   ],
 };

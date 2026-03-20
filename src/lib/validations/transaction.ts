@@ -9,6 +9,7 @@ export const transactionSchema = z.object({
   categoryId: z.string().optional(),
   memberId: z.string().optional(),
   tripId: z.string().optional(),
+  goalId: z.string().optional(),
   sourceType: z.nativeEnum(AccountType).optional(),
   sourceBankId: z.string().optional(),
   sourceCardId: z.string().optional(),
@@ -51,7 +52,8 @@ export const transactionSchema = z.object({
 });
 
 export const transactionFiltersSchema = z.object({
-  type: z.nativeEnum(TransactionType).optional(),
+  // Accept any case — coerce to uppercase so callers can pass "expense" or "EXPENSE"
+  type: z.string().transform((v) => v.toUpperCase()).pipe(z.nativeEnum(TransactionType)).optional(),
   categoryId: z.string().optional(),
   memberId: z.string().optional(),
   startDate: z.date().optional(),
@@ -59,7 +61,8 @@ export const transactionFiltersSchema = z.object({
   minAmount: z.number().min(0).optional(),
   maxAmount: z.number().positive().optional(),
   page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().max(100).default(20),
+  // Allow up to 1000 for full-page data exports (budgets/reports/member views)
+  limit: z.number().int().positive().max(1000).default(20),
 });
 
 export const updateTransactionSchema = z.object({

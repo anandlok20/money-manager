@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import ScheduledPayment from '@/lib/mongodb/models/ScheduledPayment';
 import { createTransaction } from '@/services/transactionService';
@@ -15,19 +16,23 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
 
+    // Always return 401 for missing/invalid auth — never leak misconfiguration details
     if (!cronSecret) {
-      console.error('CRON_SECRET environment variable is not set');
-      return NextResponse.json(
-        { success: false, error: 'Server misconfiguration' },
-        { status: 500 }
-      );
+      console.error('[CRON] CRON_SECRET environment variable is not set');
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const expected = `Bearer ${cronSecret}`;
+    const provided = authHeader ?? '';
+    // Constant-time comparison to prevent timing attacks
+    const expectedBuf = Buffer.from(expected);
+    const providedBuf = Buffer.from(provided);
+    const isValid =
+      expectedBuf.length === providedBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, providedBuf);
+
+    if (!isValid) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectToDatabase();

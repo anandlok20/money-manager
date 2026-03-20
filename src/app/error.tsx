@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,10 +48,10 @@ export default function GlobalError({ error, reset }: ErrorProps) {
               Try Again
             </Button>
             <Button variant="outline" className="flex-1 gap-2" asChild>
-              <a href="/">
+              <Link href="/">
                 <Home className="h-4 w-4" />
                 Go Home
-              </a>
+              </Link>
             </Button>
           </div>
         </CardContent>

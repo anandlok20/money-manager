@@ -69,6 +69,13 @@ interface Trip {
   status: string;
 }
 
+interface Goal {
+  _id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+}
+
 async function fetchCategories(type: CategoryType): Promise<Category[]> {
   const response = await fetch(`/api/categories?type=${type}`);
   if (!response.ok) throw new Error('Failed to fetch categories');
@@ -109,6 +116,13 @@ async function fetchTrips(): Promise<Trip[]> {
   if (!response.ok) throw new Error('Failed to fetch trips');
   const data = await response.json();
   return data.data;
+}
+
+async function fetchGoals(): Promise<Goal[]> {
+  const response = await fetch('/api/goals?status=active');
+  if (!response.ok) return [];
+  const data = await response.json();
+  return data.data ?? [];
 }
 
 async function fetchUserTags(): Promise<string[]> {
@@ -161,6 +175,7 @@ function NewTransactionContent() {
       sourceType: AccountType.BANK,
       tags: [],
       tripId: initialTripId || undefined,
+      goalId: undefined,
     },
   });
 
@@ -217,6 +232,11 @@ function NewTransactionContent() {
     enabled: transactionType === TransactionType.EXPENSE || transactionType === TransactionType.INCOME,
   });
 
+  const { data: activeGoals } = useQuery({
+    queryKey: ['goals-active'],
+    queryFn: fetchGoals,
+  });
+
   const { data: userTags } = useQuery({
     queryKey: ['user-tags'],
     queryFn: fetchUserTags,
@@ -232,6 +252,8 @@ function NewTransactionContent() {
       queryClient.invalidateQueries({ queryKey: ['cards'] });
       queryClient.invalidateQueries({ queryKey: ['trips'] });
       queryClient.invalidateQueries({ queryKey: ['trip'] });
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['goals-active'] });
       
       // Navigate back to trip if coming from trip page
       if (initialTripId) {
@@ -650,6 +672,41 @@ function NewTransactionContent() {
                 />
                 <p className="text-xs text-muted-foreground">
                   Tag this transaction to track trip expenses
+                </p>
+              </div>
+            )}
+
+            {/* Goal (optional — track progress towards a savings goal) */}
+            {activeGoals && activeGoals.length > 0 && (
+              <div className="space-y-2">
+                <Label>Track Goal Progress (Optional)</Label>
+                <Controller
+                  name="goalId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || 'none'}
+                      onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Link to a goal" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Goal</SelectItem>
+                        {activeGoals.map((goal) => {
+                          const pct = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100));
+                          return (
+                            <SelectItem key={goal._id} value={goal._id}>
+                              {goal.name} ({pct}% of ₹{goal.targetAmount.toLocaleString()})
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This transaction amount will be added to the goal&apos;s progress
                 </p>
               </div>
             )}
