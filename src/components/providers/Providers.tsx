@@ -65,7 +65,7 @@ export function Providers({ children }: ProvidersProps) {
             gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
             retry: 1,
             refetchOnWindowFocus: false,
-            refetchOnMount: 'always', // Always refetch but respects staleTime
+            refetchOnMount: true, // Refetch on mount only if data is stale (respects staleTime)
             refetchOnReconnect: true, // Refetch when connection is restored
           },
         },

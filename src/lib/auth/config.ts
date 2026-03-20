@@ -52,22 +52,28 @@ export const authOptions: NextAuthOptions = {
         // Seed default pricing config on first auth attempt
         await seedDefaultPricing();
 
-        // Check for admin credentials — auto-seed admin user
+        // Check for env-configured admin credentials — auto-seed admin user if ADMIN_EMAIL/ADMIN_PASSWORD set
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const adminPassword = process.env.ADMIN_PASSWORD;
         const isAdminLogin =
-          credentials.email.toLowerCase() === 'anandlok@test.com' &&
-          credentials.password === 'Anand@20';
+          adminEmail &&
+          adminPassword &&
+          credentials.email.toLowerCase() === adminEmail.toLowerCase() &&
+          credentials.password === adminPassword;
 
         if (isAdminLogin) {
           const adminUser = await seedAdminUser();
-          return {
-            id: adminUser._id.toString(),
-            email: adminUser.email,
-            name: adminUser.name,
-            currency: adminUser.currency,
-            lockEnabled: adminUser.lockEnabled,
-            role: adminUser.role as 'admin',
-            hasSelectedPlan: true,
-          };
+          if (adminUser) {
+            return {
+              id: adminUser._id.toString(),
+              email: adminUser.email,
+              name: adminUser.name,
+              currency: adminUser.currency,
+              lockEnabled: adminUser.lockEnabled,
+              role: adminUser.role as 'admin',
+              hasSelectedPlan: true,
+            };
+          }
         }
 
         const user = await User.findOne({ email: credentials.email.toLowerCase() });

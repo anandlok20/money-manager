@@ -86,7 +86,7 @@ export function DuplicateWarning({
   const [dismissed, setDismissed] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['duplicate-check', amount, dateTime, categoryId, note, excludeId],
+    queryKey: ['duplicate-check', amount, dateTime.toISOString(), categoryId, note, excludeId],
     queryFn: () => checkDuplicates({ amount, dateTime, categoryId, note, excludeId }),
     enabled: amount > 0 && !dismissed,
     staleTime: 30000, // Cache for 30 seconds
@@ -244,7 +244,7 @@ export function useDuplicateCheck(
   excludeId?: string
 ) {
   return useQuery({
-    queryKey: ['duplicate-check', amount, dateTime, categoryId, note, excludeId],
+    queryKey: ['duplicate-check', amount, dateTime.toISOString(), categoryId, note, excludeId],
     queryFn: () => checkDuplicates({ amount, dateTime, categoryId, note, excludeId }),
     enabled: amount > 0,
     staleTime: 30000,

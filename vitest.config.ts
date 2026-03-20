@@ -5,10 +5,15 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['__tests__/**/*.test.ts'],
+    include: ['__tests__/**/*.test.{ts,tsx}'],
     exclude: ['node_modules', '.next'],
+    setupFiles: ['./vitest.setup.ts'],
     coverage: {
       reporter: ['text', 'json', 'html'],
+      thresholds: {
+        lines: 70,
+        branches: 60,
+      },
     },
   },
   resolve: {

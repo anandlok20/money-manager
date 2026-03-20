@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { z } from 'zod';
+import { sanitizeText as sanitizeTextStrong, sanitizeStringArray as sanitizeStringArrayStrong } from './sanitize';
 
 /**
  * Validate that a string is a valid MongoDB ObjectId.
@@ -18,22 +19,21 @@ export function validateObjectId(id: string, label = 'ID'): NextResponse | null 
 
 /**
  * Strip HTML tags and trim whitespace from a string.
- * Prevents stored XSS from text fields.
+ * Delegates to the comprehensive sanitize.ts implementation.
  */
 export function sanitizeText(text: string | undefined | null): string | undefined {
   if (text == null) return undefined;
-  return text
-    .replace(/<[^>]*>/g, '') // Strip HTML tags
-    .replace(/[<>]/g, '')     // Strip remaining angle brackets
-    .trim();
+  const result = sanitizeTextStrong(text);
+  return result === '' ? undefined : result;
 }
 
 /**
  * Sanitize an array of strings (e.g. tags).
+ * Delegates to the comprehensive sanitize.ts implementation.
  */
 export function sanitizeStringArray(arr: string[] | undefined): string[] | undefined {
   if (!arr) return undefined;
-  return arr.map(s => s.replace(/<[^>]*>/g, '').replace(/[<>]/g, '').trim()).filter(Boolean);
+  return sanitizeStringArrayStrong(arr);
 }
 
 /**

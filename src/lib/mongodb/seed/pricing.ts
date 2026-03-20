@@ -4,27 +4,31 @@ import User from '@/lib/mongodb/models/User';
 import PricingConfig from '@/lib/mongodb/models/PricingConfig';
 import Subscription from '@/lib/mongodb/models/Subscription';
 
-// Admin credentials — used only for initial seeding
-const ADMIN_EMAIL = 'anandlok@test.com';
-const ADMIN_PASSWORD = 'Anand@20';
-const ADMIN_NAME = 'AnandLok';
-
 /**
- * Seeds the admin user on first login with hardcoded credentials.
- * On subsequent logins, just returns the existing admin user.
+ * Seeds the admin user using environment variables (ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_NAME).
+ * Returns null if env vars are not set — admin must be created through normal registration + manual DB role upgrade.
  */
-export async function seedAdminUser() {
+export async function seedAdminUser(): Promise<InstanceType<typeof User> | null> {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminName = process.env.ADMIN_NAME || 'Admin';
+
+  if (!adminEmail || !adminPassword) {
+    // No admin env vars configured — skip seeding
+    return null;
+  }
+
   await connectToDatabase();
 
-  let adminUser = await User.findOne({ role: 'admin' });
+  let adminUser = await User.findOne({ email: adminEmail.toLowerCase() });
 
   if (!adminUser) {
     // First time — create admin user
-    const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
     adminUser = await User.create({
-      email: ADMIN_EMAIL.toLowerCase(),
+      email: adminEmail.toLowerCase(),
       passwordHash,
-      name: ADMIN_NAME,
+      name: adminName,
       currency: 'INR',
       role: 'admin',
       hasSelectedPlan: true,
@@ -39,16 +43,10 @@ export async function seedAdminUser() {
       addons: [],
       startDate: new Date(),
     });
-  } else {
-    // Verify password for existing admin
-    const isValid = await bcrypt.compare(ADMIN_PASSWORD, adminUser.passwordHash);
-    if (!isValid) {
-      // Update password if it was changed externally and someone uses original creds
-      // This handles the case where admin creds are the initial bootstrap
-      const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-      adminUser.passwordHash = passwordHash;
-      await adminUser.save();
-    }
+  } else if (adminUser.role !== 'admin') {
+    // Promote existing user to admin
+    adminUser.role = 'admin';
+    await adminUser.save();
   }
 
   return adminUser;

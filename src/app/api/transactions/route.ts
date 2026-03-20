@@ -7,6 +7,7 @@ import Transaction from '@/lib/mongodb/models/Transaction';
 import { transactionSchema, transactionFiltersSchema } from '@/lib/validations/transaction';
 import { createTransaction } from '@/services/transactionService';
 import { sanitizeText, sanitizeStringArray } from '@/lib/utils/sanitize';
+import Goal, { GoalStatus } from '@/lib/mongodb/models/Goal';
 
 export async function GET(request: NextRequest) {
   try {
@@ -141,6 +142,18 @@ export async function POST(request: NextRequest) {
       ...validatedData,
     });
 
+    // If linked to a goal, increment goal progress and auto-complete if reached
+    if (validatedData.goalId) {
+      const goal = await Goal.findOne({ _id: validatedData.goalId, userId: session.user.id, status: GoalStatus.ACTIVE });
+      if (goal) {
+        goal.currentAmount += validatedData.amount;
+        if (goal.currentAmount >= goal.targetAmount) {
+          goal.status = GoalStatus.COMPLETED;
+        }
+        await goal.save();
+      }
+    }
+
     // Populate the transaction for response
     const populatedTransaction = await Transaction.findById(transaction._id)
       .populate('categoryId', 'name icon color type')
@@ -151,6 +164,7 @@ export async function POST(request: NextRequest) {
       .populate('destinationCardId', 'cardName last4Digits')
       .populate('destinationInvestmentId', 'name type')
       .populate('tripId', 'name status')
+      .populate('goalId', 'name targetAmount currentAmount status')
       .lean();
 
     if (!populatedTransaction) {

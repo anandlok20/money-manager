@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import Goal from '@/lib/mongodb/models/Goal';
 import { goalSchema } from '@/lib/validations/goal';
 import { GoalStatus } from '@/lib/mongodb/models/Goal';
+import { canCreateResource } from '@/lib/utils/subscription';
 
 export async function GET(request: NextRequest) {
   try {
@@ -91,6 +92,12 @@ export async function POST(request: NextRequest) {
     }
 
     await connectToDatabase();
+
+    const currentCount = await Goal.countDocuments({ userId: session.user.id });
+    const limitCheck = await canCreateResource(session.user.id, 'goals', currentCount);
+    if (!limitCheck.allowed) {
+      return NextResponse.json({ success: false, error: limitCheck.message }, { status: 403 });
+    }
 
     const body = await request.json();
     const validation = goalSchema.safeParse(body);

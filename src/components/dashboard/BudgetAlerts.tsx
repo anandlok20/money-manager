@@ -107,7 +107,18 @@ export function BudgetAlerts({ currency = 'INR', showAll = false, compact = fals
     );
   }
 
-  if (error || !data) {
+  if (error) {
+    return (
+      <Card className="border-destructive/30">
+        <CardContent className="flex items-center gap-3 py-4">
+          <AlertCircle className="h-5 w-5 text-destructive" />
+          <p className="text-sm text-muted-foreground">Unable to load budget alerts</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data) {
     return null;
   }
 

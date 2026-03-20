@@ -44,7 +44,7 @@ export function UpgradeGate({
         onClick={() => setShowDialog(true)}
         data-feature={feature}
       >
-        <div className="pointer-events-none opacity-50 blur-[1px]">
+        <div className="pointer-events-none opacity-50 blur-[1px]" inert>
           {children}
         </div>
         <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-xl">

@@ -94,11 +94,10 @@ async function fetchTransaction(id: string): Promise<Transaction> {
   return data.data;
 }
 
-async function fetchBankAccounts(): Promise<BankAccount[]> {
+async function fetchBankAccounts(): Promise<{ data: BankAccount[]; totalBalance: number }> {
   const response = await fetch('/api/accounts/banks');
   if (!response.ok) throw new Error('Failed to fetch bank accounts');
-  const data = await response.json();
-  return data.data;
+  return response.json();
 }
 
 async function fetchCards(): Promise<CardAccount[]> {
@@ -180,7 +179,7 @@ export default function TransactionDetailPage() {
     queryKey: ['bank-accounts'],
     queryFn: fetchBankAccounts,
   });
-  const bankAccounts = bankAccountsData || [];
+  const bankAccounts = bankAccountsData?.data ?? [];
 
   const { data: cardsData } = useQuery({
     queryKey: ['cards'],

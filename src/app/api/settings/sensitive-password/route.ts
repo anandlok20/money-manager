@@ -126,9 +126,9 @@ export async function PUT(request: NextRequest) {
 
     // Generate an HMAC-signed time-based token (valid for 5 minutes)
     const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
-    const secret = process.env.NEXTAUTH_SECRET;
+    const secret = process.env.SENSITIVE_DATA_SECRET || process.env.NEXTAUTH_SECRET;
     if (!secret) {
-      throw new Error('NEXTAUTH_SECRET is not configured');
+      throw new Error('SENSITIVE_DATA_SECRET is not configured');
     }
     const payload = `${session.user.id}:${expiresAt}`;
     const signature = crypto

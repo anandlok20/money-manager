@@ -64,7 +64,9 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-// Note: email already has unique: true which creates an index
+// email already has a unique index from unique: true
+// Compound index for admin queries filtering by role + creation date
+UserSchema.index({ role: 1, createdAt: -1 });
 
 const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 
