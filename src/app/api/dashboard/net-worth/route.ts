@@ -6,6 +6,9 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import BankAccount from '@/lib/mongodb/models/BankAccount';
 import Card from '@/lib/mongodb/models/Card';
 import Investment from '@/lib/mongodb/models/Investment';
+import Asset from '@/lib/mongodb/models/Asset';
+import Vehicle from '@/lib/mongodb/models/Vehicle';
+import Loan from '@/lib/mongodb/models/Loan';
 import { NetWorthSnapshot } from '@/lib/mongodb/models';
 import { startOfDay, subMonths, format, eachMonthOfInterval, startOfMonth } from 'date-fns';
 
@@ -157,7 +160,7 @@ export async function POST() {
 
 async function calculateCurrentNetWorth(userId: string) {
   const userObjectId = new mongoose.Types.ObjectId(userId);
-  const [bankTotal, cardTotal, investmentTotal] = await Promise.all([
+  const [bankTotal, cardTotal, investmentTotal, assetTotal, vehicleTotal, loanTotal] = await Promise.all([
     BankAccount.aggregate([
       { $match: { userId: { $eq: userObjectId }, isActive: true } },
       { $group: { _id: null, total: { $sum: '$currentBalance' } } },
@@ -170,15 +173,36 @@ async function calculateCurrentNetWorth(userId: string) {
       { $match: { userId: { $eq: userObjectId }, isActive: true } },
       { $group: { _id: null, total: { $sum: '$currentValue' } } },
     ]),
+    Asset.aggregate([
+      { $match: { userId: { $eq: userObjectId }, status: 'active' } },
+      { $group: { _id: null, total: { $sum: '$currentValue' } } },
+    ]),
+    Vehicle.aggregate([
+      { $match: { userId: { $eq: userObjectId }, status: 'active' } },
+      {
+        $group: {
+          _id: null,
+          value: { $sum: { $ifNull: ['$currentValue', 0] } },
+          loans: { $sum: { $cond: ['$hasLoan', { $ifNull: ['$loanAmount', 0] }, 0] } },
+        },
+      },
+    ]),
+    Loan.aggregate([
+      { $match: { userId: { $eq: userObjectId }, status: 'active' } },
+      { $group: { _id: null, total: { $sum: '$outstandingBalance' } } },
+    ]),
   ]);
 
   const bankBalance = bankTotal[0]?.total || 0;
   const cardBalance = cardTotal[0]?.total || 0; // Positive = debt owed
   const investmentValue = investmentTotal[0]?.total || 0;
+  const assetValue = assetTotal[0]?.total || 0;
+  const vehicleValue = vehicleTotal[0]?.value || 0;
+  const vehicleLoans = vehicleTotal[0]?.loans || 0;
+  const loanBalance = loanTotal[0]?.total || 0;
 
-  // Cards: positive balance means debt (liability)
-  const totalAssets = bankBalance + investmentValue;
-  const totalLiabilities = cardBalance; // Card balance IS the liability (positive = debt)
+  const totalAssets = bankBalance + investmentValue + assetValue + vehicleValue;
+  const totalLiabilities = cardBalance + vehicleLoans + loanBalance;
   const netWorth = totalAssets - totalLiabilities;
 
   return {
@@ -187,8 +211,12 @@ async function calculateCurrentNetWorth(userId: string) {
     totalLiabilities,
     breakdown: {
       bankAccounts: bankBalance,
-      cards: -cardBalance, // Negate for display (showing as negative liability)
+      cards: -cardBalance,
       investments: investmentValue,
+      assets: assetValue,
+      vehicles: vehicleValue,
+      vehicleLoans: -vehicleLoans,
+      loans: -loanBalance,
       cash: 0,
     },
   };

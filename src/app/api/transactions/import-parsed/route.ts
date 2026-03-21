@@ -9,13 +9,16 @@ import { TransactionType, AccountType } from '@/types';
 import { createTransaction } from '@/services/transactionService';
 
 interface ImportTransaction {
-  date: string;
-  description: string;
+  date?: string;
+  description?: string;
   amount: number;
-  type: 'income' | 'expense' | 'transfer' | 'investment';
+  type: 'income' | 'expense' | 'transfer' | 'investment' | 'INCOME' | 'EXPENSE';
   categoryId?: string;
+  memberId?: string;
+  note?: string;
   bankAccountId?: string;
   creditCardId?: string;
+  sourceBankId?: string; // alias accepted from SMS import
   reference?: string;
   narration?: string;
   source?: string;
@@ -61,7 +64,7 @@ function parseTransactionDate(value: string): Date | null {
 
 // Map UI types to database types
 function mapTransactionType(uiType: string): TransactionType {
-  switch (uiType) {
+  switch (uiType.toLowerCase()) {
     case 'income':
       return TransactionType.INCOME;
     case 'expense':
@@ -130,11 +133,11 @@ export async function POST(request: NextRequest) {
 
     for (const txn of transactions) {
       try {
-        // Parse date
-        const parsedDate = parseTransactionDate(txn.date);
+        // Parse date — default to today if missing (e.g. SMS imports have no date)
+        const parsedDate = txn.date ? parseTransactionDate(txn.date) : new Date();
         if (!parsedDate) {
           skipped++;
-          errors.push(`Invalid date for: ${txn.description}`);
+          errors.push(`Invalid date for: ${txn.description || txn.note}`);
           continue;
         }
 
@@ -172,26 +175,29 @@ export async function POST(request: NextRequest) {
           type: mapTransactionType(txn.type),
           amount: Math.abs(txn.amount),
           dateTime: parsedDate,
-          note: txn.description,
+          note: txn.description || txn.note,
           categoryId: txn.categoryId || undefined,
+          memberId: txn.memberId || undefined,
           sourceType: undefined as AccountType | undefined,
           sourceBankId: undefined as string | undefined,
           sourceCardId: undefined as string | undefined,
         };
 
         // Set source account - verify ownership per transaction
-        if (txn.bankAccountId) {
+        // Accept both `bankAccountId` (statement import) and `sourceBankId` (SMS import)
+        const bankId = txn.bankAccountId || txn.sourceBankId;
+        if (bankId) {
           const account = await BankAccount.findOne({
-            _id: txn.bankAccountId,
+            _id: bankId,
             userId: session.user.id,
           });
           if (!account) {
             skipped++;
-            errors.push(`Bank account not found for: ${txn.description}`);
+            errors.push(`Bank account not found for: ${txn.description || txn.note}`);
             continue;
           }
           baseParams.sourceType = AccountType.BANK;
-          baseParams.sourceBankId = txn.bankAccountId;
+          baseParams.sourceBankId = bankId;
         } else if (txn.creditCardId) {
           const card = await Card.findOne({
             _id: txn.creditCardId,
@@ -199,7 +205,7 @@ export async function POST(request: NextRequest) {
           });
           if (!card) {
             skipped++;
-            errors.push(`Credit card not found for: ${txn.description}`);
+            errors.push(`Credit card not found for: ${txn.description || txn.note}`);
             continue;
           }
           baseParams.sourceType = AccountType.CARD;
@@ -210,7 +216,7 @@ export async function POST(request: NextRequest) {
         imported++;
       } catch (error) {
         console.error('Error importing transaction:', error);
-        errors.push(`Failed to import: ${txn.description}`);
+        errors.push(`Failed to import: ${txn.description || txn.note}`);
       }
     }
 
