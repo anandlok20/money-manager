@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Category from '@/lib/mongodb/models/Category';
+import { parseReceiptWithAI } from '@/lib/ai/claude-vision';
 
 interface ExtractedReceiptData {
   merchantName?: string;
@@ -202,15 +203,22 @@ export async function POST(request: NextRequest) {
     const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c._id.toString()]));
 
     let extractedText = manualText || '';
-    
-    // If image provided but no manual text, OCR would be applied here
-    // Currently relies on client-side text input or future OCR integration
-    if (image && !manualText) {
-      // OCR integration placeholder - text extraction will be done client-side or via OCR service
-      extractedText = '';
+
+    // If image provided and ANTHROPIC_API_KEY is set, use Claude Vision for OCR
+    let aiData = null;
+    if (image) {
+      try {
+        // Extract MIME type from data URL (e.g. "data:image/jpeg;base64,..." → "image/jpeg")
+        const mimeMatch = image.match(/^data:(image\/[a-z]+);base64,/);
+        const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+        const base64 = mimeMatch ? image.slice(mimeMatch[0].length) : image;
+        aiData = await parseReceiptWithAI(base64, mimeType);
+      } catch (err) {
+        console.warn('Claude Vision OCR failed, falling back to regex parser:', err);
+      }
     }
 
-    // Parse the receipt text
+    // Parse the receipt text (regex fallback)
     const receiptData = parseReceiptText(extractedText);
     
     // Match suggested category with user's actual categories
@@ -221,16 +229,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Merge: AI data takes priority where available, regex fills the gaps
     const result: ExtractedReceiptData = {
-      merchantName: receiptData.merchantName,
-      date: receiptData.date,
-      totalAmount: receiptData.totalAmount,
+      merchantName: aiData?.merchantName || receiptData.merchantName,
+      date: aiData?.date || receiptData.date,
+      totalAmount: aiData?.totalAmount ?? receiptData.totalAmount,
       subtotal: receiptData.subtotal,
-      tax: receiptData.tax,
-      items: receiptData.items,
+      tax: aiData?.tax ?? receiptData.tax,
+      items: (aiData?.items?.length ? aiData.items : receiptData.items),
       suggestedCategory: receiptData.suggestedCategory,
       suggestedCategoryId: receiptData.suggestedCategoryId,
-      confidence: receiptData.confidence || 0.5,
+      confidence: aiData ? 0.95 : (receiptData.confidence || 0.5),
       rawText: receiptData.rawText,
     };
 

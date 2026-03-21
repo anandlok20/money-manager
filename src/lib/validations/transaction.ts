@@ -73,6 +73,7 @@ export const updateTransactionSchema = z.object({
   categoryId: z.string().nullable().optional(),
   memberId: z.string().nullable().optional(),
   tripId: z.string().nullable().optional(),
+  goalId: z.string().nullable().optional(),
   sourceType: z.nativeEnum(AccountType).optional(),
   sourceBankId: z.string().nullable().optional(),
   sourceCardId: z.string().nullable().optional(),

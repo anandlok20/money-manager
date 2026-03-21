@@ -110,6 +110,7 @@ function detectBankFromPDF(text: string): string {
     { bank: 'hsbc', patterns: ['hsbc bank', 'hsbc'] },
     { bank: 'sc', patterns: ['standard chartered'] },
     { bank: 'dbs', patterns: ['dbs bank'] },
+    { bank: 'phonepe', patterns: ['phonepe', 'phone pe', 'phonepe pvt'] },
   ];
   
   for (const { bank, patterns } of bankPatterns) {
@@ -178,6 +179,9 @@ function parsePDFTransactions(text: string, bankFormat: string): Array<{
       break;
     case 'indusind':
       transactions = parseIndusIndStatement(lines);
+      break;
+    case 'phonepe':
+      transactions = parsePhonePeStatement(lines);
       break;
     default:
       transactions = parseGenericStatement(lines);
@@ -901,6 +905,67 @@ function parseGenericStatement(lines: string[]): Array<{
             amount,
             type,
           });
+        }
+      }
+    }
+  }
+
+  return transactions;
+}
+
+// PhonePe Statement Parser
+// PhonePe PDF exports a table: Date | Description | Debit | Credit
+function parsePhonePeStatement(lines: string[]): Array<{
+  date: string;
+  description: string;
+  amount: number;
+  type: 'income' | 'expense';
+}> {
+  const transactions: Array<{
+    date: string;
+    description: string;
+    amount: number;
+    type: 'income' | 'expense';
+  }> = [];
+
+  // Match rows like: "15 Mar 2025  Payment to merchant@upi  500.00  "
+  // or tabular: date | description | debit | credit
+  const rowPattern = /^(\d{1,2}\s+[A-Za-z]{3}\s+\d{4}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\s+(.+?)\s+([\d,]+\.\d{2})?\s+([\d,]+\.\d{2})?$/;
+  // Simpler fallback: date then description then at least one amount
+  const simplePattern = /(\d{1,2}\s+[A-Za-z]{3}\s+\d{4}|\d{2}[\/\-]\d{2}[\/\-]\d{2,4})/;
+
+  for (const line of lines) {
+    const match = line.match(rowPattern);
+    if (match) {
+      const date = match[1];
+      const description = match[2].trim();
+      const debit = match[3] ? parseAmount(match[3]) : 0;
+      const credit = match[4] ? parseAmount(match[4]) : 0;
+
+      if (debit > 0) {
+        transactions.push({ date, description: description || 'PhonePe Payment', amount: debit, type: 'expense' });
+      } else if (credit > 0) {
+        transactions.push({ date, description: description || 'PhonePe Receipt', amount: credit, type: 'income' });
+      }
+      continue;
+    }
+
+    // Fallback: line has a date and amount, guess type from keywords
+    const dateMatch = line.match(simplePattern);
+    if (dateMatch) {
+      const amounts = line.match(/[\d,]+\.\d{2}/g) || [];
+      if (amounts.length >= 1) {
+        const amount = parseAmount(amounts[0] || '0');
+        const dateIdx = line.indexOf(dateMatch[0]);
+        const afterDate = line.slice(dateIdx + dateMatch[0].length).trim();
+        const descMatch = afterDate.match(/^([A-Za-z][\w\s@.]{3,50})/);
+        const description = descMatch ? descMatch[1].trim() : 'PhonePe Transaction';
+        const lineLower = line.toLowerCase();
+        const type: 'income' | 'expense' =
+          lineLower.includes('received') || lineLower.includes('credit') ? 'income' : 'expense';
+
+        if (amount > 0) {
+          transactions.push({ date: dateMatch[1], description, amount, type });
         }
       }
     }

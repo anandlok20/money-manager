@@ -39,10 +39,11 @@ interface Member {
   createdAt: string;
 }
 
-async function fetchMembers(): Promise<{ data: Member[] }> {
+async function fetchMembers(): Promise<Member[]> {
   const response = await fetch('/api/members?includeInactive=true');
   if (!response.ok) throw new Error('Failed to fetch members');
-  return response.json();
+  const json = await response.json();
+  return json.data || [];
 }
 
 async function deleteMember(id: string, permanent: boolean = false) {
@@ -126,7 +127,7 @@ export default function MembersPage() {
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
         </div>
-      ) : !data?.data || data.data.length === 0 ? (
+      ) : !data || data.length === 0 ? (
         <EmptyState
           icon={Users}
           title="No members"
@@ -136,7 +137,7 @@ export default function MembersPage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {data?.data.map((member) => {
+          {data?.map((member) => {
             const config = memberTypeConfig[member.type] || memberTypeConfig[MemberType.OTHER];
             const IconComponent = config.icon;
 

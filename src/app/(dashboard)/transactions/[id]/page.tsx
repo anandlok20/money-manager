@@ -59,10 +59,25 @@ interface Transaction {
   destinationInvestmentId?: string;
   categoryId?: string;
   memberId?: string;
+  tripId?: string;
+  goalId?: string;
   receiptUrl?: string;
   receiptFileName?: string;
   tags?: string[];
   createdAt: string;
+}
+
+interface Trip {
+  _id: string;
+  name: string;
+  status: string;
+}
+
+interface Goal {
+  _id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
 }
 
 interface BankAccount {
@@ -118,7 +133,7 @@ async function fetchMembers(): Promise<Member[]> {
   const response = await fetch('/api/members');
   if (!response.ok) throw new Error('Failed to fetch members');
   const data = await response.json();
-  return data.data;
+  return data.data || [];
 }
 
 async function fetchUserTags(): Promise<string[]> {
@@ -126,6 +141,20 @@ async function fetchUserTags(): Promise<string[]> {
   if (!response.ok) return [];
   const data = await response.json();
   return data.tags?.map((t: { tag: string }) => t.tag) || [];
+}
+
+async function fetchActiveTrips(): Promise<Trip[]> {
+  const response = await fetch('/api/trips?status=planned,ongoing');
+  if (!response.ok) return [];
+  const data = await response.json();
+  return data.data ?? [];
+}
+
+async function fetchActiveGoals(): Promise<Goal[]> {
+  const response = await fetch('/api/goals?status=active');
+  if (!response.ok) return [];
+  const data = await response.json();
+  return data.data ?? [];
 }
 
 async function updateTransaction(id: string, data: UpdateTransactionInput) {
@@ -203,6 +232,16 @@ export default function TransactionDetailPage() {
     queryKey: ['user-tags'],
     queryFn: fetchUserTags,
   });
+
+  const { data: activeTrips } = useQuery({
+    queryKey: ['trips-active'],
+    queryFn: fetchActiveTrips,
+  });
+
+  const { data: activeGoals } = useQuery({
+    queryKey: ['goals-active'],
+    queryFn: fetchActiveGoals,
+  });
   const userTags = userTagsData || [];
 
   const {
@@ -227,6 +266,8 @@ export default function TransactionDetailPage() {
       destinationInvestmentId: transaction.destinationInvestmentId || undefined,
       categoryId: transaction.categoryId,
       memberId: transaction.memberId,
+      tripId: transaction.tripId || undefined,
+      goalId: transaction.goalId || undefined,
     } : undefined,
   });
 
@@ -244,6 +285,11 @@ export default function TransactionDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['transaction', id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['goals-active'] });
       router.push('/transactions');
     },
     onError: (error: Error) => {
@@ -258,6 +304,11 @@ export default function TransactionDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       queryClient.invalidateQueries({ queryKey: ['bank-accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+      queryClient.invalidateQueries({ queryKey: ['trip'] });
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['goals-active'] });
       router.push('/transactions');
     },
     onError: (error: Error) => {
@@ -559,6 +610,67 @@ export default function TransactionDetailPage() {
                 )}
               />
             </div>
+
+            {/* Trip */}
+            {activeTrips && activeTrips.length > 0 && (
+              <div className="space-y-2">
+                <Label>Trip (Optional)</Label>
+                <Controller
+                  name="tripId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || 'none'}
+                      onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Tag to a trip" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Trip</SelectItem>
+                        {activeTrips.map((trip) => (
+                          <SelectItem key={trip._id} value={trip._id}>
+                            {trip.name} ({trip.status})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+            )}
+
+            {/* Goal */}
+            {activeGoals && activeGoals.length > 0 && (
+              <div className="space-y-2">
+                <Label>Track Goal Progress (Optional)</Label>
+                <Controller
+                  name="goalId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || 'none'}
+                      onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Link to a goal" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Goal</SelectItem>
+                        {activeGoals.map((goal) => {
+                          const pct = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100));
+                          return (
+                            <SelectItem key={goal._id} value={goal._id}>
+                              {goal.name} ({pct}% of ₹{goal.targetAmount.toLocaleString()})
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="note">Notes</Label>

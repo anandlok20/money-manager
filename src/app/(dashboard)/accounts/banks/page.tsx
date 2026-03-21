@@ -129,7 +129,7 @@ export default function BankAccountsPage() {
           {isLoading ? (
             <Skeleton className="h-12 w-56" />
           ) : (
-            <p className="text-4xl font-bold text-emerald-600 dark:text-emerald-400">
+            <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-emerald-600 dark:text-emerald-400 truncate">
               {formatCurrency(data?.totalBalance || 0, currency)}
             </p>
           )}
