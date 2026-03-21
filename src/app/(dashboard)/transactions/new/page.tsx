@@ -3,6 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
+import { Switch } from '@/components/ui/switch';
+import { SplitSection, type SplitParticipant } from '@/components/transactions/SplitSection';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -155,6 +157,8 @@ function NewTransactionContent() {
     TransactionType.EXPENSE
   );
   const [tags, setTags] = useState<string[]>([]);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [splitParticipants, setSplitParticipants] = useState<SplitParticipant[]>([]);
   
   // Get tripId from URL params
   const initialTripId = searchParams.get('tripId');
@@ -242,9 +246,44 @@ function NewTransactionContent() {
     queryFn: fetchUserTags,
   });
 
+  const splitMutation = useMutation({
+    mutationFn: async ({ transactionId, splits }: { transactionId: string; splits: { name: string; memberId?: string; amount: number }[] }) => {
+      const response = await fetch('/api/splits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionId, splits }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create split');
+      }
+      return response.json();
+    },
+  });
+
   const mutation = useMutation({
     mutationFn: createTransaction,
-    onSuccess: () => {
+    onSuccess: async (result) => {
+      // If split is enabled, create the split record (non-blocking)
+      if (splitEnabled && splitParticipants.length > 0) {
+        const validSplits = splitParticipants.filter((p) => p.name.trim() && p.amount > 0);
+        if (validSplits.length > 0) {
+          try {
+            await splitMutation.mutateAsync({
+              transactionId: result.data._id,
+              splits: validSplits.map((p) => ({
+                name: p.name,
+                memberId: p.memberId,
+                amount: p.amount,
+              })),
+            });
+            queryClient.invalidateQueries({ queryKey: ['splits'] });
+          } catch {
+            toast.error("Transaction saved, but split couldn't be created");
+          }
+        }
+      }
+
       toast.success('Transaction created successfully');
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
@@ -255,7 +294,7 @@ function NewTransactionContent() {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       queryClient.invalidateQueries({ queryKey: ['goals-active'] });
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
-      
+
       // Navigate back to trip if coming from trip page
       if (initialTripId) {
         router.push(`/trips/${initialTripId}`);
@@ -779,6 +818,33 @@ function NewTransactionContent() {
                 Add tags to organize and filter transactions
               </p>
             </div>
+
+            {/* Split with others (EXPENSE only) */}
+            {transactionType === TransactionType.EXPENSE && (
+              <div className="space-y-3 border rounded-lg p-4 bg-muted/10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Split with others</p>
+                    <p className="text-xs text-muted-foreground">Track who owes you from this expense</p>
+                  </div>
+                  <Switch
+                    checked={splitEnabled}
+                    onCheckedChange={(checked) => {
+                      setSplitEnabled(checked);
+                      if (!checked) setSplitParticipants([]);
+                    }}
+                  />
+                </div>
+                {splitEnabled && (
+                  <SplitSection
+                    totalAmount={watchAmount || 0}
+                    members={members || []}
+                    participants={splitParticipants}
+                    onParticipantsChange={setSplitParticipants}
+                  />
+                )}
+              </div>
+            )}
 
             {/* Duplicate Warning */}
             {watchAmount > 0 && watchDateTime && (
