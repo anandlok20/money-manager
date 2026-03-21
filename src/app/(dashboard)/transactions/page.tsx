@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Search,
   Download,
+  Upload,
   X,
   Calendar,
 } from 'lucide-react';
@@ -325,6 +326,12 @@ export default function TransactionsPage() {
               </div>
             </PopoverContent>
           </Popover>
+          <Link href="/transactions/import">
+            <Button variant="outline" className="gap-2 rounded-xl">
+              <Upload className="h-4 w-4" />
+              Import
+            </Button>
+          </Link>
           <Link href="/transactions/new">
             <Button className="gap-2 shadow-lg shadow-primary/25">
               <Plus className="h-4 w-4" />

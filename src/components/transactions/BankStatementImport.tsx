@@ -622,9 +622,11 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
                         <div className="flex items-center gap-2">
                           <Building2 className="h-4 w-4" />
                           <span>{account.bankName}</span>
-                          <span className="text-muted-foreground">
-                            ••••{account.accountNumber.slice(-4)}
-                          </span>
+                          {account.accountNumber && (
+                            <span className="text-muted-foreground">
+                              ••••{account.accountNumber.slice(-4)}
+                            </span>
+                          )}
                         </div>
                       </SelectItem>
                     ))}
