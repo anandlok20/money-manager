@@ -181,13 +181,9 @@ const VehicleSchema = new Schema<IVehicle>(
       required: [true, 'Fuel type is required'],
     },
     
-    purchaseDate: {
-      type: Date,
-      required: [true, 'Purchase date is required'],
-    },
+    purchaseDate: Date,
     purchasePrice: {
       type: Number,
-      required: [true, 'Purchase price is required'],
       min: 0,
     },
     currentValue: Number,
