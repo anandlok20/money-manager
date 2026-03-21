@@ -722,6 +722,47 @@ function NewTransactionContent() {
               />
             </div>
 
+            {/* Payment Mode + Reference Number */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Payment Mode (Optional)</Label>
+                <Controller
+                  name="paymentMode"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || 'none'}
+                      onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="How was it paid?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Not specified</SelectItem>
+                        <SelectItem value="upi">UPI</SelectItem>
+                        <SelectItem value="neft">NEFT</SelectItem>
+                        <SelectItem value="rtgs">RTGS</SelectItem>
+                        <SelectItem value="imps">IMPS</SelectItem>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="cheque">Cheque</SelectItem>
+                        <SelectItem value="card">Card (Swipe)</SelectItem>
+                        <SelectItem value="netbanking">Net Banking</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="referenceNumber">Reference No. (Optional)</Label>
+                <Input
+                  id="referenceNumber"
+                  placeholder="UPI ref, UTR, cheque no..."
+                  {...register('referenceNumber')}
+                />
+              </div>
+            </div>
+
             {/* Tags */}
             <div className="space-y-2">
               <Label>Tags (Optional)</Label>

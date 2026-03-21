@@ -1,10 +1,13 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+export type BankAccountType = 'savings' | 'current' | 'salary' | 'fd' | 'rd' | 'nre' | 'nro' | 'other';
+
 export interface IBankAccount extends Document {
   _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   bankName: string;
   accountHolderName: string;
+  accountType: BankAccountType;
   accountNumber?: string;
   upiId?: string;
   ifscCode?: string;
@@ -12,6 +15,10 @@ export interface IBankAccount extends Document {
   currentBalance: number;
   minimumBalance?: number;
   minimumBalanceAlert: boolean;
+  // FD/RD specific
+  interestRate?: number;
+  maturityDate?: Date;
+  maturityAmount?: number;
   linkedMemberIds: mongoose.Types.ObjectId[];
   isActive: boolean;
   createdAt: Date;
@@ -35,6 +42,11 @@ const BankAccountSchema = new Schema<IBankAccount>(
       type: String,
       required: [true, 'Account holder name is required'],
       trim: true,
+    },
+    accountType: {
+      type: String,
+      enum: ['savings', 'current', 'salary', 'fd', 'rd', 'nre', 'nro', 'other'],
+      default: 'savings',
     },
     accountNumber: {
       type: String,
@@ -66,6 +78,10 @@ const BankAccountSchema = new Schema<IBankAccount>(
       type: Boolean,
       default: true,
     },
+    // FD/RD specific fields
+    interestRate: Number,
+    maturityDate: Date,
+    maturityAmount: Number,
     linkedMemberIds: [{
       type: Schema.Types.ObjectId,
       ref: 'Member',

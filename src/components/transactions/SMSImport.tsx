@@ -34,9 +34,15 @@ interface Category {
   type: string;
 }
 
+interface Member {
+  _id: string;
+  name: string;
+}
+
 interface SMSImportProps {
   categories: Category[];
   bankAccounts: { _id: string; bankName: string; accountNumber: string }[];
+  members?: Member[];
 }
 
 async function parseSMSMessages(messages: string[]): Promise<ParsedSMS[]> {
@@ -51,7 +57,14 @@ async function parseSMSMessages(messages: string[]): Promise<ParsedSMS[]> {
 }
 
 async function importTransactions(
-  transactions: Array<{ type: string; amount: number; categoryId?: string; note?: string; sourceBankId?: string }>
+  transactions: Array<{
+    type: string;
+    amount: number;
+    categoryId?: string;
+    memberId?: string;
+    note?: string;
+    sourceBankId?: string;
+  }>
 ) {
   const res = await fetch('/api/transactions/import-parsed', {
     method: 'POST',
@@ -65,10 +78,12 @@ async function importTransactions(
   return res.json();
 }
 
-export function SMSImport({ categories, bankAccounts }: SMSImportProps) {
+export function SMSImport({ categories, bankAccounts, members = [] }: SMSImportProps) {
   const [smsText, setSmsText] = useState('');
   const [parsed, setParsed] = useState<ParsedSMS[]>([]);
+  const [rowTypes, setRowTypes] = useState<Record<number, 'EXPENSE' | 'INCOME'>>({});
   const [rowCategories, setRowCategories] = useState<Record<number, string>>({});
+  const [rowMembers, setRowMembers] = useState<Record<number, string>>({});
   const [selectedBank, setSelectedBank] = useState<string>('');
 
   const parseMutation = useMutation({
@@ -81,12 +96,16 @@ export function SMSImport({ categories, bankAccounts }: SMSImportProps) {
     },
     onSuccess: (data) => {
       setParsed(data);
-      // Pre-fill category selections with suggestions
-      const initial: Record<number, string> = {};
+      // Pre-fill types and categories with suggestions
+      const initialTypes: Record<number, 'EXPENSE' | 'INCOME'> = {};
+      const initialCategories: Record<number, string> = {};
       data.forEach((item, i) => {
-        if (item.suggestedCategoryId) initial[i] = item.suggestedCategoryId;
+        initialTypes[i] = item.type;
+        if (item.suggestedCategoryId) initialCategories[i] = item.suggestedCategoryId;
       });
-      setRowCategories(initial);
+      setRowTypes(initialTypes);
+      setRowCategories(initialCategories);
+      setRowMembers({});
       if (data.length === 0) {
         toast.warning('No transactions found in the pasted messages');
       } else {
@@ -99,9 +118,10 @@ export function SMSImport({ categories, bankAccounts }: SMSImportProps) {
   const importMutation = useMutation({
     mutationFn: () => {
       const txns = parsed.map((item, i) => ({
-        type: item.type,
+        type: rowTypes[i] || item.type,
         amount: item.amount,
         categoryId: rowCategories[i] || undefined,
+        memberId: rowMembers[i] || undefined,
         note: item.merchantName || item.rawText.slice(0, 100),
         sourceBankId: selectedBank || undefined,
       }));
@@ -111,10 +131,21 @@ export function SMSImport({ categories, bankAccounts }: SMSImportProps) {
       toast.success(`Imported ${data.imported} transaction${data.imported !== 1 ? 's' : ''}`);
       setSmsText('');
       setParsed([]);
+      setRowTypes({});
       setRowCategories({});
+      setRowMembers({});
     },
     onError: (err: Error) => toast.error(err.message),
   });
+
+  function toggleType(i: number) {
+    setRowTypes((prev) => ({
+      ...prev,
+      [i]: prev[i] === 'INCOME' ? 'EXPENSE' : 'INCOME',
+    }));
+    // Clear category when type changes
+    setRowCategories((prev) => ({ ...prev, [i]: '' }));
+  }
 
   return (
     <div className="space-y-6">
@@ -173,60 +204,92 @@ export function SMSImport({ categories, bankAccounts }: SMSImportProps) {
           </div>
 
           <div className="space-y-2">
-            {parsed.map((item, i) => (
-              <div
-                key={i}
-                className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border rounded-xl bg-muted/30"
-              >
-                {/* Type badge */}
-                <Badge
-                  variant={item.type === 'INCOME' ? 'default' : 'destructive'}
-                  className="w-fit shrink-0"
+            {parsed.map((item, i) => {
+              const currentType = rowTypes[i] || item.type;
+              return (
+                <div
+                  key={i}
+                  className="flex flex-col gap-2 p-3 border rounded-xl bg-muted/30"
                 >
-                  {item.type === 'INCOME' ? '+' : '-'}
-                </Badge>
+                  {/* Row 1: type + amount + merchant + confidence */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Clickable type badge */}
+                    <button
+                      type="button"
+                      onClick={() => toggleType(i)}
+                      title="Click to toggle expense/income"
+                    >
+                      <Badge
+                        variant={currentType === 'INCOME' ? 'default' : 'destructive'}
+                        className="cursor-pointer shrink-0"
+                      >
+                        {currentType === 'INCOME' ? 'Income ▲' : 'Expense ▼'}
+                      </Badge>
+                    </button>
 
-                {/* Amount */}
-                <span className="font-semibold shrink-0">
-                  ₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </span>
+                    <span className="font-semibold shrink-0">
+                      ₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </span>
 
-                {/* Merchant / bank */}
-                <span className="text-sm text-muted-foreground flex-1 truncate">
-                  {item.merchantName || item.bankName || 'Unknown'}
-                  {item.accountLast4 && <span className="ml-1">••{item.accountLast4}</span>}
-                </span>
+                    <span className="text-sm text-muted-foreground flex-1 truncate">
+                      {item.merchantName || item.bankName || 'Unknown'}
+                      {item.accountLast4 && <span className="ml-1">••{item.accountLast4}</span>}
+                    </span>
 
-                {/* Confidence */}
-                {item.confidence >= 0.8 ? (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
-                )}
+                    {item.confidence >= 0.8 ? (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                    )}
+                  </div>
 
-                {/* Category picker */}
-                <Select
-                  value={rowCategories[i] || ''}
-                  onValueChange={(val) => setRowCategories((prev) => ({ ...prev, [i]: val }))}
-                >
-                  <SelectTrigger className="w-40 h-8 text-xs shrink-0">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Uncategorized</SelectItem>
-                    {categories
-                      .filter((c) =>
-                        item.type === 'INCOME' ? c.type === 'INCOME' : c.type === 'EXPENSE'
-                      )
-                      .map((c) => (
-                        <SelectItem key={c._id} value={c._id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
+                  {/* Row 2: category + member */}
+                  <div className="flex flex-wrap gap-2">
+                    {/* Category picker */}
+                    <Select
+                      value={rowCategories[i] || ''}
+                      onValueChange={(val) => setRowCategories((prev) => ({ ...prev, [i]: val }))}
+                    >
+                      <SelectTrigger className="w-40 h-8 text-xs shrink-0">
+                        <SelectValue placeholder="Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Uncategorized</SelectItem>
+                        {categories
+                          .filter((c) =>
+                            currentType === 'INCOME' ? c.type === 'INCOME' : c.type === 'EXPENSE'
+                          )
+                          .map((c) => (
+                            <SelectItem key={c._id} value={c._id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Member picker */}
+                    {members.length > 0 && (
+                      <Select
+                        value={rowMembers[i] || ''}
+                        onValueChange={(val) => setRowMembers((prev) => ({ ...prev, [i]: val }))}
+                      >
+                        <SelectTrigger className="w-36 h-8 text-xs shrink-0">
+                          <SelectValue placeholder="Member (opt.)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">No member</SelectItem>
+                          {members.map((m) => (
+                            <SelectItem key={m._id} value={m._id}>
+                              {m.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <Button

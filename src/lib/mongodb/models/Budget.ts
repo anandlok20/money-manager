@@ -7,6 +7,8 @@ export interface IBudget extends Document {
   amount: number;
   month: number; // 1-12
   year: number;
+  rolloverEnabled: boolean;
+  rolloverAmount: number; // Unspent amount carried from prior month
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -39,6 +41,15 @@ const BudgetSchema = new Schema<IBudget>(
     year: {
       type: Number,
       required: true,
+    },
+    rolloverEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    rolloverAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     isActive: {
       type: Boolean,

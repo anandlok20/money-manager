@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Transaction, { ITransaction } from '@/lib/mongodb/models/Transaction';
+import Goal from '@/lib/mongodb/models/Goal';
 import { dashboardCache, userCacheKey } from '@/lib/cache/lru-cache';
 import { TransactionType, AccountType } from '@/types';
 import {
@@ -17,6 +18,7 @@ interface CreateTransactionParams {
   categoryId?: string;
   memberId?: string;
   tripId?: string;
+  goalId?: string;
   sourceType?: AccountType;
   sourceBankId?: string;
   sourceCardId?: string;
@@ -24,6 +26,8 @@ interface CreateTransactionParams {
   destinationBankId?: string;
   destinationCardId?: string;
   destinationInvestmentId?: string;
+  paymentMode?: 'upi' | 'neft' | 'rtgs' | 'imps' | 'cash' | 'cheque' | 'card' | 'netbanking' | 'other';
+  referenceNumber?: string;
 }
 
 export async function createTransaction(
@@ -45,6 +49,7 @@ export async function createTransaction(
           categoryId: params.categoryId,
           memberId: params.memberId,
           tripId: params.tripId,
+          goalId: params.goalId,
           sourceType: params.sourceType,
           sourceBankId: params.sourceBankId,
           sourceCardId: params.sourceCardId,
@@ -52,6 +57,8 @@ export async function createTransaction(
           destinationBankId: params.destinationBankId,
           destinationCardId: params.destinationCardId,
           destinationInvestmentId: params.destinationInvestmentId,
+          paymentMode: params.paymentMode,
+          referenceNumber: params.referenceNumber,
         },
       ],
       { session }
@@ -59,6 +66,15 @@ export async function createTransaction(
 
     // Update balances based on transaction type
     await applyTransactionToBalances(params, session);
+
+    // Auto-update goal progress when a transaction is tagged with a goal
+    if (params.goalId) {
+      await Goal.findByIdAndUpdate(
+        params.goalId,
+        { $inc: { currentAmount: params.amount } },
+        { session }
+      );
+    }
 
     await session.commitTransaction();
     dashboardCache.delete(userCacheKey(params.userId, 'dashboard'));
@@ -91,6 +107,15 @@ export async function deleteTransaction(
 
     // Reverse the balance changes
     await reverseTransactionFromBalances(transaction, session);
+
+    // Reverse goal progress if this transaction was tagged with a goal
+    if (transaction.goalId) {
+      await Goal.findByIdAndUpdate(
+        transaction.goalId,
+        { $inc: { currentAmount: -transaction.amount } },
+        { session }
+      );
+    }
 
     // Delete the transaction
     await Transaction.findByIdAndDelete(transactionId).session(session);
@@ -127,6 +152,15 @@ export async function updateTransaction(
     // Reverse the original balance changes
     await reverseTransactionFromBalances(originalTransaction, session);
 
+    // Reverse original goal progress
+    if (originalTransaction.goalId) {
+      await Goal.findByIdAndUpdate(
+        originalTransaction.goalId,
+        { $inc: { currentAmount: -originalTransaction.amount } },
+        { session }
+      );
+    }
+
     // Update the transaction
     const updatedTransaction = await Transaction.findByIdAndUpdate(
       transactionId,
@@ -136,6 +170,15 @@ export async function updateTransaction(
 
     if (!updatedTransaction) {
       throw new Error('Failed to update transaction');
+    }
+
+    // Apply new goal progress
+    if (updatedTransaction.goalId) {
+      await Goal.findByIdAndUpdate(
+        updatedTransaction.goalId,
+        { $inc: { currentAmount: updatedTransaction.amount } },
+        { session }
+      );
     }
 
     // Apply new balance changes

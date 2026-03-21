@@ -27,6 +27,9 @@ export interface ITransaction extends Document {
   destinationBankId?: mongoose.Types.ObjectId;
   destinationCardId?: mongoose.Types.ObjectId;
   destinationInvestmentId?: mongoose.Types.ObjectId;
+  // Payment mode (how money moved)
+  paymentMode?: 'upi' | 'neft' | 'rtgs' | 'imps' | 'cash' | 'cheque' | 'card' | 'netbanking' | 'other';
+  referenceNumber?: string; // UPI Ref ID, NEFT UTR, RTGS UTR, cheque number, etc.
   // Receipt/Attachment
   receiptUrl?: string;
   receiptFileName?: string;
@@ -120,6 +123,15 @@ const TransactionSchema = new Schema<ITransaction>(
     destinationInvestmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Investment',
+    },
+    // Payment mode
+    paymentMode: {
+      type: String,
+      enum: ['upi', 'neft', 'rtgs', 'imps', 'cash', 'cheque', 'card', 'netbanking', 'other'],
+    },
+    referenceNumber: {
+      type: String,
+      trim: true,
     },
     // Receipt/Attachment
     receiptUrl: {

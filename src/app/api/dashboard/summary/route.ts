@@ -7,6 +7,8 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import BankAccount from '@/lib/mongodb/models/BankAccount';
 import Card from '@/lib/mongodb/models/Card';
 import Investment from '@/lib/mongodb/models/Investment';
+import Asset from '@/lib/mongodb/models/Asset';
+import Vehicle from '@/lib/mongodb/models/Vehicle';
 import Transaction from '@/lib/mongodb/models/Transaction';
 import Budget from '@/lib/mongodb/models/Budget';
 import Goal, { GoalStatus } from '@/lib/mongodb/models/Goal';
@@ -47,6 +49,8 @@ export async function GET() {
       bankAccounts,
       cards,
       investments,
+      assetTotal,
+      vehicleTotal,
       recentTransactions,
       monthlyStats,
       expenseByCategory,
@@ -68,6 +72,24 @@ export async function GET() {
       Investment.find({ userId, isActive: true })
         .select('name type currentValue')
         .lean(),
+
+      // Assets (FD, PPF, Real Estate, Gold, etc.)
+      Asset.aggregate([
+        { $match: { userId: { $eq: userId }, status: 'active' } },
+        { $group: { _id: null, total: { $sum: '$currentValue' } } },
+      ]),
+
+      // Vehicles: value (asset) and outstanding loans (liability)
+      Vehicle.aggregate([
+        { $match: { userId: { $eq: userId }, status: 'active' } },
+        {
+          $group: {
+            _id: null,
+            value: { $sum: { $ifNull: ['$currentValue', 0] } },
+            loans: { $sum: { $cond: ['$hasLoan', { $ifNull: ['$loanAmount', 0] }, 0] } },
+          },
+        },
+      ]),
 
       // Recent transactions
       Transaction.find({ userId })
@@ -182,9 +204,18 @@ export async function GET() {
       (sum, inv) => sum + inv.currentValue,
       0
     );
+    const totalAssetValue = assetTotal[0]?.total || 0;
+    const totalVehicleValue = vehicleTotal[0]?.value || 0;
+    const totalVehicleLoans = vehicleTotal[0]?.loans || 0;
 
-    // Net worth = Bank balance + Investment value - Card balance (card balance is debt, positive = owed)
-    const netWorth = totalBankBalance + totalInvestmentValue - totalCardBalance;
+    // Net worth = (Bank + Investment + Assets + Vehicles) - (Cards debt + Vehicle loans)
+    const netWorth =
+      totalBankBalance +
+      totalInvestmentValue +
+      totalAssetValue +
+      totalVehicleValue -
+      totalCardBalance -
+      totalVehicleLoans;
 
     // Parse monthly stats
     let monthlyIncome = 0;
@@ -316,6 +347,9 @@ export async function GET() {
         totalBankBalance,
         totalCardBalance,
         totalInvestmentValue,
+        totalAssetValue,
+        totalVehicleValue,
+        totalVehicleLoans,
         netWorth,
         monthlyIncome,
         monthlyExpense,

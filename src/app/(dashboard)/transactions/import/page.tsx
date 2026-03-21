@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import BankAccount from '@/lib/mongodb/models/BankAccount';
 import Card from '@/lib/mongodb/models/Card';
 import Category from '@/lib/mongodb/models/Category';
+import Member from '@/lib/mongodb/models/Member';
 import { BankStatementImport } from '@/components/transactions/BankStatementImport';
 import ReceiptScanner from '@/components/transactions/ReceiptScanner';
 import { SMSImport } from '@/components/transactions/SMSImport';
@@ -20,10 +21,11 @@ export default async function ImportTransactionsPage() {
   await connectToDatabase();
 
   // Fetch required data
-  const [bankAccounts, cards, categories] = await Promise.all([
+  const [bankAccounts, cards, categories, members] = await Promise.all([
     BankAccount.find({ userId: session.user.id }).lean(),
     Card.find({ userId: session.user.id }).lean(),
     Category.find({ userId: session.user.id }).lean(),
+    Member.find({ userId: session.user.id }).lean(),
   ]);
 
   // Serialize MongoDB documents
@@ -90,6 +92,7 @@ export default async function ImportTransactionsPage() {
           <SMSImport
             categories={serializedCategories}
             bankAccounts={serializedBankAccounts}
+            members={members.map((m) => ({ _id: m._id.toString(), name: (m as unknown as { name: string }).name }))}
           />
         </TabsContent>
       </Tabs>

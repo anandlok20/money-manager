@@ -18,6 +18,8 @@ export const transactionSchema = z.object({
   destinationCardId: z.string().optional(),
   destinationInvestmentId: z.string().optional(),
   tags: z.array(z.string().max(50)).max(10).optional(),
+  paymentMode: z.enum(['upi', 'neft', 'rtgs', 'imps', 'cash', 'cheque', 'card', 'netbanking', 'other']).optional(),
+  referenceNumber: z.string().max(100).optional(),
 }).refine((data) => {
   // For EXPENSE and INCOME, category is required but source is optional
   if (data.type === TransactionType.EXPENSE || data.type === TransactionType.INCOME) {
@@ -82,6 +84,8 @@ export const updateTransactionSchema = z.object({
   destinationCardId: z.string().nullable().optional(),
   destinationInvestmentId: z.string().nullable().optional(),
   tags: z.array(z.string().max(50)).max(10).optional(),
+  paymentMode: z.enum(['upi', 'neft', 'rtgs', 'imps', 'cash', 'cheque', 'card', 'netbanking', 'other']).optional(),
+  referenceNumber: z.string().max(100).nullable().optional(),
 });
 
 export type TransactionInput = z.infer<typeof transactionSchema>;
