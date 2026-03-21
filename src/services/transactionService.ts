@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Transaction, { ITransaction } from '@/lib/mongodb/models/Transaction';
+import { dashboardCache, userCacheKey } from '@/lib/cache/lru-cache';
 import { TransactionType, AccountType } from '@/types';
 import {
   updateAccountBalance,
@@ -60,6 +61,7 @@ export async function createTransaction(
     await applyTransactionToBalances(params, session);
 
     await session.commitTransaction();
+    dashboardCache.delete(userCacheKey(params.userId, 'dashboard'));
     return transaction;
   } catch (error) {
     await session.abortTransaction();
@@ -94,6 +96,7 @@ export async function deleteTransaction(
     await Transaction.findByIdAndDelete(transactionId).session(session);
 
     await session.commitTransaction();
+    dashboardCache.delete(userCacheKey(userId, 'dashboard'));
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -154,6 +157,7 @@ export async function updateTransaction(
     );
 
     await session.commitTransaction();
+    dashboardCache.delete(userCacheKey(userId, 'dashboard'));
     return updatedTransaction;
   } catch (error) {
     await session.abortTransaction();

@@ -199,7 +199,7 @@ export default function DashboardPage() {
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-lg sm:text-2xl lg:text-3xl font-bold truncate">
+              <div className="text-base sm:text-xl lg:text-2xl font-bold truncate">
                 {formatCurrency(data?.netWorth || 0, currency)}
               </div>
             )}
@@ -221,7 +221,7 @@ export default function DashboardPage() {
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-emerald-600 dark:text-emerald-400 truncate">
+              <div className="text-base sm:text-xl lg:text-2xl font-bold text-emerald-600 dark:text-emerald-400 truncate">
                 {formatCurrency(data?.totalBankBalance || 0, currency)}
               </div>
             )}
@@ -243,7 +243,7 @@ export default function DashboardPage() {
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-green-600 dark:text-green-400 truncate">
+              <div className="text-base sm:text-xl lg:text-2xl font-bold text-green-600 dark:text-green-400 truncate">
                 {formatCurrency(data?.monthlyIncome || 0, currency)}
               </div>
             )}
@@ -265,7 +265,7 @@ export default function DashboardPage() {
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-red-600 dark:text-red-400 truncate">
+              <div className="text-base sm:text-xl lg:text-2xl font-bold text-red-600 dark:text-red-400 truncate">
                 {formatCurrency(data?.monthlyExpense || 0, currency)}
               </div>
             )}
@@ -291,10 +291,10 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className={cn(
-                "text-lg sm:text-2xl lg:text-3xl font-bold truncate",
+                "text-base sm:text-xl lg:text-2xl font-bold truncate",
                 (data?.totalCardBalance || 0) > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
               )}>
-                {(data?.totalCardBalance || 0) > 0 ? '-' : ''}{formatCurrency(Math.abs(data?.totalCardBalance || 0), currency)}
+                {formatCurrency(data?.totalCardBalance || 0, currency)}
               </div>
             )}
           </CardContent>
@@ -315,7 +315,7 @@ export default function DashboardPage() {
             {isLoading ? (
               <Skeleton className="h-8 w-32" />
             ) : (
-              <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-blue-600 dark:text-blue-400 truncate">
+              <div className="text-base sm:text-xl lg:text-2xl font-bold text-blue-600 dark:text-blue-400 truncate">
                 {formatCurrency(data?.totalInvestmentValue || 0, currency)}
               </div>
             )}
@@ -338,7 +338,7 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className={cn(
-                "text-lg sm:text-2xl lg:text-3xl font-bold truncate",
+                "text-base sm:text-xl lg:text-2xl font-bold truncate",
                 (data?.monthlySavings || 0) >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
               )}>
                 {formatCurrency(data?.monthlySavings || 0, currency)}
@@ -363,7 +363,7 @@ export default function DashboardPage() {
               <Skeleton className="h-8 w-32" />
             ) : (
               <div className={cn(
-                "text-lg sm:text-2xl lg:text-3xl font-bold truncate",
+                "text-base sm:text-xl lg:text-2xl font-bold truncate",
                 (data?.savingsRate || 0) >= 20 ? "text-green-600 dark:text-green-400" : 
                 (data?.savingsRate || 0) >= 0 ? "text-amber-600 dark:text-amber-400" : 
                 "text-red-600 dark:text-red-400"

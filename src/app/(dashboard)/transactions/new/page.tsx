@@ -254,6 +254,7 @@ function NewTransactionContent() {
       queryClient.invalidateQueries({ queryKey: ['trip'] });
       queryClient.invalidateQueries({ queryKey: ['goals'] });
       queryClient.invalidateQueries({ queryKey: ['goals-active'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
       
       // Navigate back to trip if coming from trip page
       if (initialTripId) {

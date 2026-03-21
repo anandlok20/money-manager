@@ -105,7 +105,7 @@ function getClientIP(request: NextRequest): string {
   return request.headers.get('x-real-ip') ?? 'unknown';
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = getClientIP(request);
 

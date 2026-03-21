@@ -363,7 +363,7 @@ export default function BudgetsPage() {
             <PiggyBank className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totals.totalBudget)}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{formatCurrency(totals.totalBudget)}</div>
             <p className="text-xs text-muted-foreground">
               {budgets.length} categories budgeted
             </p>
@@ -376,7 +376,7 @@ export default function BudgetsPage() {
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totals.totalSpent)}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{formatCurrency(totals.totalSpent)}</div>
             <Progress 
               value={totals.totalBudget > 0 ? Math.min((totals.totalSpent / totals.totalBudget) * 100, 100) : 0} 
               className="mt-2" 
@@ -394,7 +394,7 @@ export default function BudgetsPage() {
             )}
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${totals.totalRemaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-xl sm:text-2xl font-bold truncate ${totals.totalRemaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(totals.totalRemaining)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -409,7 +409,7 @@ export default function BudgetsPage() {
             <AlertTriangle className={`h-4 w-4 ${totals.overBudgetCount > 0 ? 'text-red-500' : 'text-muted-foreground'}`} />
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${totals.overBudgetCount > 0 ? 'text-red-600' : ''}`}>
+            <div className={`text-xl sm:text-2xl font-bold ${totals.overBudgetCount > 0 ? 'text-red-600' : ''}`}>
               {totals.overBudgetCount}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -484,7 +484,7 @@ export default function BudgetsPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm">
                         <span className="text-muted-foreground">
                           Spent: <span className="font-medium text-foreground">{formatCurrency(spent)}</span>
                         </span>

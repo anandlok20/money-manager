@@ -658,7 +658,7 @@ export default function TransactionsPage() {
 
                     <p
                       className={cn(
-                        'text-lg font-semibold shrink-0',
+                        'text-sm sm:text-base font-semibold shrink-0',
                         transaction.type === TransactionType.INCOME
                           ? 'text-green-600 dark:text-green-400'
                           : transaction.type === TransactionType.EXPENSE

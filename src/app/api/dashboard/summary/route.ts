@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import mongoose from 'mongoose';
+import { dashboardCache, userCacheKey } from '@/lib/cache/lru-cache';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import BankAccount from '@/lib/mongodb/models/BankAccount';
@@ -28,6 +29,10 @@ export async function GET() {
         { status: 401 }
       );
     }
+
+    const cacheKey = userCacheKey(session.user.id, 'dashboard');
+    const cached = dashboardCache.get(cacheKey);
+    if (cached) return NextResponse.json(cached);
 
     await connectToDatabase();
 
@@ -305,7 +310,7 @@ export async function GET() {
     const totalGoalTarget = activeGoals.reduce((sum, g) => sum + g.targetAmount, 0);
     const totalGoalCurrent = activeGoals.reduce((sum, g) => sum + g.currentAmount, 0);
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       data: {
         totalBankBalance,
@@ -340,7 +345,9 @@ export async function GET() {
         totalGoalCurrent,
         goalsCount: activeGoals.length,
       },
-    });
+    };
+    dashboardCache.set(cacheKey, responsePayload);
+    return NextResponse.json(responsePayload);
   } catch (error) {
     console.error('Error fetching dashboard summary:', error);
     return NextResponse.json(
