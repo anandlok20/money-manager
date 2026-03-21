@@ -128,7 +128,7 @@ export default function NewTaxPage() {
   const selectedRegime = form.watch('regime');
 
   const createMutation = useMutation({
-    mutationFn: async (data: TaxFormValues) => {
+    mutationFn: async (data: TaxFormValues & { assessmentYear: string }) => {
       const response = await fetch('/api/tax', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -148,7 +148,10 @@ export default function NewTaxPage() {
   });
 
   const onSubmit = (data: TaxFormValues) => {
-    createMutation.mutate(data);
+    // Derive assessmentYear from financialYear: FY 2025-26 → AY 2026-27
+    const fyStart = parseInt(data.financialYear.split('-')[0]);
+    const assessmentYear = `${fyStart + 1}-${String(fyStart + 2).slice(-2)}`;
+    createMutation.mutate({ ...data, assessmentYear });
   };
 
   return (
