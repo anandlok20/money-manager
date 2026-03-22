@@ -52,6 +52,11 @@ interface CardAccount {
   cardName: string;
 }
 
+interface Member {
+  _id: string;
+  name: string;
+}
+
 interface ImportedTransaction {
   date: string;
   description: string;
@@ -90,12 +95,20 @@ async function fetchCards(): Promise<CardAccount[]> {
   return data.data;
 }
 
+async function fetchMembers(): Promise<Member[]> {
+  const response = await fetch('/api/members');
+  if (!response.ok) throw new Error('Failed to fetch members');
+  const data = await response.json();
+  return data.data;
+}
+
 async function importTransactions(params: {
   file: File;
   bankFormat: string;
   accountId: string;
   accountType: string;
   skipDuplicates: boolean;
+  memberId?: string;
 }): Promise<ImportResult> {
   const formData = new FormData();
   formData.append('file', params.file);
@@ -103,6 +116,7 @@ async function importTransactions(params: {
   formData.append('accountId', params.accountId);
   formData.append('accountType', params.accountType);
   formData.append('skipDuplicates', String(params.skipDuplicates));
+  if (params.memberId) formData.append('memberId', params.memberId);
 
   const response = await fetch('/api/transactions/import', {
     method: 'POST',
@@ -125,6 +139,7 @@ export function ImportTransactions() {
   const [accountType, setAccountType] = useState('bank');
   const [accountId, setAccountId] = useState('');
   const [skipDuplicates, setSkipDuplicates] = useState(true);
+  const [memberId, setMemberId] = useState('');
   const [result, setResult] = useState<ImportResult | null>(null);
 
   const { data: formatsData } = useQuery({
@@ -144,6 +159,12 @@ export function ImportTransactions() {
     queryFn: fetchCards,
   });
   const cards = cardsData || [];
+
+  const { data: membersData } = useQuery({
+    queryKey: ['members-simple'],
+    queryFn: fetchMembers,
+  });
+  const members = membersData || [];
 
   const mutation = useMutation({
     mutationFn: importTransactions,
@@ -192,6 +213,7 @@ export function ImportTransactions() {
       accountId,
       accountType,
       skipDuplicates,
+      memberId: memberId || undefined,
     });
   };
 
@@ -201,6 +223,7 @@ export function ImportTransactions() {
     setBankFormat('generic');
     setAccountType('bank');
     setAccountId('');
+    setMemberId('');
   };
 
   const handleClose = () => {
@@ -336,19 +359,49 @@ export function ImportTransactions() {
                 </Select>
               </div>
 
-              {/* Skip Duplicates */}
+              {/* Member Tag */}
               <div className="space-y-2">
-                <Label>Skip Duplicates</Label>
+                <Label>Tag Member <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Select value={memberId} onValueChange={setMemberId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="No member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No member</SelectItem>
+                    {members.map((m) => (
+                      <SelectItem key={m._id} value={m._id}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Skip Duplicates */}
+              <div className="space-y-2 col-span-2">
                 <div className="flex items-center gap-2 h-10">
                   <Switch
                     checked={skipDuplicates}
                     onCheckedChange={setSkipDuplicates}
                   />
                   <span className="text-sm text-muted-foreground">
-                    Skip existing transactions
+                    Skip duplicate transactions (matched by date + amount)
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Credit/Debit mapping note */}
+            <div className="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm text-muted-foreground bg-muted/30">
+              <span className="font-medium text-foreground">Type detection:</span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                Credit → Income
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-destructive inline-block" />
+                Debit → Expense
+              </span>
             </div>
 
             {/* Actions */}

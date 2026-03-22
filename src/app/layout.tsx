@@ -106,7 +106,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(regs) {
-              regs.forEach(function(r) { r.unregister(); });
+              if (regs.length > 0) {
+                Promise.all(regs.map(function(r) { return r.unregister(); })).then(function() {
+                  window.location.reload();
+                });
+              }
             });
           }
         `}} />
