@@ -64,6 +64,14 @@ export async function withErrorHandler(handler: () => Promise<NextResponse>): Pr
   try {
     return await handler();
   } catch (error) {
+    // next/navigation redirect() throws with a NEXT_REDIRECT digest — treat as 401 in API routes
+    const digest =
+      typeof error === 'object' && error !== null && 'digest' in error
+        ? String((error as Record<string, unknown>).digest)
+        : '';
+    if (digest.startsWith('NEXT_REDIRECT')) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
     return handleApiError(error, 'An unexpected error occurred');
   }
 }

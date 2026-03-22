@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Plus, CreditCard, Calendar, TrendingDown, Loader2, Edit, X } from 'lucide-react';
+import { Plus, CreditCard, Calendar, TrendingDown, Loader2, Edit, X, Eye } from 'lucide-react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -201,6 +202,11 @@ export default function LoansPage() {
                       </Badge>
                       {loan.status === 'active' && (
                         <>
+                          <Link href={`/loans/${loan._id}`}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <Eye className="h-3.5 w-3.5" />
+                            </Button>
+                          </Link>
                           <Button
                             variant="ghost"
                             size="icon"

@@ -97,6 +97,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Inline script — runs before any cached JS chunks load.
+            The HTML is always fetched fresh (SW uses network-first for navigation),
+            so this unregisters stale service workers that would otherwise serve
+            outdated chunks. */}
+        {/* eslint-disable-next-line @next/next/no-before-interactive-script-component */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              regs.forEach(function(r) { r.unregister(); });
+            });
+          }
+        `}} />
+      </head>
       <body className={`${inter.variable} ${nunito.variable} ${crimsonText.variable} ${baloo2.variable} ${orbitron.variable} ${pressStart2P.variable} ${ibmPlexSans.variable} ${merriweather.variable} ${cinzel.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>

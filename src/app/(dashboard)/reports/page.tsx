@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { useQuery } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth, subMonths, parseISO } from 'date-fns';
 import {
@@ -24,6 +25,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/utils/currency';
 import { TransactionType } from '@/types';
+
+const NetWorthHistoryChart = dynamic(
+  () => import('@/components/dashboard/NetWorthHistory').then((mod) => ({ default: mod.NetWorthHistoryChart })),
+  { loading: () => <Skeleton className="h-[300px] w-full" />, ssr: false }
+);
 
 interface Transaction {
   _id: string;
@@ -322,6 +328,7 @@ export default function ReportsPage() {
           <TabsTrigger value="categories">By Category</TabsTrigger>
           <TabsTrigger value="members">By Member</TabsTrigger>
           <TabsTrigger value="top">Top Expenses</TabsTrigger>
+          <TabsTrigger value="networth">Net Worth</TabsTrigger>
         </TabsList>
 
         <TabsContent value="categories">
@@ -463,6 +470,10 @@ export default function ReportsPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="networth">
+          <NetWorthHistoryChart />
         </TabsContent>
       </Tabs>
 

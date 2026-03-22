@@ -18,21 +18,21 @@ export function useServiceWorker() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Register service worker
+    // Register service worker — first unregister any stale SW so old cached
+    // chunks can never block a fresh registration from taking effect.
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
+      navigator.serviceWorker.getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((r) => r.unregister())))
+        .then(() => navigator.serviceWorker.register('/sw.js'))
         .then((registration) => {
           console.log('Service Worker registered:', registration.scope);
           setIsReady(true);
 
-          // Check for updates
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New content available
                   console.log('New content available, refresh to update');
                 }
               });
