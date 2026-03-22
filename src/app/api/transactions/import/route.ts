@@ -987,6 +987,7 @@ export async function POST(request: Request) {
     const accountId = formData.get('accountId') as string;
     const accountType = formData.get('accountType') as string || 'bank';
     const skipDuplicates = formData.get('skipDuplicates') === 'true';
+    const memberId = (formData.get('memberId') as string) || undefined;
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -1125,6 +1126,7 @@ export async function POST(request: Request) {
           sourceType: accountType as Parameters<typeof createTransaction>[0]['sourceType'],
           ...(accountType === 'bank' && accountId ? { sourceBankId: accountId } : {}),
           ...(accountType === 'card' && accountId ? { sourceCardId: accountId } : {}),
+          ...(memberId ? { memberId } : {}),
         });
 
         result.imported++;
