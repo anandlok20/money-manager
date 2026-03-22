@@ -314,6 +314,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               );
             }
 
+            if (!navItem.href) return null;
+
             return (
               <li key={navItem.name}>
                 <Link
