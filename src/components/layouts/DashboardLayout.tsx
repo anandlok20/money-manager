@@ -9,6 +9,7 @@ import {
   Wallet,
   ArrowLeftRight,
   TrendingUp,
+  TrendingDown,
   Users,
   Settings,
   Menu,
@@ -59,14 +60,15 @@ interface NavChild {
   name: string;
   href: string;
   icon: LucideIcon;
+  gatedFeature?: string;
 }
 
 interface NavItem {
   name: string;
-  href: string;
+  href?: string;
   icon: LucideIcon;
   children?: NavChild[];
-  gatedFeature?: string; // Feature ID for subscription gating
+  gatedFeature?: string;
 }
 
 const navigation: NavItem[] = [
@@ -79,6 +81,8 @@ const navigation: NavItem[] = [
       { name: 'Banks', href: '/accounts/banks', icon: Building2 },
       { name: 'Cards', href: '/accounts/cards', icon: CreditCard },
       { name: 'Assets', href: '/accounts/assets', icon: TrendingUp },
+      { name: 'Loans', href: '/loans', icon: Landmark },
+      { name: 'Splits', href: '/splits', icon: SplitSquareVertical },
     ],
   },
   {
@@ -89,19 +93,35 @@ const navigation: NavItem[] = [
       { name: 'All Transactions', href: '/transactions', icon: List },
     ],
   },
-  { name: 'Categories', href: '/categories', icon: Tag },
   { name: 'Reports', href: '/reports', icon: BarChart3, gatedFeature: 'reports' },
-  { name: 'Budgets', href: '/budgets', icon: PiggyBank },
-  { name: 'Goals', href: '/goals', icon: Target },
-  { name: 'Trips', href: '/trips', icon: Plane, gatedFeature: 'trips' },
-  { name: 'Documents', href: '/documents', icon: FileText, gatedFeature: 'documents' },
-  { name: 'Tax', href: '/tax', icon: Receipt, gatedFeature: 'tax' },
-  { name: 'Vehicles', href: '/vehicles', icon: Car, gatedFeature: 'vehicles' },
-  { name: 'Loans', href: '/loans', icon: Landmark },
-  { name: 'Splits', href: '/splits', icon: SplitSquareVertical },
-  { name: 'Members', href: '/members', icon: Users },
-  { name: 'Scheduled', href: '/scheduled-payments', icon: CalendarClock, gatedFeature: 'scheduled-payments' },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  {
+    name: 'Planning',
+    icon: Sparkles,
+    children: [
+      { name: 'Goals', href: '/goals', icon: Target },
+      { name: 'Budgets', href: '/budgets', icon: PiggyBank },
+      { name: 'Trips', href: '/trips', icon: Plane, gatedFeature: 'trips' },
+    ],
+  },
+  {
+    name: 'Organization',
+    icon: List,
+    children: [
+      { name: 'Members', href: '/members', icon: Users },
+      { name: 'Categories', href: '/categories', icon: Tag },
+      { name: 'Scheduled', href: '/scheduled-payments', icon: CalendarClock, gatedFeature: 'scheduled-payments' },
+      { name: 'Settings', href: '/settings', icon: Settings },
+    ],
+  },
+  {
+    name: 'Records',
+    icon: FileText,
+    children: [
+      { name: 'Documents', href: '/documents', icon: FileText, gatedFeature: 'documents' },
+      { name: 'Tax', href: '/tax', icon: Receipt, gatedFeature: 'tax' },
+      { name: 'Vehicles', href: '/vehicles', icon: Car, gatedFeature: 'vehicles' },
+    ],
+  },
 ];
 
 interface DashboardLayoutProps {
@@ -195,24 +215,54 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Navigation Links */}
       <div className="flex-1 overflow-y-auto py-4 px-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted">
         <ul className="space-y-1">
-          {navigation.map((item) => {
-            const Icon = item.icon;
+          {navigation.map((navItem) => {
+            const Icon = navItem.icon;
 
             // Hide locked/gated features entirely — only show after purchase
-            if (item.gatedFeature && !canAccessFeature(item.gatedFeature)) {
+            if (navItem.gatedFeature && !canAccessFeature(navItem.gatedFeature)) {
               return null;
             }
 
-            if (item.children && !collapsed) {
-              const isExpanded = expandedMenus[item.name];
+            if (navItem.children) {
+              // Filter out gated children the user can't access
+              const visibleChildren = navItem.children.filter(
+                (c) => !c.gatedFeature || canAccessFeature(c.gatedFeature)
+              );
+              // Hide the whole group if all children are gated away
+              if (visibleChildren.length === 0) return null;
+
+              const isExpanded = expandedMenus[navItem.name];
+              const anyChildActive = visibleChildren.some((c) => pathname === c.href.split('?')[0] || (pathname.startsWith(c.href) && c.href !== '/'));
+              const groupActive = (navItem.href ? isActive(navItem.href) : false) || anyChildActive;
+
+              if (collapsed) {
+                return (
+                  <li key={navItem.name}>
+                    <button
+                      type="button"
+                      onClick={() => toggleMenu(navItem.name)}
+                      title={navItem.name}
+                      className={cn(
+                        'flex items-center justify-center w-full rounded-xl px-2 py-2.5 transition-all duration-200',
+                        groupActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                      )}
+                    >
+                      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", groupActive ? "bg-primary/20" : "bg-muted/50")}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                    </button>
+                  </li>
+                );
+              }
+
               return (
-                <li key={item.name}>
+                <li key={navItem.name}>
                   <button
                     type="button"
-                    onClick={() => toggleMenu(item.name)}
+                    onClick={() => toggleMenu(navItem.name)}
                     className={cn(
                       'flex items-center justify-between w-full gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                      isActive(item.href)
+                      groupActive
                         ? 'bg-primary/10 text-primary shadow-sm'
                         : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                     )}
@@ -220,11 +270,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-                        isActive(item.href) ? "bg-primary/20" : "bg-muted/50"
+                        groupActive ? "bg-primary/20" : "bg-muted/50"
                       )}>
                         <Icon className="h-4 w-4" />
                       </div>
-                      {item.name}
+                      {navItem.name}
                     </div>
                     <ChevronDown
                       className={cn(
@@ -238,7 +288,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     isExpanded ? "grid-rows-[1fr] opacity-100 mt-1" : "grid-rows-[0fr] opacity-0"
                   )}>
                     <ul className="overflow-hidden ml-4 space-y-0.5">
-                      {item.children.map((child) => {
+                      {visibleChildren.map((child) => {
                         const ChildIcon = child.icon;
                         return (
                           <li key={child.name}>
@@ -247,7 +297,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                               onClick={closeSidebar}
                               className={cn(
                                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
-                                pathname === child.href
+                                pathname === child.href.split('?')[0]
                                   ? 'bg-primary/10 text-primary'
                                   : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:translate-x-1'
                               )}
@@ -265,14 +315,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             }
 
             return (
-              <li key={item.name}>
+              <li key={navItem.name}>
                 <Link
-                  href={item.href}
+                  href={navItem.href}
                   onClick={closeSidebar}
-                  title={collapsed ? item.name : undefined}
+                  title={collapsed ? navItem.name : undefined}
                   className={cn(
                     'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                    isActive(item.href)
+                    isActive(navItem.href)
                       ? 'bg-primary/10 text-primary shadow-sm'
                       : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
                     collapsed && 'justify-center px-2'
@@ -280,13 +330,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 >
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-                    isActive(item.href) ? "bg-primary/20" : "bg-muted/50"
+                    isActive(navItem.href) ? "bg-primary/20" : "bg-muted/50"
                   )}>
                     <Icon className="h-4 w-4" />
                   </div>
                   {!collapsed && (
                     <span className="flex items-center gap-2 flex-1">
-                      {item.name}
+                      {navItem.name}
                     </span>
                   )}
                 </Link>

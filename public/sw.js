@@ -1,10 +1,7 @@
-const CACHE_VERSION = '2';
+const CACHE_VERSION = '5';
 const CACHE_NAME = `family-expense-manager-v${CACHE_VERSION}`;
 const MAX_CACHE_ITEMS = 100; // Limit cache size to prevent storage bloat
 const STATIC_ASSETS = [
-  '/',
-  '/login',
-  '/register',
   '/manifest.json',
 ];
 
@@ -74,12 +71,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For static assets, try cache first
+  // For static assets (icons only), try cache first
+  // NOTE: /_next/static/ is intentionally excluded — Next.js handles its own
+  // chunk versioning via content hashes; caching them here causes stale module errors.
+  // sw.js itself is also excluded to allow cache-busting via CACHE_VERSION.
   if (
-    url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/icons/') ||
-    url.pathname.endsWith('.css') ||
-    url.pathname.endsWith('.js')
+    url.pathname.endsWith('.css')
   ) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {

@@ -61,6 +61,8 @@ interface Transaction {
   memberId?: string;
   tripId?: string;
   goalId?: string;
+  paymentMode?: string;
+  referenceNumber?: string;
   receiptUrl?: string;
   receiptFileName?: string;
   tags?: string[];
@@ -268,10 +270,14 @@ export default function TransactionDetailPage() {
       memberId: transaction.memberId,
       tripId: transaction.tripId || undefined,
       goalId: transaction.goalId || undefined,
+      paymentMode: (transaction.paymentMode as UpdateTransactionInput['paymentMode']) || undefined,
+      referenceNumber: transaction.referenceNumber || undefined,
     } : undefined,
   });
 
   const transactionType = watch('type');
+  const watchSourceType = watch('sourceType');
+  const watchDestinationType = watch('destinationType');
   const watchAmount = watch('amount');
   const watchDate = watch('dateTime');
   const watchCategoryId = watch('categoryId');
@@ -320,19 +326,6 @@ export default function TransactionDetailPage() {
     updateMutation.mutate(data);
   };
 
-  // Combine bank accounts and cards for source/destination selection
-  const allAccounts = [
-    ...bankAccounts.map((bank) => ({
-      id: bank._id,
-      name: `🏦 ${bank.bankName} - ${bank.accountHolderName}`,
-      type: 'bank',
-    })),
-    ...cards.map((card) => ({
-      id: card._id,
-      name: `💳 ${card.cardName}`,
-      type: 'card',
-    })),
-  ];
 
   const filteredCategories = categories.filter((c) => 
     transactionType === TransactionType.TRANSFER_SELF ? false : c.type === transactionType
@@ -509,57 +502,132 @@ export default function TransactionDetailPage() {
               )}
             </div>
 
+            {/* Source Account */}
             <div className="space-y-2">
-              <Label htmlFor="sourceBankId">
-                {transactionType === TransactionType.INCOME ? 'Deposit To' : 'From Account'} *
+              <Label>
+                {transactionType === TransactionType.INCOME ? 'Deposit To' : 'Pay From'} *
               </Label>
-              <Controller
-                name="sourceBankId"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allAccounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.sourceBankId && (
-                <p className="text-sm text-destructive">{errors.sourceBankId.message}</p>
-              )}
-            </div>
-
-            {transactionType === TransactionType.TRANSFER_SELF && (
-              <div className="space-y-2">
-                <Label htmlFor="destinationBankId">To Account *</Label>
+              <div className="grid grid-cols-2 gap-2">
                 <Controller
-                  name="destinationBankId"
+                  name="sourceType"
                   control={control}
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select destination account" />
+                        <SelectValue placeholder="Account Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {allAccounts.map((account) => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.name}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value={AccountType.BANK}>Bank</SelectItem>
+                        <SelectItem value={AccountType.CARD}>Card</SelectItem>
+                        <SelectItem value={AccountType.CASH}>Cash</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
                 />
-                {errors.destinationBankId && (
-                  <p className="text-sm text-destructive">{errors.destinationBankId.message}</p>
+                {watchSourceType === AccountType.BANK && (
+                  <Controller
+                    name="sourceBankId"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value ?? undefined} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select bank" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {bankAccounts.map((account) => (
+                            <SelectItem key={account._id} value={account._id}>
+                              {account.bankName} - {account.accountHolderName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 )}
+                {watchSourceType === AccountType.CARD && (
+                  <Controller
+                    name="sourceCardId"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value ?? undefined} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select card" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cards.map((card) => (
+                            <SelectItem key={card._id} value={card._id}>
+                              {card.cardName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Destination Account (for Transfer) */}
+            {transactionType === TransactionType.TRANSFER_SELF && (
+              <div className="space-y-2">
+                <Label>Transfer To *</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Controller
+                    name="destinationType"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Account Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={AccountType.BANK}>Bank</SelectItem>
+                          <SelectItem value={AccountType.CARD}>Card</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {watchDestinationType === AccountType.BANK && (
+                    <Controller
+                      name="destinationBankId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value ?? undefined} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select bank" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {bankAccounts.map((account) => (
+                              <SelectItem key={account._id} value={account._id}>
+                                {account.bankName} - {account.accountHolderName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  )}
+                  {watchDestinationType === AccountType.CARD && (
+                    <Controller
+                      name="destinationCardId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value ?? undefined} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select card" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {cards.map((card) => (
+                              <SelectItem key={card._id} value={card._id}>
+                                {card.cardName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  )}
+                </div>
               </div>
             )}
 
@@ -696,6 +764,47 @@ export default function TransactionDetailPage() {
               <p className="text-xs text-muted-foreground">
                 Add tags to organize and filter transactions
               </p>
+            </div>
+
+            {/* Payment Mode + Reference Number */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Payment Mode (Optional)</Label>
+                <Controller
+                  name="paymentMode"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || 'none'}
+                      onValueChange={(value) => field.onChange(value === 'none' ? undefined : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="How was it paid?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Not specified</SelectItem>
+                        <SelectItem value="upi">UPI</SelectItem>
+                        <SelectItem value="neft">NEFT</SelectItem>
+                        <SelectItem value="rtgs">RTGS</SelectItem>
+                        <SelectItem value="imps">IMPS</SelectItem>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="cheque">Cheque</SelectItem>
+                        <SelectItem value="card">Card (Swipe)</SelectItem>
+                        <SelectItem value="netbanking">Net Banking</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="referenceNumber">Reference No. (Optional)</Label>
+                <Input
+                  id="referenceNumber"
+                  placeholder="UPI ref, UTR, cheque no..."
+                  {...register('referenceNumber')}
+                />
+              </div>
             </div>
 
             {/* Duplicate Warning (only when amount changes significantly) */}

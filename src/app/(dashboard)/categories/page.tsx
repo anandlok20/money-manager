@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -106,9 +107,13 @@ const defaultColors = [
   '#ec4899', '#f43f5e',
 ];
 
-export default function CategoriesPage() {
+function CategoriesContent() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
+  const searchParams = useSearchParams();
+  const typeParam = searchParams.get('type');
+  const [activeTab, setActiveTab] = useState<'INCOME' | 'EXPENSE'>(
+    typeParam === 'INCOME' ? 'INCOME' : 'EXPENSE'
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -442,5 +447,13 @@ export default function CategoriesPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function CategoriesPage() {
+  return (
+    <Suspense fallback={<div className="space-y-4"><div className="h-8 bg-muted rounded animate-pulse" /><div className="h-64 bg-muted rounded animate-pulse" /></div>}>
+      <CategoriesContent />
+    </Suspense>
   );
 }

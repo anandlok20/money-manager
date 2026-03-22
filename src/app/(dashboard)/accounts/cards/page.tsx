@@ -190,7 +190,7 @@ export default function CardsPage() {
       </Card>
 
       {/* Sensitive Data Access Banner */}
-      {data?.data.some(card => card.cvv || card.pin) && (
+      {data?.data?.some(card => card.cvv || card.pin) && (
         <Card className={hasAccess ? "border-green-500/30 bg-green-500/5" : "border-amber-500/30 bg-amber-500/5"}>
           <CardContent className="py-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -244,7 +244,7 @@ export default function CardsPage() {
           <Skeleton className="h-40" />
           <Skeleton className="h-40" />
         </div>
-      ) : data?.data.length === 0 ? (
+      ) : data?.data?.length === 0 ? (
         <EmptyState
           icon={CreditCard}
           title="No cards"
@@ -254,7 +254,7 @@ export default function CardsPage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {data?.data.map((card) => {
+          {data?.data?.map((card) => {
             const gradientClass = cardTypeColors[card.cardType || 'CREDIT'];
             const badgeClass = cardTypeBadgeColors[card.cardType || 'CREDIT'];
             

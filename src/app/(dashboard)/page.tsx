@@ -53,10 +53,6 @@ const BudgetProgressChart = dynamic(() => import('@/components/dashboard/Charts'
   ssr: false,
 });
 
-const NetWorthHistoryChart = dynamic(() => import('@/components/dashboard/NetWorthHistory').then(mod => ({ default: mod.NetWorthHistoryChart })), {
-  loading: () => <Skeleton className="h-[300px] w-full" />,
-  ssr: false,
-});
 
 interface BudgetProgress {
   _id: string;
@@ -600,8 +596,6 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Net Worth History */}
-      <NetWorthHistoryChart />
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
