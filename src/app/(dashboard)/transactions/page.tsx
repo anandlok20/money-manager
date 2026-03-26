@@ -172,7 +172,7 @@ export default function TransactionsPage() {
   const [isExporting, setIsExporting] = useState(false);
 
   // Queries
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['transactions', page, typeFilter, categoryFilter, memberFilter, searchQuery, startDate, endDate, minAmount, maxAmount],
     queryFn: () => fetchTransactions(page, {
       type: typeFilter,
@@ -184,16 +184,23 @@ export default function TransactionsPage() {
       minAmount: minAmount ? parseFloat(minAmount) : undefined,
       maxAmount: maxAmount ? parseFloat(maxAmount) : undefined,
     }),
+    staleTime: 30_000,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: fetchCategories,
+    staleTime: 60_000,
+    retry: 2,
   });
 
   const { data: members = [] } = useQuery({
     queryKey: ['members'],
     queryFn: fetchMembers,
+    staleTime: 60_000,
+    retry: 2,
   });
 
   // Export handler
@@ -283,8 +290,9 @@ export default function TransactionsPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-destructive">Failed to load transactions</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-destructive">Failed to load transactions. Please check your connection.</p>
+        <Button variant="outline" onClick={() => refetch()}>Try Again</Button>
       </div>
     );
   }

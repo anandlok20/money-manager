@@ -92,7 +92,9 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
       endDate: new Date(trip.endDate),
       budget: trip.budget,
       status: trip.status,
-      travelers: trip.travelers || [],
+      travelers: trip.travelers?.map((t: string | { name: string }) =>
+        typeof t === 'string' ? t : t.name
+      ) || [],
       notes: trip.notes || '',
     } : undefined,
   });
@@ -122,7 +124,12 @@ export default function EditTripPage({ params }: { params: Promise<{ id: string 
   });
 
   const onSubmit = (data: FormInput) => {
-    mutation.mutate(data);
+    // Sanitize budget: treat NaN (empty input) as undefined
+    const sanitized = {
+      ...data,
+      budget: typeof data.budget === 'number' && !isNaN(data.budget) ? data.budget : undefined,
+    };
+    mutation.mutate(sanitized);
   };
 
   const addTraveler = () => {

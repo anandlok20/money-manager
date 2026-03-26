@@ -67,6 +67,7 @@ interface ParsedTransaction {
   type: "income" | "expense" | "transfer" | "investment";
   category?: string;
   categoryId?: string;
+  memberId?: string;
   balance?: number;
   reference?: string;
   narration?: string;
@@ -79,6 +80,11 @@ interface ParsedTransaction {
   isDuplicate?: boolean;
   duplicateOf?: string;
   rawText?: string;
+}
+
+interface Member {
+  _id: string;
+  name: string;
 }
 
 interface Category {
@@ -166,6 +172,19 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
       const json = await res.json();
       return json.data || [];
     },
+    staleTime: 60_000,
+  });
+
+  // Fetch members
+  const { data: members = [] } = useQuery<Member[]>({
+    queryKey: ["members-simple"],
+    queryFn: async () => {
+      const res = await fetch("/api/members");
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data || [];
+    },
+    staleTime: 60_000,
   });
 
   // Fetch bank accounts
@@ -273,6 +292,7 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
             amount: t.amount,
             type: t.type,
             categoryId: t.categoryId,
+            memberId: t.memberId,
             bankAccountId: accountType === "bank" ? accountId : undefined,
             creditCardId: accountType === "card" ? accountId : undefined,
             reference: t.reference,
@@ -392,6 +412,16 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
       )
     );
   }, [categories]);
+
+  const handleMemberChange = useCallback((transactionId: string, memberId: string) => {
+    setParsedTransactions(prev =>
+      prev.map(t =>
+        t.id === transactionId
+          ? { ...t, memberId: memberId || undefined }
+          : t
+      )
+    );
+  }, []);
 
   const handleTypeChange = useCallback((transactionId: string, type: ParsedTransaction["type"]) => {
     setParsedTransactions(prev =>
@@ -866,7 +896,7 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-8 w-[180px]"
+                    className="pl-8 w-full sm:w-[180px]"
                   />
                 </div>
 
@@ -943,7 +973,105 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
               </div>
             </div>
 
-            {/* Transactions Table */}
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {filteredAndSortedTransactions.map(transaction => (
+                <div
+                  key={transaction.id}
+                  className={cn(
+                    "border rounded-lg p-3 space-y-3",
+                    transaction.isDuplicate && "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200",
+                    !selectedTransactions.has(transaction.id) && "opacity-60"
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 min-w-0">
+                      <Checkbox
+                        checked={selectedTransactions.has(transaction.id)}
+                        onCheckedChange={checked => handleSelectTransaction(transaction.id, checked as boolean)}
+                        className="mt-0.5"
+                      />
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{transaction.description}</p>
+                        {transaction.narration && transaction.narration !== transaction.description && (
+                          <p className="text-xs text-muted-foreground truncate">{transaction.narration}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-0.5">{parseDisplayDate(transaction.date)}</p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className={cn(
+                        "font-mono font-semibold text-sm",
+                        transaction.type === "income" && "text-green-600",
+                        transaction.type === "expense" && "text-red-600",
+                        transaction.type === "transfer" && "text-blue-600",
+                        transaction.type === "investment" && "text-purple-600"
+                      )}>
+                        {transaction.type === "income" ? "+" : "-"}{formatCurrency(Math.abs(transaction.amount))}
+                      </span>
+                      {transaction.isDuplicate && (
+                        <div>
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-300 text-xs">Duplicate</Badge>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select
+                      value={transaction.type}
+                      onValueChange={v => handleTypeChange(transaction.id, v as ParsedTransaction["type"])}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <div className="flex items-center gap-1">
+                          {getTypeIcon(transaction.type)}
+                          <span className="capitalize">{transaction.type === "income" ? "Credit" : transaction.type === "expense" ? "Debit" : transaction.type}</span>
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="income"><div className="flex items-center gap-2"><ArrowDownCircle className="h-4 w-4 text-green-500" />Credit (Income)</div></SelectItem>
+                        <SelectItem value="expense"><div className="flex items-center gap-2"><ArrowUpCircle className="h-4 w-4 text-red-500" />Debit (Expense)</div></SelectItem>
+                        <SelectItem value="transfer"><div className="flex items-center gap-2"><RefreshCw className="h-4 w-4 text-blue-500" />Transfer</div></SelectItem>
+                        <SelectItem value="investment"><div className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-purple-500" />Investment</div></SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={transaction.categoryId || ""}
+                      onValueChange={v => handleCategoryChange(transaction.id, v)}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories
+                          .filter(c => transaction.type === "income" ? c.type === "income" : c.type === "expense")
+                          .map(category => (
+                            <SelectItem key={category._id} value={category._id}>{category.name}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {members.length > 0 && (
+                    <Select
+                      value={transaction.memberId || ""}
+                      onValueChange={v => handleMemberChange(transaction.id, v)}
+                    >
+                      <SelectTrigger className="h-8 text-xs w-full">
+                        <SelectValue placeholder="Linked person (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">No person</SelectItem>
+                        {members.map(m => (
+                          <SelectItem key={m._id} value={m._id}>{m.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Transactions Table (desktop) */}
+            <div className="hidden md:block">
             <ScrollArea className="h-[500px] rounded-md border">
               <Table>
                 <TableHeader className="sticky top-0 bg-background z-10">
@@ -951,10 +1079,11 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
                     <TableHead className="w-[40px]"></TableHead>
                     <TableHead className="w-[100px]">Date</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead className="w-[100px]">Type</TableHead>
+                    <TableHead className="w-[110px]">Type (debit/credit)</TableHead>
                     <TableHead className="text-right w-[120px]">Amount</TableHead>
                     {showDetailsPanel && <TableHead className="w-[120px]">Balance</TableHead>}
-                    <TableHead className="w-[150px]">Category</TableHead>
+                    <TableHead className="w-[140px]">Category</TableHead>
+                    <TableHead className="w-[130px]">Person</TableHead>
                     <TableHead className="w-[40px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1082,6 +1211,22 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
                             </Select>
                           </TableCell>
                           <TableCell>
+                            <Select
+                              value={transaction.memberId || ""}
+                              onValueChange={v => handleMemberChange(transaction.id, v)}
+                            >
+                              <SelectTrigger className="h-8">
+                                <SelectValue placeholder="Person" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">None</SelectItem>
+                                {members.map(m => (
+                                  <SelectItem key={m._id} value={m._id}>{m.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -1098,7 +1243,7 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
                         </TableRow>
                         {expandedRows.has(transaction.id) && (
                           <TableRow className="bg-muted/30">
-                            <TableCell colSpan={showDetailsPanel ? 8 : 7}>
+                            <TableCell colSpan={showDetailsPanel ? 9 : 8}>
                               <div className="py-2 px-4 space-y-2">
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                   {transaction.reference && (
@@ -1164,6 +1309,7 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
                 </TableBody>
               </Table>
             </ScrollArea>
+            </div>
 
             {/* Import Button */}
             <div className="flex justify-end gap-2 pt-4">

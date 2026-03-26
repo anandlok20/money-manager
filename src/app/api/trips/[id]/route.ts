@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Trip from '@/lib/mongodb/models/Trip';
 import Transaction from '@/lib/mongodb/models/Transaction';
+import SplitExpense from '@/lib/mongodb/models/SplitExpense';
 import { TransactionType } from '@/types';
 import { z } from 'zod';
 import { TripStatus } from '@/lib/mongodb/models/Trip';
@@ -130,11 +131,25 @@ export async function GET(
       .sort({ dateTime: -1 })
       .lean();
 
-    // Calculate totals
+    // Fetch splits for these transactions to use yourShare for expense calculation
+    const transactionIds = transactions.map((t) => t._id);
+    const splits = await SplitExpense.find({
+      transactionId: { $in: transactionIds },
+    }).lean();
+    const splitMap = new Map(
+      splits.map((s) => [s.transactionId.toString(), s.yourShare as number])
+    );
+
+    // Calculate totals (use yourShare for split expenses)
     let totalExpenses = 0;
     let totalIncome = 0;
     transactions.forEach((t) => {
-      if (t.type === TransactionType.EXPENSE) totalExpenses += t.amount;
+      if (t.type === TransactionType.EXPENSE) {
+        const effectiveAmount = splitMap.has(t._id.toString())
+          ? splitMap.get(t._id.toString())!
+          : t.amount;
+        totalExpenses += effectiveAmount;
+      }
       if (t.type === TransactionType.INCOME) totalIncome += t.amount;
     });
 
@@ -148,6 +163,8 @@ export async function GET(
         transactions: transactions.map((t) => ({
           ...t,
           _id: t._id.toString(),
+          isSplit: splitMap.has(t._id.toString()),
+          myShare: splitMap.get(t._id.toString()),
         })),
       },
     });

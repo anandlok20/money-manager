@@ -62,6 +62,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { formatCurrency } from '@/lib/utils/currency';
+import { SplitSection, type SplitParticipant } from '@/components/transactions/SplitSection';
 
 interface TripTraveler {
   _id?: string;
@@ -157,6 +158,8 @@ interface Trip {
     type: string;
     note?: string;
     categoryId?: { name: string; icon: string; color: string };
+    isSplit?: boolean;
+    myShare?: number;
   }>;
 }
 
@@ -240,6 +243,8 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
     note: '',
     categoryId: '',
   });
+  const [quickExpenseSplitEnabled, setQuickExpenseSplitEnabled] = useState(false);
+  const [quickExpenseSplitParticipants, setQuickExpenseSplitParticipants] = useState<SplitParticipant[]>([]);
   
   // Form states
   const [newTraveler, setNewTraveler] = useState<TripTraveler>({ name: '' });
@@ -251,11 +256,27 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
   const { data: trip, isLoading, error } = useQuery({
     queryKey: ['trip', id],
     queryFn: () => fetchTrip(id),
+    staleTime: 30_000,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const { data: expenseCategories } = useQuery({
     queryKey: ['expense-categories'],
     queryFn: fetchExpenseCategories,
+    staleTime: 60_000,
+    retry: 2,
+  });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['members-simple'],
+    queryFn: async () => {
+      const res = await fetch('/api/members');
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.data || [];
+    },
+    staleTime: 60_000,
   });
 
   // Find travel category for auto-creating transactions
@@ -325,14 +346,38 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
       toast.error('Please select a category');
       return;
     }
-    
-    await createExpenseForTrip(
-      quickExpense.amount,
-      quickExpense.note || `Expense for ${trip?.name}`,
-      quickExpense.categoryId
-    );
-    
+
+    const result = await transactionMutation.mutateAsync({
+      type: 'EXPENSE',
+      amount: quickExpense.amount,
+      dateTime: new Date(),
+      note: quickExpense.note || `Expense for ${trip?.name}`,
+      categoryId: quickExpense.categoryId,
+      tripId: id,
+    });
+
+    // Create split if enabled
+    if (quickExpenseSplitEnabled && quickExpenseSplitParticipants.length > 0 && result?.data?._id) {
+      try {
+        await fetch('/api/splits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            transactionId: result.data._id,
+            splits: quickExpenseSplitParticipants
+              .filter((p) => p.name && p.amount > 0)
+              .map((p) => ({ name: p.name, memberId: p.memberId, amount: p.amount })),
+          }),
+        });
+        queryClient.invalidateQueries({ queryKey: ['splits'] });
+      } catch {
+        toast.error('Expense added but split creation failed. Add split manually from the transaction.');
+      }
+    }
+
     setQuickExpense({ amount: 0, note: '', categoryId: '' });
+    setQuickExpenseSplitEnabled(false);
+    setQuickExpenseSplitParticipants([]);
     setQuickExpenseDialog(false);
     toast.success('Expense added successfully');
   };
@@ -610,27 +655,29 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto">
-          <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="expenses" className="text-xs md:text-sm">
-            Expenses {trip.transactions?.length ? `(${trip.transactions.length})` : ''}
-          </TabsTrigger>
-          <TabsTrigger value="travelers" className="text-xs md:text-sm">
-            Travelers {trip.travelers?.length ? `(${trip.travelers.length})` : ''}
-          </TabsTrigger>
-          <TabsTrigger value="tickets" className="text-xs md:text-sm">
-            Tickets {trip.tickets?.length ? `(${trip.tickets.length})` : ''}
-          </TabsTrigger>
-          <TabsTrigger value="hotels" className="text-xs md:text-sm">
-            Hotels {trip.hotels?.length ? `(${trip.hotels.length})` : ''}
-          </TabsTrigger>
-          <TabsTrigger value="places" className="text-xs md:text-sm">
-            Places {trip.placesToVisit?.length ? `(${trip.placesToVisit.length})` : ''}
-          </TabsTrigger>
-          <TabsTrigger value="cabs" className="text-xs md:text-sm">
-            Cabs {trip.cabs?.length ? `(${trip.cabs.length})` : ''}
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4">
+          <TabsList className="flex h-auto w-max min-w-full gap-1">
+            <TabsTrigger value="overview" className="shrink-0 text-xs md:text-sm px-3">Overview</TabsTrigger>
+            <TabsTrigger value="expenses" className="shrink-0 text-xs md:text-sm px-3">
+              Expenses {trip.transactions?.length ? `(${trip.transactions.length})` : ''}
+            </TabsTrigger>
+            <TabsTrigger value="travelers" className="shrink-0 text-xs md:text-sm px-3">
+              Travelers {trip.travelers?.length ? `(${trip.travelers.length})` : ''}
+            </TabsTrigger>
+            <TabsTrigger value="tickets" className="shrink-0 text-xs md:text-sm px-3">
+              Tickets {trip.tickets?.length ? `(${trip.tickets.length})` : ''}
+            </TabsTrigger>
+            <TabsTrigger value="hotels" className="shrink-0 text-xs md:text-sm px-3">
+              Hotels {trip.hotels?.length ? `(${trip.hotels.length})` : ''}
+            </TabsTrigger>
+            <TabsTrigger value="places" className="shrink-0 text-xs md:text-sm px-3">
+              Places {trip.placesToVisit?.length ? `(${trip.placesToVisit.length})` : ''}
+            </TabsTrigger>
+            <TabsTrigger value="cabs" className="shrink-0 text-xs md:text-sm px-3">
+              Cabs {trip.cabs?.length ? `(${trip.cabs.length})` : ''}
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
@@ -803,28 +850,38 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
               ) : (
                 <div className="space-y-2">
                   {trip.transactions.map((txn) => (
-                    <Link 
+                    <Link
                       key={txn._id}
                       href={`/transactions/${txn._id}`}
                       className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         {txn.categoryId && (
-                          <div 
-                            className="h-8 w-8 rounded-full flex items-center justify-center text-white"
+                          <div
+                            className="h-8 w-8 rounded-full flex items-center justify-center text-white shrink-0"
                             style={{ backgroundColor: txn.categoryId.color || '#6B7280' }}
                           >
                             <span className="text-sm">{txn.categoryId.icon || '📦'}</span>
                           </div>
                         )}
-                        <div>
-                          <p className="font-medium">{txn.note || txn.categoryId?.name || 'Transaction'}</p>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium truncate">{txn.note || txn.categoryId?.name || 'Transaction'}</p>
+                            {txn.isSplit && (
+                              <Badge variant="outline" className="text-xs shrink-0">Split</Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-muted-foreground">{format(new Date(txn.dateTime), 'MMM dd, yyyy')}</p>
                         </div>
                       </div>
-                      <span className={`font-mono font-medium ${txn.type === 'EXPENSE' ? 'text-red-600' : 'text-green-600'}`}>
-                        {txn.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(txn.amount, currency)}
-                      </span>
+                      <div className="text-right shrink-0 ml-2">
+                        <span className={`font-mono font-medium ${txn.type === 'EXPENSE' ? 'text-red-600' : 'text-green-600'}`}>
+                          {txn.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(txn.isSplit && txn.myShare != null ? txn.myShare : txn.amount, currency)}
+                        </span>
+                        {txn.isSplit && txn.myShare != null && (
+                          <p className="text-xs text-muted-foreground">my share</p>
+                        )}
+                      </div>
                     </Link>
                   ))}
                   
@@ -1154,7 +1211,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
 
       {/* Add Traveler Dialog */}
       <Dialog open={travelerDialog} onOpenChange={setTravelerDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Add Traveler</DialogTitle>
             <DialogDescription>Add someone traveling on this trip</DialogDescription>
@@ -1194,7 +1251,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
 
       {/* Add Ticket Dialog */}
       <Dialog open={ticketDialog} onOpenChange={setTicketDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Ticket</DialogTitle>
           </DialogHeader>
@@ -1291,7 +1348,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
 
       {/* Add Hotel Dialog */}
       <Dialog open={hotelDialog} onOpenChange={setHotelDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Hotel</DialogTitle>
           </DialogHeader>
@@ -1382,7 +1439,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
 
       {/* Add Place Dialog */}
       <Dialog open={placeDialog} onOpenChange={setPlaceDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Add Place to Visit</DialogTitle>
           </DialogHeader>
@@ -1454,7 +1511,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
 
       {/* Add Cab Dialog */}
       <Dialog open={cabDialog} onOpenChange={setCabDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Cab Booking</DialogTitle>
           </DialogHeader>
@@ -1558,17 +1615,17 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
 
       {/* Quick Expense Dialog */}
       <Dialog open={quickExpenseDialog} onOpenChange={setQuickExpenseDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Quick Expense</DialogTitle>
             <DialogDescription>Quickly add an expense for this trip</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
             <div className="space-y-2">
               <Label>Amount *</Label>
-              <Input 
+              <Input
                 type="number"
-                value={quickExpense.amount || ''} 
+                value={quickExpense.amount || ''}
                 onChange={(e) => setQuickExpense({ ...quickExpense, amount: parseFloat(e.target.value) || 0 })}
                 placeholder="0.00"
                 className="text-lg"
@@ -1576,8 +1633,8 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
             </div>
             <div className="space-y-2">
               <Label>Category *</Label>
-              <Select 
-                value={quickExpense.categoryId} 
+              <Select
+                value={quickExpense.categoryId}
                 onValueChange={(v) => setQuickExpense({ ...quickExpense, categoryId: v })}
               >
                 <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
@@ -1596,9 +1653,29 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 placeholder="What was this expense for?"
               />
             </div>
-            <Button 
-              onClick={handleAddQuickExpense} 
-              className="w-full" 
+            {/* Split toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/50">
+              <div>
+                <Label htmlFor="quick-split-toggle" className="cursor-pointer">Split this expense</Label>
+                <p className="text-xs text-muted-foreground">Share cost with others on this trip</p>
+              </div>
+              <Switch
+                id="quick-split-toggle"
+                checked={quickExpenseSplitEnabled}
+                onCheckedChange={setQuickExpenseSplitEnabled}
+              />
+            </div>
+            {quickExpenseSplitEnabled && (
+              <SplitSection
+                totalAmount={quickExpense.amount || 0}
+                members={members}
+                participants={quickExpenseSplitParticipants}
+                onParticipantsChange={setQuickExpenseSplitParticipants}
+              />
+            )}
+            <Button
+              onClick={handleAddQuickExpense}
+              className="w-full"
               disabled={transactionMutation.isPending}
             >
               {transactionMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Add Expense'}
