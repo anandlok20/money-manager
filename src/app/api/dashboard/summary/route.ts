@@ -35,7 +35,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const memberView = searchParams.get('memberView') === 'true' && session.user.isMemberUser;
 
-    const cacheKey = userCacheKey(session.user.id, memberView ? 'dashboard-member' : 'dashboard');
+    const cacheKey = memberView && session.user.memberId
+      ? userCacheKey(session.user.id, `dashboard-member-${session.user.memberId}`)
+      : userCacheKey(session.user.id, 'dashboard');
     const cached = dashboardCache.get(cacheKey);
     if (cached) return NextResponse.json(cached);
 

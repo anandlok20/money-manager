@@ -78,6 +78,7 @@ const cabSchema = z.object({
 });
 
 const updateTripSchema = z.object({
+  isPrivate: z.boolean().optional(),
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
   destination: z.string().min(1).optional(),
@@ -197,6 +198,9 @@ export async function PUT(
     await connectToDatabase();
 
     const updateData: Record<string, unknown> = { ...validatedData };
+    if (validatedData.isPrivate !== undefined) {
+      updateData.privateMemberId = validatedData.isPrivate ? (session.user.memberId || null) : null;
+    }
     if (validatedData.startDate) {
       updateData.startDate = new Date(validatedData.startDate);
     }

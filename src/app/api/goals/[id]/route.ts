@@ -94,12 +94,15 @@ export async function PUT(
 
     const sanitizedData = sanitizeTextFields(validation.data as Record<string, unknown>);
 
-    const updateData = {
+    const updateData: Record<string, unknown> = {
       ...sanitizedData,
       deadline: (sanitizedData as typeof validation.data).deadline
         ? new Date((sanitizedData as typeof validation.data).deadline!)
         : undefined,
     };
+    if (validation.data.isPrivate !== undefined) {
+      updateData.privateMemberId = validation.data.isPrivate ? (session.user.memberId || null) : null;
+    }
 
     const goal = await Goal.findOneAndUpdate(
       { _id: id, userId: session.user.id },

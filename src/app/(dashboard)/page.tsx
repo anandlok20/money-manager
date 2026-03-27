@@ -154,7 +154,12 @@ export default function DashboardPage() {
   const currency = (session?.user as unknown as { currency?: string })?.currency || 'INR';
   const { canAccessFeature } = useSubscription();
   const isMemberUser = session?.user?.isMemberUser;
-  const [viewMode, setViewMode] = useState<'family' | 'personal'>('family');
+  const [viewMode, setViewMode] = useState<'family' | 'personal'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('dashboard-view-mode') as 'family' | 'personal') || 'family';
+    }
+    return 'family';
+  });
   const isPersonalView = isMemberUser && viewMode === 'personal';
 
   const { data: dashboardResponse, isLoading, error } = useQuery({
@@ -186,7 +191,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-1 rounded-lg border border-blue-200 dark:border-blue-700 p-0.5 bg-white dark:bg-blue-950 w-fit">
             <button
-              onClick={() => setViewMode('family')}
+              onClick={() => { setViewMode('family'); localStorage.setItem('dashboard-view-mode', 'family'); }}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors',
                 viewMode === 'family'
@@ -198,7 +203,7 @@ export default function DashboardPage() {
               Family
             </button>
             <button
-              onClick={() => setViewMode('personal')}
+              onClick={() => { setViewMode('personal'); localStorage.setItem('dashboard-view-mode', 'personal'); }}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors',
                 viewMode === 'personal'

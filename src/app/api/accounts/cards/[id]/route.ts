@@ -95,9 +95,14 @@ export async function PUT(
 
     await connectToDatabase();
 
+    const updateData: Record<string, unknown> = { ...sanitizedData };
+    if (validatedData.isPrivate !== undefined) {
+      updateData.privateMemberId = validatedData.isPrivate ? (session.user.memberId || null) : null;
+    }
+
     const card = await Card.findOneAndUpdate(
       { _id: id, userId: session.user.id },
-      { $set: sanitizedData },
+      { $set: updateData },
       { new: true }
     )
       .populate('linkedBankId', 'bankName accountHolderName')

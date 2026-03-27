@@ -6,6 +6,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import Loan from '@/lib/mongodb/models/Loan';
 
 const updateLoanSchema = z.object({
+  isPrivate: z.boolean().optional(),
   lender: z.string().min(1).max(200).optional(),
   loanType: z.enum(['home', 'car', 'personal', 'education', 'gold', 'other']).optional(),
   principalAmount: z.number().positive().optional(),
@@ -66,9 +67,14 @@ export async function PUT(
 
     await connectToDatabase();
 
+    const updateData: Record<string, unknown> = { ...validatedData };
+    if (validatedData.isPrivate !== undefined) {
+      updateData.privateMemberId = validatedData.isPrivate ? (session.user.memberId || null) : null;
+    }
+
     const loan = await Loan.findOneAndUpdate(
       { _id: id, userId: session.user.id },
-      { $set: validatedData },
+      { $set: updateData },
       { new: true }
     ).populate('linkedVehicleId', 'make model registrationNumber');
 

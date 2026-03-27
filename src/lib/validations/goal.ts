@@ -18,7 +18,6 @@ export const goalSchema = z.object({
     .optional(),
   deadline: z
     .string()
-    .datetime({ message: 'Invalid date format' })
     .optional(),
   icon: z
     .string()
