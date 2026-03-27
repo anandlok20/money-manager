@@ -112,6 +112,9 @@ export async function PUT(
 
     // If opening balance changed, use atomic $inc for currentBalance adjustment
     const updateData: Record<string, unknown> = { ...sanitizedData };
+    if (validatedData.isPrivate !== undefined) {
+      updateData.privateMemberId = validatedData.isPrivate ? (session.user.memberId || null) : null;
+    }
     if (
       validatedData.openingBalance !== undefined &&
       validatedData.openingBalance !== currentAccount.openingBalance

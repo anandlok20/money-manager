@@ -90,7 +90,14 @@ export async function PUT(
 
     await connectToDatabase();
 
-    const transaction = await updateTransaction(id, session.user.id, validatedData);
+    const transactionUpdates = {
+      ...validatedData,
+      ...(validatedData.isPrivate !== undefined && {
+        privateMemberId: validatedData.isPrivate ? (session.user.memberId || undefined) : undefined,
+      }),
+    };
+
+    const transaction = await updateTransaction(id, session.user.id, transactionUpdates);
 
     // Populate the transaction for response
     const populatedTransaction = await Transaction.findById(transaction._id)

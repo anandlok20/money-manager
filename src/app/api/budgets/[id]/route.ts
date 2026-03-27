@@ -75,9 +75,14 @@ export async function PUT(
 
     await connectToDatabase();
 
+    const updateData: Record<string, unknown> = { ...sanitizedData };
+    if (validatedData.isPrivate !== undefined) {
+      updateData.privateMemberId = validatedData.isPrivate ? (session.user.memberId || null) : null;
+    }
+
     const budget = await Budget.findOneAndUpdate(
       { _id: id, userId: session.user.id },
-      { $set: sanitizedData },
+      { $set: updateData },
       { new: true }
     ).lean();
 

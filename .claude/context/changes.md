@@ -1,5 +1,23 @@
 # Recent Changes Log
 
+## 2026-03-27 — Privacy Filter Fixes + Dashboard View Persistence
+
+### Bug Fixes
+- **Dashboard LRU cache key**: `'dashboard-member'` was shared across ALL members of the same family — member B could get member A's personal summary. Fixed by using `dashboard-member-{memberId}` key.
+- **PUT handlers missing `privateMemberId`**: All 6 entity edit APIs updated `isPrivate` but never computed `privateMemberId`, so making an existing item private via edit wouldn't properly store the owner. Fixed in:
+  - `src/app/api/accounts/banks/[id]/route.ts`
+  - `src/app/api/accounts/cards/[id]/route.ts`
+  - `src/app/api/loans/[id]/route.ts` — also added `isPrivate` to `updateLoanSchema` (was missing)
+  - `src/app/api/trips/[id]/route.ts` — also added `isPrivate` to `updateTripSchema` (was missing)
+  - `src/app/api/budgets/[id]/route.ts`
+  - `src/app/api/goals/[id]/route.ts`
+  - `src/app/api/transactions/[id]/route.ts` — passes `privateMemberId` alongside `validatedData` to `updateTransaction`
+- **Dashboard view mode persistence**: `viewMode` state in `src/app/(dashboard)/page.tsx` now initialises from `localStorage('dashboard-view-mode')` and writes back on toggle — survives page reloads.
+
+### tsc: ✅ clean
+
+---
+
 ## 2026-03-27 — Mobile UI Audit Fixes (108 items)
 
 ### Files Modified
