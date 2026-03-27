@@ -20,6 +20,11 @@ export interface IMember extends Document {
   notes?: string;
   avatar?: string;
   isActive: boolean;
+  // App access fields
+  accessCode?: string;
+  accessCodeEnabled: boolean;
+  accessPasswordHash?: string;
+  accessSetupComplete: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,6 +81,22 @@ const MemberSchema = new Schema<IMember>(
       type: Boolean,
       default: true,
     },
+    // App access fields
+    accessCode: {
+      type: String,
+      sparse: true,
+    },
+    accessCodeEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    accessPasswordHash: {
+      type: String,
+    },
+    accessSetupComplete: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -84,6 +105,7 @@ const MemberSchema = new Schema<IMember>(
 
 // Indexes
 MemberSchema.index({ userId: 1, isActive: 1 });
+MemberSchema.index({ accessCode: 1 }, { unique: true, sparse: true });
 
 const Member: Model<IMember> = mongoose.models.Member || mongoose.model<IMember>('Member', MemberSchema);
 

@@ -17,6 +17,7 @@ import {
   PieChart,
   BarChart3,
   Target,
+  Users,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -155,8 +156,20 @@ export default function DashboardPage() {
     );
   }
 
+  const isMemberUser = session?.user?.isMemberUser;
+
   return (
     <div className="space-y-8">
+      {/* Member user banner */}
+      {isMemberUser && (
+        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
+          <Users className="h-4 w-4 shrink-0" />
+          <span>
+            Viewing as <span className="font-semibold">{session?.user?.name}</span> — family shared view
+          </span>
+        </div>
+      )}
+
       {/* Getting Started Guide for New Users */}
       <GettingStarted />
 

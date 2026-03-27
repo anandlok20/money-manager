@@ -1,13 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Users, Plus, MoreVertical, Edit, Trash2, User, UserCheck, Users2, Mail, Phone, Eye, UserX } from 'lucide-react';
+import { Users, Plus, MoreVertical, Edit, Trash2, User, UserCheck, Users2, Mail, Phone, Eye, UserX, KeyRound, Copy, RefreshCw, ShieldOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +38,9 @@ interface Member {
   phone?: string;
   relationship?: string;
   isActive: boolean;
+  accessCode?: string;
+  accessCodeEnabled: boolean;
+  accessSetupComplete: boolean;
   createdAt: string;
 }
 
@@ -48,9 +53,7 @@ async function fetchMembers(): Promise<Member[]> {
 
 async function deleteMember(id: string, permanent: boolean = false) {
   const url = permanent ? `/api/members/${id}?permanent=true` : `/api/members/${id}`;
-  const response = await fetch(url, {
-    method: 'DELETE',
-  });
+  const response = await fetch(url, { method: 'DELETE' });
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || 'Failed to delete member');
@@ -63,6 +66,131 @@ const memberTypeConfig = {
   [MemberType.FAMILY]: { label: 'Family', icon: Users2, color: 'bg-green-500' },
   [MemberType.OTHER]: { label: 'Other', icon: UserCheck, color: 'bg-gray-500' },
 };
+
+function AccessCodeSection({ member, onUpdate }: { member: Member; onUpdate: () => void }) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function enableAccess() {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/members/${member._id}/access`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || 'Failed to enable access'); return; }
+      toast.success('Access code generated');
+      onUpdate();
+    } catch { toast.error('Something went wrong'); }
+    finally { setIsLoading(false); }
+  }
+
+  async function disableAccess() {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/members/${member._id}/access`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); toast.error(d.error || 'Failed'); return; }
+      toast.success('Access disabled');
+      onUpdate();
+    } catch { toast.error('Something went wrong'); }
+    finally { setIsLoading(false); }
+  }
+
+  async function regenerateCode() {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/members/${member._id}/access`, { method: 'PUT' });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || 'Failed'); return; }
+      toast.success('New code generated');
+      onUpdate();
+    } catch { toast.error('Something went wrong'); }
+    finally { setIsLoading(false); }
+  }
+
+  function copyCode() {
+    if (member.accessCode) {
+      navigator.clipboard.writeText(member.accessCode);
+      toast.success('Code copied to clipboard');
+    }
+  }
+
+  return (
+    <div className="pt-1">
+      <Separator className="mb-3" />
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+          <KeyRound className="h-3 w-3" />
+          App Access
+        </p>
+        {!member.accessCodeEnabled ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full h-9 text-xs"
+            onClick={enableAccess}
+            disabled={isLoading}
+          >
+            <KeyRound className="mr-1.5 h-3.5 w-3.5" />
+            Enable Access
+          </Button>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-muted px-2 py-1.5 rounded text-sm font-mono tracking-widest text-center">
+                {member.accessCode}
+              </code>
+              <Button size="icon" variant="ghost" className="h-9 w-9 shrink-0" onClick={copyCode}>
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            {member.accessSetupComplete ? (
+              <p className="text-xs text-green-600 dark:text-green-400">Account set up</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Waiting for first login</p>
+            )}
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-9 text-xs"
+                onClick={regenerateCode}
+                disabled={isLoading}
+              >
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                New Code
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 h-9 text-xs text-destructive hover:text-destructive"
+                    disabled={isLoading}
+                  >
+                    <ShieldOff className="mr-1.5 h-3.5 w-3.5" />
+                    Disable
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Disable Access</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {member.name} will no longer be able to sign in with their access code. You can re-enable it later.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={disableAccess} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Disable
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function MembersPage() {
   const queryClient = useQueryClient();
@@ -140,6 +268,7 @@ export default function MembersPage() {
           {data?.map((member) => {
             const config = memberTypeConfig[member.type] || memberTypeConfig[MemberType.OTHER];
             const IconComponent = config.icon;
+            const canHaveAccess = member.type !== MemberType.SELF && member.isActive;
 
             return (
               <Card key={member._id} className="relative">
@@ -158,6 +287,11 @@ export default function MembersPage() {
                           {!member.isActive && (
                             <Badge variant="outline" className="text-xs text-muted-foreground">
                               Inactive
+                            </Badge>
+                          )}
+                          {member.accessCodeEnabled && (
+                            <Badge variant="outline" className="text-xs text-green-600 border-green-200">
+                              Access On
                             </Badge>
                           )}
                         </CardDescription>
@@ -193,7 +327,7 @@ export default function MembersPage() {
                                 Deactivate
                               </DropdownMenuItem>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
+                            <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Deactivate Member</AlertDialogTitle>
                                 <AlertDialogDescription>
@@ -222,7 +356,7 @@ export default function MembersPage() {
                               Delete Permanently
                             </DropdownMenuItem>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Member Permanently</AlertDialogTitle>
                               <AlertDialogDescription>
@@ -266,6 +400,12 @@ export default function MembersPage() {
                     <p className="text-sm text-muted-foreground">
                       Added {new Date(member.createdAt).toLocaleDateString()}
                     </p>
+                  )}
+                  {canHaveAccess && (
+                    <AccessCodeSection
+                      member={member}
+                      onUpdate={() => queryClient.invalidateQueries({ queryKey: ['members'] })}
+                    />
                   )}
                 </CardContent>
               </Card>
