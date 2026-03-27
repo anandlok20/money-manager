@@ -1,5 +1,13 @@
 # Test Results
 
+## 2026-03-27 — Edit/Fetch Audit Fixes
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| `npx tsc --noEmit` | ✅ clean | 0 errors after card edit + dashboard invalidation fixes |
+
+---
+
 ## 2026-03-27 — Privacy Filter Fixes
 
 | Check | Status | Notes |

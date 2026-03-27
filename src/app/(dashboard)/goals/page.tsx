@@ -135,6 +135,7 @@ export default function GoalsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       toast.success('Goal created successfully!');
       setIsCreateOpen(false);
       resetForm();
@@ -161,6 +162,7 @@ export default function GoalsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       toast.success('Goal updated successfully!');
       setEditingGoal(null);
       resetForm();
@@ -180,6 +182,7 @@ export default function GoalsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       toast.success('Goal deleted successfully!');
     },
     onError: () => {
@@ -199,6 +202,7 @@ export default function GoalsPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       if (data.data.status === 'completed') {
         toast.success('🎉 Congratulations! You reached your goal!');
       } else {

@@ -1,5 +1,23 @@
 # Recent Changes Log
 
+## 2026-03-27 — Edit/Fetch Audit Fixes
+
+### Bug Fixes
+
+**Critical - Card edit populated field extraction:**
+- `src/app/(dashboard)/accounts/cards/[id]/edit/page.tsx` — `linkedBankId` and `linkedMemberId` were set directly from the API response which returns populated Mongoose objects (`{ _id, bankName, ... }`), not strings. Zod would reject these on PUT with a 400 error every time a card with a linked bank or member was edited. Fixed by extracting `._id` string in `values`.
+- Updated `CardAccount` interface: `linkedBankId?: string | { _id: string }` and `linkedMemberId?: string | { _id: string }`.
+
+**High - Missing dashboard-summary React Query invalidation:**
+- `src/app/(dashboard)/goals/page.tsx` — Added `dashboard-summary` invalidation to create, update, delete, and contribute mutations (goals show in dashboard).
+- `src/app/(dashboard)/budgets/page.tsx` — Added `dashboard-summary` invalidation to create, update, and delete mutations (budgets show in dashboard).
+- `src/app/(dashboard)/vehicles/new/page.tsx` — Added `dashboard-summary` invalidation (vehicles affect net worth on dashboard).
+- `src/app/(dashboard)/vehicles/[id]/edit/page.tsx` — Added `dashboard-summary` invalidation.
+
+### tsc: ✅ clean
+
+---
+
 ## 2026-03-27 — Privacy Filter Fixes + Dashboard View Persistence
 
 ### Bug Fixes
