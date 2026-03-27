@@ -209,7 +209,7 @@ export default function LoanDetailPage() {
           <CardTitle className="text-base">EMI Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
                 <CreditCard className="h-4 w-4 text-primary" />

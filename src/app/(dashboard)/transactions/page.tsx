@@ -405,7 +405,7 @@ export default function TransactionsPage() {
                   {/* Date Range */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Date Range</label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" className="justify-start text-left font-normal rounded-xl">
@@ -478,7 +478,7 @@ export default function TransactionsPage() {
                   {/* Amount Range */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Amount Range</label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <Input
                         type="number"
                         placeholder="Min"

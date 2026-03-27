@@ -417,7 +417,7 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
     setParsedTransactions(prev =>
       prev.map(t =>
         t.id === transactionId
-          ? { ...t, memberId: memberId || undefined }
+          ? { ...t, memberId: (memberId && memberId !== '__none__') ? memberId : undefined }
           : t
       )
     );
@@ -902,7 +902,7 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
 
                 {/* Type Filter */}
                 <Select value={filterType} onValueChange={(v: FilterType) => setFilterType(v)}>
-                  <SelectTrigger className="w-[130px]">
+                  <SelectTrigger className="w-full sm:w-[130px]">
                     <Filter className="h-4 w-4 mr-2" />
                     <SelectValue />
                   </SelectTrigger>
@@ -917,7 +917,7 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
 
                 {/* Sort */}
                 <Select value={sortOrder} onValueChange={(v: SortOrder) => setSortOrder(v)}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-full sm:w-[150px]">
                     <ArrowUpDown className="h-4 w-4 mr-2" />
                     <SelectValue />
                   </SelectTrigger>
@@ -1052,14 +1052,14 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
                   </div>
                   {members.length > 0 && (
                     <Select
-                      value={transaction.memberId || ""}
+                      value={transaction.memberId || "__none__"}
                       onValueChange={v => handleMemberChange(transaction.id, v)}
                     >
                       <SelectTrigger className="h-8 text-xs w-full">
                         <SelectValue placeholder="Linked person (optional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No person</SelectItem>
+                        <SelectItem value="__none__">No person</SelectItem>
                         {members.map(m => (
                           <SelectItem key={m._id} value={m._id}>{m.name}</SelectItem>
                         ))}
@@ -1212,14 +1212,14 @@ export function BankStatementImport({ onImportComplete }: BankStatementImportPro
                           </TableCell>
                           <TableCell>
                             <Select
-                              value={transaction.memberId || ""}
+                              value={transaction.memberId || "__none__"}
                               onValueChange={v => handleMemberChange(transaction.id, v)}
                             >
                               <SelectTrigger className="h-8">
                                 <SelectValue placeholder="Person" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">None</SelectItem>
+                                <SelectItem value="__none__">None</SelectItem>
                                 {members.map(m => (
                                   <SelectItem key={m._id} value={m._id}>{m.name}</SelectItem>
                                 ))}

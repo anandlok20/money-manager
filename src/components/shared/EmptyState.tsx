@@ -36,11 +36,11 @@ export function EmptyState({
       <p className="text-sm text-muted-foreground max-w-sm mb-6">{description}</p>
       {actionLabel && (actionHref || onAction) && (
         actionHref ? (
-          <Link href={actionHref}>
-            <Button>{actionLabel}</Button>
+          <Link href={actionHref} className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">{actionLabel}</Button>
           </Link>
         ) : (
-          <Button onClick={onAction}>{actionLabel}</Button>
+          <Button className="w-full sm:w-auto" onClick={onAction}>{actionLabel}</Button>
         )
       )}
     </div>

@@ -362,12 +362,12 @@ export function ImportTransactions() {
               {/* Member Tag */}
               <div className="space-y-2">
                 <Label>Tag Member <span className="text-muted-foreground font-normal">(optional)</span></Label>
-                <Select value={memberId} onValueChange={setMemberId}>
+                <Select value={memberId || '__none__'} onValueChange={(v) => setMemberId(v === '__none__' ? '' : v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="No member" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No member</SelectItem>
+                    <SelectItem value="__none__">No member</SelectItem>
                     {members.map((m) => (
                       <SelectItem key={m._id} value={m._id}>
                         {m.name}

@@ -290,7 +290,7 @@ export default function EditScheduledPaymentPage() {
             </div>
 
             {/* Amount and Frequency */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount *</Label>
                 <Input
@@ -368,7 +368,7 @@ export default function EditScheduledPaymentPage() {
             {/* Source Account */}
             <div className="space-y-4">
               <h3 className="font-medium">Source Account</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Account Type *</Label>
                   <Controller
@@ -441,7 +441,7 @@ export default function EditScheduledPaymentPage() {
             {/* Destination Account */}
             <div className="space-y-4">
               <h3 className="font-medium">Destination Account</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Account Type *</Label>
                   <Controller

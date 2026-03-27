@@ -170,7 +170,7 @@ export default function NewLoanPage() {
             </div>
 
             {/* Principal + Outstanding */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="principalAmount">Principal Amount (₹) *</Label>
                 <Input
@@ -196,7 +196,7 @@ export default function NewLoanPage() {
             </div>
 
             {/* Interest + Tenure */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="interestRate">Interest Rate (% p.a.) *</Label>
                 <Input
@@ -249,7 +249,7 @@ export default function NewLoanPage() {
             </div>
 
             {/* Dates */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="disbursementDate">Disbursement Date *</Label>
                 <Input

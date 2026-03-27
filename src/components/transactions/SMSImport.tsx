@@ -187,12 +187,12 @@ export function SMSImport({ categories, bankAccounts, members = [] }: SMSImportP
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">{parsed.length} transactions found</h3>
             <div className="flex items-center gap-3">
-              <Select value={selectedBank} onValueChange={setSelectedBank}>
+              <Select value={selectedBank || '__none__'} onValueChange={(v) => setSelectedBank(v === '__none__' ? '' : v)}>
                 <SelectTrigger className="w-44 h-8 text-xs">
                   <SelectValue placeholder="Link to bank (opt.)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No account</SelectItem>
+                  <SelectItem value="__none__">No account</SelectItem>
                   {bankAccounts.map((b) => (
                     <SelectItem key={b._id} value={b._id}>
                       {b.bankName}
@@ -247,14 +247,14 @@ export function SMSImport({ categories, bankAccounts, members = [] }: SMSImportP
                   <div className="flex flex-wrap gap-2">
                     {/* Category picker */}
                     <Select
-                      value={rowCategories[i] || ''}
-                      onValueChange={(val) => setRowCategories((prev) => ({ ...prev, [i]: val }))}
+                      value={rowCategories[i] || '__none__'}
+                      onValueChange={(val) => setRowCategories((prev) => ({ ...prev, [i]: val === '__none__' ? '' : val }))}
                     >
-                      <SelectTrigger className="w-40 h-8 text-xs shrink-0">
+                      <SelectTrigger className="w-full sm:w-40 h-9 text-xs">
                         <SelectValue placeholder="Category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Uncategorized</SelectItem>
+                        <SelectItem value="__none__">Uncategorized</SelectItem>
                         {categories
                           .filter((c) =>
                             currentType === 'INCOME' ? c.type === 'INCOME' : c.type === 'EXPENSE'
@@ -270,14 +270,14 @@ export function SMSImport({ categories, bankAccounts, members = [] }: SMSImportP
                     {/* Member picker */}
                     {members.length > 0 && (
                       <Select
-                        value={rowMembers[i] || ''}
-                        onValueChange={(val) => setRowMembers((prev) => ({ ...prev, [i]: val }))}
+                        value={rowMembers[i] || '__none__'}
+                        onValueChange={(val) => setRowMembers((prev) => ({ ...prev, [i]: val === '__none__' ? '' : val }))}
                       >
-                        <SelectTrigger className="w-36 h-8 text-xs shrink-0">
+                        <SelectTrigger className="w-full sm:w-36 h-9 text-xs">
                           <SelectValue placeholder="Member (opt.)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No member</SelectItem>
+                          <SelectItem value="__none__">No member</SelectItem>
                           {members.map((m) => (
                             <SelectItem key={m._id} value={m._id}>
                               {m.name}

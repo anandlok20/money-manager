@@ -155,7 +155,7 @@ export function ReceiptUploader({
                   <Eye className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl max-h-[90vh]">
+              <DialogContent className="w-full sm:max-w-3xl max-h-[90vh]">
                 <DialogHeader>
                   <DialogTitle>{receiptFileName}</DialogTitle>
                   <DialogDescription>Receipt Preview</DialogDescription>
@@ -164,7 +164,7 @@ export function ReceiptUploader({
                   {isPdf ? (
                     <iframe
                       src={receiptUrl}
-                      className="w-full h-[600px]"
+                      className="w-full h-[300px] sm:h-[600px]"
                       title="Receipt PDF"
                     />
                   ) : (

@@ -1,4 +1,4 @@
-const CACHE_VERSION = '5';
+const CACHE_VERSION = '6';
 const CACHE_NAME = `family-expense-manager-v${CACHE_VERSION}`;
 const MAX_CACHE_ITEMS = 100; // Limit cache size to prevent storage bloat
 const STATIC_ASSETS = [
@@ -49,6 +49,10 @@ self.addEventListener('fetch', (event) => {
 
   // Skip API requests - let them go through normally
   if (url.pathname.startsWith('/api/')) return;
+
+  // Skip all Next.js internal chunks - these are content-hashed and must never be cached
+  // by the service worker (stale chunks cause "module factory not available" errors)
+  if (url.pathname.startsWith('/_next/')) return;
 
   // For navigation requests, try network first
   if (request.mode === 'navigate') {

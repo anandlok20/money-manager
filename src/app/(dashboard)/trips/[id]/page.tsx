@@ -1276,7 +1276,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 placeholder="Mumbai to Goa"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label>From *</Label>
                 <Input 
@@ -1310,7 +1310,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 placeholder="IndiGo, Vistara, etc."
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label>Booking Reference</Label>
                 <Input 
@@ -1368,7 +1368,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setNewHotel({ ...newHotel, address: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label>Check-in *</Label>
                 <Input 
@@ -1394,7 +1394,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 placeholder="Deluxe, Suite, etc."
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label>Price</Label>
                 <Input 
@@ -1459,7 +1459,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setNewPlace({ ...newPlace, address: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label>Category</Label>
                 <Select value={newPlace.category || 'other'} onValueChange={(v) => setNewPlace({ ...newPlace, category: v })}>
@@ -1529,7 +1529,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label>Driver Name</Label>
                 <Input 
@@ -1545,7 +1545,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label>Pickup Location</Label>
                 <Input 
@@ -1569,7 +1569,7 @@ export default function TripDetailsPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => setNewCab({ ...newCab, pickupTime: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label>Vehicle Number</Label>
                 <Input 
