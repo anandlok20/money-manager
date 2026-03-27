@@ -73,7 +73,7 @@ interface Transaction {
   _id: string;
   type: string;
   amount: number;
-  categoryId?: string;
+  categoryId?: string | { _id: string; name: string };
   date: string;
 }
 
@@ -194,7 +194,8 @@ export default function BudgetsPage() {
     const map = new Map<string, number>();
     transactions.forEach((t) => {
       if (t.categoryId) {
-        map.set(t.categoryId, (map.get(t.categoryId) || 0) + t.amount);
+        const catId = typeof t.categoryId === 'object' ? t.categoryId._id : t.categoryId;
+        map.set(catId, (map.get(catId) || 0) + t.amount);
       }
     });
     return map;
@@ -347,7 +348,7 @@ export default function BudgetsPage() {
         <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)} aria-label="Previous month">
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-xl font-semibold min-w-48 text-center">
+        <h2 className="text-xl font-semibold min-w-[8rem] sm:min-w-48 text-center">
           {monthNames[currentMonth - 1]} {currentYear}
         </h2>
         <Button variant="outline" size="icon" onClick={() => navigateMonth(1)} aria-label="Next month">
@@ -356,7 +357,7 @@ export default function BudgetsPage() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Budget</CardTitle>

@@ -306,7 +306,7 @@ export default function GoalsPage() {
                     rows={2}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="targetAmount">Target Amount</Label>
                     <Input
@@ -352,7 +352,7 @@ export default function GoalsPage() {
                         type="button"
                         onClick={() => setFormData({ ...formData, icon })}
                         className={cn(
-                          'w-10 h-10 rounded-lg flex items-center justify-center text-xl border transition-colors',
+                          'w-11 h-11 rounded-lg flex items-center justify-center text-xl border transition-colors',
                           formData.icon === icon
                             ? 'border-primary bg-primary/10'
                             : 'border-muted hover:bg-muted'
@@ -520,16 +520,15 @@ export default function GoalsPage() {
                         <span className="text-muted-foreground">Progress</span>
                         <span className="font-medium">{goal.progress}%</span>
                       </div>
-                      <Progress
-                        value={goal.progress}
-                        className={cn(
-                          'h-2',
-                          goal.status === 'completed'
-                            ? '[&>div]:bg-green-500'
-                            : `[&>div]:bg-[${goal.color}]`
-                        )}
-                        style={{ ['--progress-color' as string]: goal.color }}
-                      />
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                        <div
+                          className="h-full transition-all"
+                          style={{
+                            width: `${goal.progress}%`,
+                            backgroundColor: goal.status === 'completed' ? '#22c55e' : goal.color,
+                          }}
+                        />
+                      </div>
                       <div className="flex justify-between text-sm">
                         <span className="font-medium" style={{ color: goal.color }}>
                           {formatCurrency(goal.currentAmount, currency)}
@@ -642,7 +641,7 @@ export default function GoalsPage() {
                   rows={2}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="edit-targetAmount">Target Amount</Label>
                   <Input

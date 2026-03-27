@@ -104,6 +104,16 @@ interface Member {
   name: string;
 }
 
+// Mongoose populate returns objects; extract the string _id or return the value as-is if already a string
+function extractId(val: unknown): string | undefined {
+  if (!val) return undefined;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object' && val !== null && '_id' in val) {
+    return String((val as Record<string, unknown>)._id);
+  }
+  return String(val);
+}
+
 async function fetchTransaction(id: string): Promise<Transaction> {
   const response = await fetch(`/api/transactions/${id}`);
   if (!response.ok) throw new Error('Failed to fetch transaction');
@@ -260,16 +270,16 @@ export default function TransactionDetailPage() {
       note: transaction.note || '',
       dateTime: new Date(transaction.dateTime),
       sourceType: transaction.sourceType,
-      sourceBankId: transaction.sourceBankId || undefined,
-      sourceCardId: transaction.sourceCardId || undefined,
+      sourceBankId: extractId(transaction.sourceBankId),
+      sourceCardId: extractId(transaction.sourceCardId),
       destinationType: transaction.destinationType,
-      destinationBankId: transaction.destinationBankId || undefined,
-      destinationCardId: transaction.destinationCardId || undefined,
-      destinationInvestmentId: transaction.destinationInvestmentId || undefined,
-      categoryId: transaction.categoryId,
-      memberId: transaction.memberId,
-      tripId: transaction.tripId || undefined,
-      goalId: transaction.goalId || undefined,
+      destinationBankId: extractId(transaction.destinationBankId),
+      destinationCardId: extractId(transaction.destinationCardId),
+      destinationInvestmentId: extractId(transaction.destinationInvestmentId),
+      categoryId: extractId(transaction.categoryId),
+      memberId: extractId(transaction.memberId),
+      tripId: extractId(transaction.tripId),
+      goalId: extractId(transaction.goalId),
       paymentMode: (transaction.paymentMode as UpdateTransactionInput['paymentMode']) || undefined,
       referenceNumber: transaction.referenceNumber || undefined,
     } : undefined,
@@ -507,7 +517,7 @@ export default function TransactionDetailPage() {
               <Label>
                 {transactionType === TransactionType.INCOME ? 'Deposit To' : 'Pay From'} *
               </Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Controller
                   name="sourceType"
                   control={control}
@@ -571,7 +581,7 @@ export default function TransactionDetailPage() {
             {transactionType === TransactionType.TRANSFER_SELF && (
               <div className="space-y-2">
                 <Label>Transfer To *</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <Controller
                     name="destinationType"
                     control={control}
@@ -767,7 +777,7 @@ export default function TransactionDetailPage() {
             </div>
 
             {/* Payment Mode + Reference Number */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Payment Mode (Optional)</Label>
                 <Controller

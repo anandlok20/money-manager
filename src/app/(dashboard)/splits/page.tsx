@@ -97,7 +97,7 @@ function SplitCard({ split, onSettle, settlingIds }: {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs"
+                className="h-9 text-xs"
                 disabled={settlingIds.has(item._id)}
                 onClick={() => onSettle(split._id, item._id)}
               >

@@ -433,7 +433,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Mobile Sidebar */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="w-72 p-0 bg-card/95 backdrop-blur-xl border-r-0">
+        <SheetContent side="left" className="w-[min(288px,calc(100vw-3rem))] p-0 bg-card/95 backdrop-blur-xl border-r-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           {renderNavContent()}
         </SheetContent>
@@ -522,7 +522,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             )}
           >
             <LayoutDashboard className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Home</span>
+            <span className="text-xs font-medium">Home</span>
           </Link>
           <Link
             href="/accounts/banks"
@@ -532,7 +532,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             )}
           >
             <Wallet className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Accounts</span>
+            <span className="text-xs font-medium">Accounts</span>
           </Link>
           
           {/* Floating Add Button */}
@@ -553,14 +553,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             )}
           >
             <ArrowLeftRight className="h-5 w-5" />
-            <span className="text-[10px] font-medium">Transactions</span>
+            <span className="text-xs font-medium">Txns</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(true)}
             className="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-xl text-muted-foreground hover:text-foreground transition-all duration-200"
           >
             <Menu className="h-5 w-5" />
-            <span className="text-[10px] font-medium">More</span>
+            <span className="text-xs font-medium">More</span>
           </button>
         </div>
       </nav>

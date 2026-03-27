@@ -206,17 +206,17 @@ export default function SettingsPage() {
         <CardContent className="space-y-6 relative">
           <Tabs defaultValue="modes" className="w-full">
             <TabsList className="grid w-full grid-cols-3 rounded-xl h-11">
-              <TabsTrigger value="modes" className="gap-2 rounded-lg text-xs sm:text-sm">
-                <Wand2 className="h-3.5 w-3.5" />
-                Modes
+              <TabsTrigger value="modes" className="gap-1.5 rounded-lg text-xs">
+                <Wand2 className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">Modes</span>
               </TabsTrigger>
-              <TabsTrigger value="themes" className="gap-2 rounded-lg text-xs sm:text-sm">
-                <Sparkles className="h-3.5 w-3.5" />
-                Themes
+              <TabsTrigger value="themes" className="gap-1.5 rounded-lg text-xs">
+                <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">Themes</span>
               </TabsTrigger>
-              <TabsTrigger value="display" className="gap-2 rounded-lg text-xs sm:text-sm">
-                <Eye className="h-3.5 w-3.5" />
-                Display
+              <TabsTrigger value="display" className="gap-1.5 rounded-lg text-xs">
+                <Eye className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">Display</span>
               </TabsTrigger>
             </TabsList>
 
@@ -407,7 +407,7 @@ export default function SettingsPage() {
           ) : subscription ? (
             <>
               {/* Current Plan */}
-              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
+              <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-muted/30">
                 <div>
                   <p className="font-semibold">
                     {subscription.plan === 'premium' ? 'Premium Plan' : 'Free Plan'}
@@ -475,7 +475,7 @@ export default function SettingsPage() {
                     return (
                       <div
                         key={addon.id}
-                        className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-muted/20 transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-xl border border-border/50 hover:bg-muted/20 transition-colors"
                       >
                         <div className="flex items-center gap-3">
                           <span className="text-lg">{addon.emoji}</span>
@@ -491,12 +491,12 @@ export default function SettingsPage() {
                             <p className="text-xs text-muted-foreground">{addon.description}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 self-end sm:self-auto">
                           <span className="text-xs text-muted-foreground">₹{addon.price}/mo</span>
                           <Button
                             variant={isActive ? 'destructive' : 'outline'}
                             size="sm"
-                            className="h-7 text-xs"
+                            className="h-9 text-xs"
                             onClick={() => handleAddonToggle(addon.id, isActive)}
                             disabled={subActionLoading === addon.id}
                           >

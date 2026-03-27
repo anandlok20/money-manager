@@ -375,7 +375,7 @@ export default function CardsPage() {
                   )}
 
                   {/* Expiry and CVV */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {(card.expiryMonth && card.expiryYear) && (
                       <div className="p-2 bg-muted/50 rounded-lg">
                         <p className="text-xs text-muted-foreground">Expiry</p>

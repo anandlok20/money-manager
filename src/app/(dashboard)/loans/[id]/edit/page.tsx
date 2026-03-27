@@ -235,7 +235,7 @@ export default function EditLoanPage() {
             </div>
 
             {/* Principal + Outstanding */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="principalAmount">Principal Amount (₹) *</Label>
                 <Input
@@ -259,7 +259,7 @@ export default function EditLoanPage() {
             </div>
 
             {/* Interest + Tenure */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="interestRate">Interest Rate (% p.a.) *</Label>
                 <Input
@@ -306,7 +306,7 @@ export default function EditLoanPage() {
             </div>
 
             {/* Dates */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="disbursementDate">Disbursement Date *</Label>
                 <Input

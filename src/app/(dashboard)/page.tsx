@@ -392,13 +392,13 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="h-[250px] flex items-center justify-center">
+              <div className="h-[180px] sm:h-[250px] flex items-center justify-center">
                 <Skeleton className="h-[200px] w-[200px] rounded-full" />
               </div>
             ) : data?.expenseByCategory && data.expenseByCategory.length > 0 ? (
               <ExpensePieChart data={data.expenseByCategory} currency={currency} />
             ) : (
-              <div className="h-[250px] flex flex-col items-center justify-center text-muted-foreground gap-2">
+              <div className="h-[180px] sm:h-[250px] flex flex-col items-center justify-center text-muted-foreground gap-2">
                 <PieChart className="h-12 w-12 opacity-20" />
                 <span>No expense data yet</span>
               </div>
@@ -427,7 +427,7 @@ export default function DashboardPage() {
             ) : data?.monthlyTrends && data.monthlyTrends.length > 0 ? (
               <IncomeExpenseBarChart data={data.monthlyTrends} currency={currency} />
             ) : (
-              <div className="h-[250px] flex flex-col items-center justify-center text-muted-foreground gap-2">
+              <div className="h-[180px] sm:h-[250px] flex flex-col items-center justify-center text-muted-foreground gap-2">
                 <BarChart3 className="h-12 w-12 opacity-20" />
                 <span>No trend data yet</span>
               </div>

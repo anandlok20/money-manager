@@ -60,7 +60,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
           {value || '😀'}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-3" align="start">
+      <PopoverContent className="w-[min(320px,calc(100vw-2rem))] p-3" align="start">
         <Input
           placeholder="Search category..."
           value={search}
@@ -79,7 +79,7 @@ export function EmojiPicker({ value, onChange, className }: EmojiPickerProps) {
                     key={emoji}
                     type="button"
                     className={cn(
-                      'w-8 h-8 rounded hover:bg-muted flex items-center justify-center text-lg transition-colors',
+                      'w-9 h-9 rounded hover:bg-muted flex items-center justify-center text-lg transition-colors',
                       value === emoji && 'bg-primary/20 ring-1 ring-primary'
                     )}
                     onClick={() => {

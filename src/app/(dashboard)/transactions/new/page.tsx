@@ -489,7 +489,7 @@ function NewTransactionContent() {
                   : 'Pay From'}{' '}
                 *
               </Label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Controller
                   name="sourceType"
                   control={control}
@@ -561,7 +561,7 @@ function NewTransactionContent() {
             {transactionType === TransactionType.TRANSFER_SELF && (
               <div className="space-y-2">
                 <Label>Transfer To *</Label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <Controller
                     name="destinationType"
                     control={control}
@@ -762,7 +762,7 @@ function NewTransactionContent() {
             </div>
 
             {/* Payment Mode + Reference Number */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Payment Mode (Optional)</Label>
                 <Controller

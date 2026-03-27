@@ -233,7 +233,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Reports & Analytics</h1>
           <p className="text-muted-foreground">
@@ -241,7 +241,7 @@ export default function ReportsPage() {
           </p>
         </div>
         <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <Calendar className="mr-2 h-4 w-4" />
             <SelectValue />
           </SelectTrigger>
@@ -256,7 +256,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Income</CardTitle>
@@ -324,12 +324,14 @@ export default function ReportsPage() {
 
       {/* Detailed Analysis */}
       <Tabs defaultValue="categories" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="categories">By Category</TabsTrigger>
-          <TabsTrigger value="members">By Member</TabsTrigger>
-          <TabsTrigger value="top">Top Expenses</TabsTrigger>
-          <TabsTrigger value="networth">Net Worth</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 pb-1">
+          <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4">
+            <TabsTrigger value="categories" className="flex-shrink-0 px-4">By Category</TabsTrigger>
+            <TabsTrigger value="members" className="flex-shrink-0 px-4">By Member</TabsTrigger>
+            <TabsTrigger value="top" className="flex-shrink-0 px-4">Top Expenses</TabsTrigger>
+            <TabsTrigger value="networth" className="flex-shrink-0 px-4">Net Worth</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="categories">
           <Card>
@@ -489,9 +491,9 @@ export default function ReportsPage() {
           <CardContent>
             <div className="space-y-2">
               {dailyTrend.map((day) => (
-                <div key={day.day} className="flex items-center gap-4">
-                  <span className="w-16 text-sm text-muted-foreground">{day.day}</span>
-                  <div className="flex-1 flex gap-1">
+                <div key={day.day} className="flex items-center gap-2">
+                  <span className="w-12 text-xs text-muted-foreground shrink-0">{day.day}</span>
+                  <div className="flex-1 flex gap-1 min-w-0">
                     {day.income > 0 && (
                       <div
                         className="h-6 bg-green-500 rounded"
@@ -511,7 +513,7 @@ export default function ReportsPage() {
                       />
                     )}
                   </div>
-                  <div className="w-32 text-right text-sm">
+                  <div className="w-24 text-right text-xs shrink-0">
                     {day.income > 0 && (
                       <span className="text-green-600">+{formatCurrency(day.income)}</span>
                     )}

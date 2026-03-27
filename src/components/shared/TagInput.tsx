@@ -69,7 +69,7 @@ export function TagInput({
             <button
               type="button"
               onClick={() => removeTag(tag)}
-              className="ml-1 hover:text-destructive transition-colors"
+              className="ml-1 hover:text-destructive transition-colors inline-flex items-center justify-center min-w-[1.25rem] min-h-[1.25rem]"
             >
               <X className="h-3 w-3" />
             </button>
