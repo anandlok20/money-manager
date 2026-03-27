@@ -205,6 +205,7 @@ export default function NewVehiclePage() {
     onSuccess: () => {
       toast.success('Vehicle added successfully');
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       router.push('/vehicles');
     },
     onError: () => {

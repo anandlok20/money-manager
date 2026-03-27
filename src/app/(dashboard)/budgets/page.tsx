@@ -177,6 +177,7 @@ export default function BudgetsPage() {
     onSuccess: () => {
       toast.success(editingBudget ? 'Budget updated' : 'Budget created');
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       closeDialog();
     },
     onError: (error: Error) => toast.error(error.message),
@@ -187,6 +188,7 @@ export default function BudgetsPage() {
     onSuccess: () => {
       toast.success('Budget deleted');
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       setDeleteId(null);
     },
     onError: (error: Error) => toast.error(error.message),
@@ -262,6 +264,7 @@ export default function BudgetsPage() {
     onSuccess: () => {
       toast.success('Budget updated');
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       closeDialog();
     },
     onError: (error: Error) => toast.error(error.message),

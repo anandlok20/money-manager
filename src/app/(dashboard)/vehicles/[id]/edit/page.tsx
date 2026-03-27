@@ -211,6 +211,7 @@ export default function EditVehiclePage({ params }: { params: Promise<{ id: stri
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       queryClient.invalidateQueries({ queryKey: ['vehicle', id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       toast.success('Vehicle updated successfully');
       router.push(`/vehicles/${id}`);
     },

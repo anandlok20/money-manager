@@ -38,8 +38,8 @@ interface CardAccount {
   creditLimit?: number;
   spendingLimit?: number;
   spendingLimitAlert?: boolean;
-  linkedBankId?: string;
-  linkedMemberId?: string;
+  linkedBankId?: string | { _id: string };
+  linkedMemberId?: string | { _id: string };
   isPrivate?: boolean;
 }
 
@@ -156,8 +156,12 @@ export default function EditCardPage() {
       creditLimit: card.creditLimit,
       spendingLimit: card.spendingLimit ?? 0,
       spendingLimitAlert: card.spendingLimitAlert ?? true,
-      linkedBankId: card.linkedBankId,
-      linkedMemberId: card.linkedMemberId,
+      linkedBankId: card.linkedBankId
+        ? (typeof card.linkedBankId === 'object' ? card.linkedBankId._id : card.linkedBankId)
+        : undefined,
+      linkedMemberId: card.linkedMemberId
+        ? (typeof card.linkedMemberId === 'object' ? card.linkedMemberId._id : card.linkedMemberId)
+        : undefined,
       isPrivate: card.isPrivate ?? false,
     } : undefined,
   });
