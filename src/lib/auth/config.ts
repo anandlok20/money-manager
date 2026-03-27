@@ -41,13 +41,57 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        accessCode: { label: 'Access Code', type: 'text' },
       },
       async authorize(credentials) {
+        await connectToDatabase();
+
+        // --- Member access code login path ---
+        if (credentials?.accessCode) {
+          const member = await Member.findOne({
+            accessCode: credentials.accessCode.toUpperCase(),
+            accessCodeEnabled: true,
+          });
+
+          if (!member) {
+            throw new Error('Invalid or disabled access code');
+          }
+
+          if (!member.accessSetupComplete || !member.accessPasswordHash) {
+            throw new Error('Account setup not complete');
+          }
+
+          if (!credentials.password) {
+            throw new Error('Password is required');
+          }
+
+          const isPasswordValid = await bcrypt.compare(credentials.password, member.accessPasswordHash);
+          if (!isPasswordValid) {
+            throw new Error('Invalid password');
+          }
+
+          const primaryUser = await User.findById(member.userId);
+          if (!primaryUser) {
+            throw new Error('Account not found');
+          }
+
+          return {
+            id: primaryUser._id.toString(),
+            email: primaryUser.email,
+            name: member.name,
+            currency: primaryUser.currency,
+            lockEnabled: primaryUser.lockEnabled,
+            role: 'user' as const,
+            hasSelectedPlan: primaryUser.hasSelectedPlan || false,
+            memberId: member._id.toString(),
+            isMemberUser: true,
+          };
+        }
+
+        // --- Standard email/password login path ---
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Email and password are required');
         }
-
-        await connectToDatabase();
 
         // Seed default pricing config on first auth attempt
         await seedDefaultPricing();
@@ -110,6 +154,8 @@ export const authOptions: NextAuthOptions = {
         token.lockEnabled = (user as unknown as { lockEnabled: boolean }).lockEnabled;
         token.role = (user as unknown as { role: 'user' | 'admin' }).role || 'user';
         token.hasSelectedPlan = (user as unknown as { hasSelectedPlan: boolean }).hasSelectedPlan || false;
+        token.memberId = (user as unknown as { memberId?: string }).memberId;
+        token.isMemberUser = (user as unknown as { isMemberUser?: boolean }).isMemberUser;
       }
 
       // Handle updates to the session
@@ -133,6 +179,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as unknown as { lockEnabled: boolean }).lockEnabled = token.lockEnabled as boolean;
         session.user.role = (token.role as 'user' | 'admin') || 'user';
         session.user.hasSelectedPlan = (token.hasSelectedPlan as boolean) || false;
+        session.user.memberId = token.memberId as string | undefined;
+        session.user.isMemberUser = (token.isMemberUser as boolean | undefined) || false;
       }
       return session;
     },

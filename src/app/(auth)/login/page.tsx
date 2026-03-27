@@ -129,6 +129,12 @@ function LoginForm() {
               Sign up
             </Link>
           </p>
+          <p className="text-sm text-center text-muted-foreground">
+            Family member?{' '}
+            <Link href="/join" className="text-primary hover:underline">
+              Join with access code
+            </Link>
+          </p>
         </CardFooter>
       </form>
     </Card>

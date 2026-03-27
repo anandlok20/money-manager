@@ -51,6 +51,7 @@ import { Badge } from '@/components/ui/badge';
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const isMemberUser = session?.user?.isMemberUser;
   const { theme, setTheme } = useTheme();
   const { isPasswordSet } = useSensitiveDataAccess();
   const { currency, setCurrency, colorTheme, setColorTheme, appMode, setAppMode } = useUIStore();
@@ -373,8 +374,21 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Subscription & Billing */}
-      <Card className="relative overflow-hidden">
+      {/* Subscription & Billing — hidden for member users */}
+      {isMemberUser && (
+        <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20">
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
+              <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">Member Account</p>
+              <p className="text-xs text-muted-foreground">You are viewing this app as a family member. Subscription settings are managed by the account owner.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      <Card className="relative overflow-hidden" style={isMemberUser ? { display: 'none' } : undefined}>
         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-orange-500/5" />
         <CardHeader className="relative">
           <div className="flex items-center gap-3">

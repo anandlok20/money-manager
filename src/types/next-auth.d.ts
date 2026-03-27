@@ -10,6 +10,8 @@ declare module 'next-auth' {
       lockEnabled: boolean;
       role: 'user' | 'admin';
       hasSelectedPlan: boolean;
+      memberId?: string;
+      isMemberUser?: boolean;
     };
   }
 
@@ -21,6 +23,8 @@ declare module 'next-auth' {
     lockEnabled: boolean;
     role: 'user' | 'admin';
     hasSelectedPlan: boolean;
+    memberId?: string;
+    isMemberUser?: boolean;
   }
 }
 
@@ -33,5 +37,7 @@ declare module 'next-auth/jwt' {
     lockEnabled: boolean;
     role: 'user' | 'admin';
     hasSelectedPlan: boolean;
+    memberId?: string;
+    isMemberUser?: boolean;
   }
 }
