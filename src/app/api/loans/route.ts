@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Loan from '@/lib/mongodb/models/Loan';
+import { buildPrivacyFilter } from '@/lib/utils/privacy';
 
 const createLoanSchema = z.object({
   lender: z.string().min(1, 'Lender is required').max(200),
@@ -13,6 +14,7 @@ const createLoanSchema = z.object({
   tenureMonths: z.number().int().min(1),
   emiAmount: z.number().min(0),
   disbursementDate: z.string().transform((v) => new Date(v)),
+  isPrivate: z.boolean().optional().default(false),
   startDate: z.string().transform((v) => new Date(v)),
   endDate: z.string().transform((v) => new Date(v)).optional(),
   outstandingBalance: z.number().min(0),
@@ -36,6 +38,7 @@ export async function GET(request: NextRequest) {
 
     const query: Record<string, unknown> = { userId: session.user.id };
     if (status) query.status = status;
+    Object.assign(query, buildPrivacyFilter(session.user));
 
     const loans = await Loan.find(query)
       .populate('linkedVehicleId', 'make model registrationNumber')
@@ -67,6 +70,7 @@ export async function POST(request: NextRequest) {
     const loan = await Loan.create({
       userId: session.user.id,
       ...validatedData,
+      privateMemberId: validatedData.isPrivate ? session.user.memberId || undefined : undefined,
     });
 
     return NextResponse.json({ success: true, data: loan }, { status: 201 });

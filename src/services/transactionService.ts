@@ -28,6 +28,8 @@ interface CreateTransactionParams {
   destinationInvestmentId?: string;
   paymentMode?: 'upi' | 'neft' | 'rtgs' | 'imps' | 'cash' | 'cheque' | 'card' | 'netbanking' | 'other';
   referenceNumber?: string;
+  isPrivate?: boolean;
+  privateMemberId?: string;
 }
 
 export async function createTransaction(
@@ -59,6 +61,8 @@ export async function createTransaction(
           destinationInvestmentId: params.destinationInvestmentId,
           paymentMode: params.paymentMode,
           referenceNumber: params.referenceNumber,
+          isPrivate: params.isPrivate ?? false,
+          privateMemberId: params.privateMemberId || undefined,
         },
       ],
       { session }

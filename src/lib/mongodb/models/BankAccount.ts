@@ -21,6 +21,8 @@ export interface IBankAccount extends Document {
   maturityAmount?: number;
   linkedMemberIds: mongoose.Types.ObjectId[];
   isActive: boolean;
+  isPrivate?: boolean;
+  privateMemberId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -90,6 +92,8 @@ const BankAccountSchema = new Schema<IBankAccount>(
       type: Boolean,
       default: true,
     },
+    isPrivate: { type: Boolean, default: false },
+    privateMemberId: { type: Schema.Types.ObjectId, ref: 'Member', default: null },
   },
   {
     timestamps: true,

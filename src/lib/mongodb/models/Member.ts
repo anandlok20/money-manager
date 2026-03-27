@@ -25,6 +25,7 @@ export interface IMember extends Document {
   accessCodeEnabled: boolean;
   accessPasswordHash?: string;
   accessSetupComplete: boolean;
+  passwordResetRequested: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -84,7 +85,6 @@ const MemberSchema = new Schema<IMember>(
     // App access fields
     accessCode: {
       type: String,
-      sparse: true,
     },
     accessCodeEnabled: {
       type: Boolean,
@@ -94,6 +94,10 @@ const MemberSchema = new Schema<IMember>(
       type: String,
     },
     accessSetupComplete: {
+      type: Boolean,
+      default: false,
+    },
+    passwordResetRequested: {
       type: Boolean,
       default: false,
     },

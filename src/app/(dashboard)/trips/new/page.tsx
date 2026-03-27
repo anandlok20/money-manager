@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { ArrowLeft, Loader2, CalendarIcon, Plus, X } from 'lucide-react';
+import { ArrowLeft, Loader2, CalendarIcon, Plus, X, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +31,7 @@ const formSchema = z.object({
   status: z.enum(['planned', 'ongoing', 'completed', 'cancelled']).optional(),
   travelers: z.array(z.string()).optional(),
   notes: z.string().optional(),
+  isPrivate: z.boolean().optional(),
 });
 
 type FormInput = z.infer<typeof formSchema>;
@@ -277,6 +279,24 @@ export default function NewTripPage() {
                 {...register('description')}
               />
             </div>
+
+            {/* Private toggle */}
+            <Controller
+              name="isPrivate"
+              control={control}
+              render={({ field }) => (
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">Private</p>
+                      <p className="text-xs text-muted-foreground">Only visible to you</p>
+                    </div>
+                  </div>
+                  <Switch checked={!!field.value} onCheckedChange={field.onChange} />
+                </div>
+              )}
+            />
 
             <div className="flex gap-4 pt-4">
               <Button

@@ -6,7 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Eye, EyeOff, Bell } from 'lucide-react';
+import { ArrowLeft, Loader2, Eye, EyeOff, Bell, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { cardSchema, type CardInput } from '@/lib/validations/account';
 import { Button } from '@/components/ui/button';
@@ -118,6 +118,7 @@ export default function NewCardPage() {
 
   const cardType = watch('cardType');
   const spendingLimitAlert = watch('spendingLimitAlert');
+  const isPrivate = watch('isPrivate');
 
   const mutation = useMutation({
     mutationFn: createCard,
@@ -466,6 +467,21 @@ export default function NewCardPage() {
                     </SelectContent>
                   </Select>
                 )}
+              />
+            </div>
+
+            {/* Private toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Private</p>
+                  <p className="text-xs text-muted-foreground">Only visible to you</p>
+                </div>
+              </div>
+              <Switch
+                checked={!!isPrivate}
+                onCheckedChange={(checked) => setValue('isPrivate', checked)}
               />
             </div>
 

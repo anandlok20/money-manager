@@ -20,6 +20,8 @@ export interface ILoan extends Document {
   linkedVehicleId?: mongoose.Types.ObjectId;
   status: LoanStatus;
   notes?: string;
+  isPrivate?: boolean;
+  privateMemberId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -93,6 +95,8 @@ const LoanSchema = new Schema<ILoan>(
       type: String,
       trim: true,
     },
+    isPrivate: { type: Boolean, default: false },
+    privateMemberId: { type: Schema.Types.ObjectId, ref: 'Member', default: null },
   },
   {
     timestamps: true,

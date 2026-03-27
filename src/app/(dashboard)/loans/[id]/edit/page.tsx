@@ -5,12 +5,13 @@ import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -50,6 +51,7 @@ interface Loan {
   accountNumber?: string;
   notes?: string;
   status: string;
+  isPrivate?: boolean;
 }
 
 function calculateEMI(principal: number, annualRate: number, tenureMonths: number): number {
@@ -87,6 +89,7 @@ export default function EditLoanPage() {
   });
 
   const [loanType, setLoanType] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<LoanFormValues>({
     values: loan
@@ -106,9 +109,10 @@ export default function EditLoanPage() {
       : undefined,
   });
 
-  // Sync loanType state when loan data loads
+  // Sync loanType and isPrivate state when loan data loads
   if (loan && !loanType) {
     setLoanType(loan.loanType);
+    setIsPrivate(loan.isPrivate ?? false);
   }
 
   const watchPrincipal = watch('principalAmount');
@@ -142,6 +146,7 @@ export default function EditLoanPage() {
           outstandingBalance: parseFloat(data.outstandingBalance),
           accountNumber: data.accountNumber || undefined,
           notes: data.notes || undefined,
+          isPrivate,
         }),
       });
       if (!res.ok) {
@@ -343,6 +348,18 @@ export default function EditLoanPage() {
                 placeholder="Any additional details..."
                 {...register('notes')}
               />
+            </div>
+
+            {/* Private toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Private</p>
+                  <p className="text-xs text-muted-foreground">Only visible to you</p>
+                </div>
+              </div>
+              <Switch checked={isPrivate} onCheckedChange={setIsPrivate} />
             </div>
 
             {/* Actions */}

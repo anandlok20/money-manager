@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import Budget from '@/lib/mongodb/models/Budget';
 import { budgetSchema } from '@/lib/validations/budget';
 import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
+import { buildPrivacyFilter } from '@/lib/utils/privacy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
     const query: Record<string, unknown> = { userId: session.user.id };
     if (month) query.month = parseInt(month);
     if (year) query.year = parseInt(year);
+    Object.assign(query, buildPrivacyFilter(session.user));
 
     const budgets = await Budget.find(query)
       .populate('categoryId', 'name color type')
@@ -92,6 +94,7 @@ export async function POST(request: NextRequest) {
       ...sanitizedData,
       userId: session.user.id,
       isActive: true,
+      privateMemberId: validatedData.isPrivate ? session.user.memberId || undefined : undefined,
     });
 
     return NextResponse.json(

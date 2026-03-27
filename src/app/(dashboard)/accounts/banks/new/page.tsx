@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Bell } from 'lucide-react';
+import { ArrowLeft, Loader2, Bell, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { bankAccountSchema, type BankAccountInput } from '@/lib/validations/account';
 import { Button } from '@/components/ui/button';
@@ -50,6 +50,7 @@ export default function NewBankAccountPage() {
   });
 
   const minimumBalanceAlert = watch('minimumBalanceAlert');
+  const isPrivate = watch('isPrivate');
 
   const mutation = useMutation({
     mutationFn: createBankAccount,
@@ -214,6 +215,21 @@ export default function NewBankAccountPage() {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Private toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Private</p>
+                  <p className="text-xs text-muted-foreground">Only visible to you</p>
+                </div>
+              </div>
+              <Switch
+                checked={!!isPrivate}
+                onCheckedChange={(checked) => setValue('isPrivate', checked)}
+              />
             </div>
 
             <div className="flex gap-4 pt-4">

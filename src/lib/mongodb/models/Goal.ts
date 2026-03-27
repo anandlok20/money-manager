@@ -18,6 +18,8 @@ export interface IGoal extends Document {
   color?: string;
   status: GoalStatus;
   linkedAccountId?: mongoose.Types.ObjectId;
+  isPrivate?: boolean;
+  privateMemberId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,6 +73,8 @@ const GoalSchema = new Schema<IGoal>(
       type: Schema.Types.ObjectId,
       ref: 'BankAccount',
     },
+    isPrivate: { type: Boolean, default: false },
+    privateMemberId: { type: Schema.Types.ObjectId, ref: 'Member', default: null },
   },
   {
     timestamps: true,

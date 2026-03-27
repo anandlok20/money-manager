@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import SplitExpense, { SplitStatus } from '@/lib/mongodb/models/SplitExpense';
 import Transaction from '@/lib/mongodb/models/Transaction';
 import { createSplitSchema } from '@/lib/validations/split';
+import { buildPrivacyFilter } from '@/lib/utils/privacy';
 import { TransactionType } from '@/types';
 
 export async function GET(request: NextRequest) {
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
       // All items settled: no PENDING items remain
       query['splits.status'] = { $not: { $eq: SplitStatus.PENDING } };
     }
+    Object.assign(query, buildPrivacyFilter(session.user));
 
     const splits = await SplitExpense.find(query)
       .populate('transactionId', 'note dateTime amount categoryId sourceBankId sourceCardId')
@@ -102,6 +104,8 @@ export async function POST(request: NextRequest) {
         amount: s.amount,
         status: SplitStatus.PENDING,
       })),
+      isPrivate: validatedData.isPrivate,
+      privateMemberId: validatedData.isPrivate ? session.user.memberId || undefined : undefined,
     });
 
     return NextResponse.json({ success: true, data: splitExpense }, { status: 201 });

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Users, Plus, MoreVertical, Edit, Trash2, User, UserCheck, Users2, Mail, Phone, Eye, UserX, KeyRound, Copy, RefreshCw, ShieldOff } from 'lucide-react';
+import { Users, Plus, MoreVertical, Edit, Trash2, User, UserCheck, Users2, Mail, Phone, Eye, UserX, KeyRound, Copy, RefreshCw, ShieldOff, RotateCcw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ interface Member {
   accessCode?: string;
   accessCodeEnabled: boolean;
   accessSetupComplete: boolean;
+  passwordResetRequested: boolean;
   createdAt: string;
 }
 
@@ -67,7 +69,7 @@ const memberTypeConfig = {
   [MemberType.OTHER]: { label: 'Other', icon: UserCheck, color: 'bg-gray-500' },
 };
 
-function AccessCodeSection({ member, onUpdate }: { member: Member; onUpdate: () => void }) {
+function AccessCodeSection({ member, onUpdate }: { member: Member; onUpdate: () => void; }) {
   const [isLoading, setIsLoading] = useState(false);
 
   async function enableAccess() {
@@ -100,6 +102,17 @@ function AccessCodeSection({ member, onUpdate }: { member: Member; onUpdate: () 
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || 'Failed'); return; }
       toast.success('New code generated');
+      onUpdate();
+    } catch { toast.error('Something went wrong'); }
+    finally { setIsLoading(false); }
+  }
+
+  async function resetPassword() {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/members/${member._id}/password`, { method: 'DELETE' });
+      if (!res.ok) { const d = await res.json(); toast.error(d.error || 'Failed'); return; }
+      toast.success('Password reset. Member can now set a new password at /join.');
       onUpdate();
     } catch { toast.error('Something went wrong'); }
     finally { setIsLoading(false); }
@@ -141,7 +154,24 @@ function AccessCodeSection({ member, onUpdate }: { member: Member; onUpdate: () 
                 <Copy className="h-3.5 w-3.5" />
               </Button>
             </div>
-            {member.accessSetupComplete ? (
+            {member.passwordResetRequested ? (
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                  <AlertCircle className="h-3 w-3" />
+                  Password reset requested
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs border-amber-300 text-amber-700 hover:text-amber-800 dark:border-amber-700 dark:text-amber-400"
+                  onClick={resetPassword}
+                  disabled={isLoading}
+                >
+                  <RotateCcw className="mr-1 h-3 w-3" />
+                  Reset Password
+                </Button>
+              </div>
+            ) : member.accessSetupComplete ? (
               <p className="text-xs text-green-600 dark:text-green-400">Account set up</p>
             ) : (
               <p className="text-xs text-muted-foreground">Waiting for first login</p>
@@ -193,6 +223,8 @@ function AccessCodeSection({ member, onUpdate }: { member: Member; onUpdate: () 
 }
 
 export default function MembersPage() {
+  const { data: session } = useSession();
+  const isMemberUser = session?.user?.isMemberUser;
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -292,6 +324,11 @@ export default function MembersPage() {
                           {member.accessCodeEnabled && (
                             <Badge variant="outline" className="text-xs text-green-600 border-green-200">
                               Access On
+                            </Badge>
+                          )}
+                          {member.passwordResetRequested && (
+                            <Badge variant="outline" className="text-xs text-amber-600 border-amber-200">
+                              Reset Requested
                             </Badge>
                           )}
                         </CardDescription>
@@ -401,7 +438,7 @@ export default function MembersPage() {
                       Added {new Date(member.createdAt).toLocaleDateString()}
                     </p>
                   )}
-                  {canHaveAccess && (
+                  {canHaveAccess && !isMemberUser && (
                     <AccessCodeSection
                       member={member}
                       onUpdate={() => queryClient.invalidateQueries({ queryKey: ['members'] })}

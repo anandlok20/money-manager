@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
@@ -48,6 +49,7 @@ export default function NewLoanPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [loanType, setLoanType] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<LoanFormValues>({
     defaultValues: {
@@ -96,6 +98,7 @@ export default function NewLoanPage() {
           outstandingBalance: parseFloat(data.outstandingBalance || data.principalAmount),
           accountNumber: data.accountNumber || undefined,
           notes: data.notes || undefined,
+          isPrivate,
         }),
       });
       if (!res.ok) {
@@ -286,6 +289,18 @@ export default function NewLoanPage() {
                 placeholder="Any additional details..."
                 {...register('notes')}
               />
+            </div>
+
+            {/* Private toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Private</p>
+                  <p className="text-xs text-muted-foreground">Only visible to you</p>
+                </div>
+              </div>
+              <Switch checked={isPrivate} onCheckedChange={setIsPrivate} />
             </div>
 
             {/* Actions */}

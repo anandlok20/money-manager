@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Loader2, KeyRound, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Loader2, KeyRound, ArrowRight, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,6 +37,7 @@ export default function JoinPage() {
   // Step 3: returning login
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPass, setShowLoginPass] = useState(false);
+  const [resetRequested, setResetRequested] = useState(false);
 
   async function handleValidateCode(e: React.FormEvent) {
     e.preventDefault();
@@ -102,6 +103,26 @@ export default function JoinPage() {
       }
     } catch {
       toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleRequestReset() {
+    if (!codeInfo) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/request-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codeInfo.code }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || 'Failed to request reset'); return; }
+      setResetRequested(true);
+      toast.success('Reset requested! Ask your family admin to reset your password.');
+    } catch {
+      toast.error('Something went wrong.');
     } finally {
       setIsLoading(false);
     }
@@ -282,11 +303,27 @@ export default function JoinPage() {
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>
+            {resetRequested ? (
+              <p className="text-xs text-center text-muted-foreground">
+                Reset requested. Your family admin will reset your password.
+              </p>
+            ) : (
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-sm"
+                onClick={handleRequestReset}
+                disabled={isLoading}
+              >
+                <RotateCcw className="mr-2 h-3.5 w-3.5" />
+                Forgot password? Request reset
+              </Button>
+            )}
             <Button
               type="button"
               variant="ghost"
               className="w-full text-sm"
-              onClick={() => { setStep('code'); setCodeInfo(null); setLoginPassword(''); }}
+              onClick={() => { setStep('code'); setCodeInfo(null); setLoginPassword(''); setResetRequested(false); }}
               disabled={isLoading}
             >
               Use a different code

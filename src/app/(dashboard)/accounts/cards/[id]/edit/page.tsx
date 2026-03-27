@@ -6,7 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Eye, EyeOff, Bell } from 'lucide-react';
+import { ArrowLeft, Loader2, Eye, EyeOff, Bell, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { updateCardSchema, type UpdateCardInput } from '@/lib/validations/account';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,7 @@ interface CardAccount {
   spendingLimitAlert?: boolean;
   linkedBankId?: string;
   linkedMemberId?: string;
+  isPrivate?: boolean;
 }
 
 interface BankAccount {
@@ -157,11 +158,13 @@ export default function EditCardPage() {
       spendingLimitAlert: card.spendingLimitAlert ?? true,
       linkedBankId: card.linkedBankId,
       linkedMemberId: card.linkedMemberId,
+      isPrivate: card.isPrivate ?? false,
     } : undefined,
   });
 
   const cardType = watch('cardType');
   const spendingLimitAlert = watch('spendingLimitAlert');
+  const isPrivate = watch('isPrivate');
 
   const mutation = useMutation({
     mutationFn: (data: UpdateCardInput) => updateCard(id, data),
@@ -500,6 +503,21 @@ export default function EditCardPage() {
                     </SelectContent>
                   </Select>
                 )}
+              />
+            </div>
+
+            {/* Private toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Private</p>
+                  <p className="text-xs text-muted-foreground">Only visible to you</p>
+                </div>
+              </div>
+              <Switch
+                checked={!!isPrivate}
+                onCheckedChange={(checked) => setValue('isPrivate', checked)}
               />
             </div>
 

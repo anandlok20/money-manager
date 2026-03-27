@@ -8,6 +8,7 @@ import Trip from '@/lib/mongodb/models/Trip';
 import { transactionSchema, transactionFiltersSchema } from '@/lib/validations/transaction';
 import { createTransaction } from '@/services/transactionService';
 import { sanitizeText, sanitizeStringArray } from '@/lib/utils/sanitize';
+import { buildPrivacyFilter } from '@/lib/utils/privacy';
 
 // Ensure Trip model is registered for populate() calls
 void Trip;
@@ -74,6 +75,9 @@ export async function GET(request: NextRequest) {
         (query.amount as Record<string, number>).$lte = filters.maxAmount;
       }
     }
+
+    // Apply privacy filter for member users
+    Object.assign(query, buildPrivacyFilter(session.user));
 
     // Get total count
     const total = await Transaction.countDocuments(query);
@@ -143,6 +147,7 @@ export async function POST(request: NextRequest) {
     const transaction = await createTransaction({
       userId: session.user.id,
       ...validatedData,
+      privateMemberId: validatedData.isPrivate ? session.user.memberId || undefined : undefined,
     });
 
     // Populate the transaction for response

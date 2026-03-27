@@ -7,6 +7,7 @@ import Transaction from '@/lib/mongodb/models/Transaction';
 import { TransactionType } from '@/types';
 import { z } from 'zod';
 import { checkFeatureAccess } from '@/lib/utils/apiFeatureGate';
+import { buildPrivacyFilter } from '@/lib/utils/privacy';
 
 // Traveler can be either a string (just name) or a full object
 const travelerSchema = z.union([
@@ -91,6 +92,7 @@ const tripSchema = z.object({
   placesToVisit: z.array(placeSchema).optional(),
   cabs: z.array(cabSchema).optional(),
   notes: z.string().optional(),
+  isPrivate: z.boolean().optional().default(false),
 });
 
 export async function GET(request: NextRequest) {
@@ -123,6 +125,7 @@ export async function GET(request: NextRequest) {
         query.status = { $in: statuses };
       }
     }
+    Object.assign(query, buildPrivacyFilter(session.user));
 
     const trips = await Trip.find(query)
       .sort({ startDate: -1 })
@@ -222,6 +225,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       startDate: new Date(validatedData.startDate),
       endDate: new Date(validatedData.endDate),
+      privateMemberId: validatedData.isPrivate ? session.user.memberId || undefined : undefined,
     });
 
     return NextResponse.json(

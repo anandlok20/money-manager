@@ -9,7 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { ArrowLeft, Loader2, CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Loader2, CalendarIcon, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { transactionSchema, type TransactionInput } from '@/lib/validations/transaction';
 import { TransactionType, AccountType, CategoryType } from '@/types';
@@ -845,6 +845,24 @@ function NewTransactionContent() {
                 )}
               </div>
             )}
+
+            {/* Private toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Private</p>
+                  <p className="text-xs text-muted-foreground">Only visible to you</p>
+                </div>
+              </div>
+              <Controller
+                name="isPrivate"
+                control={control}
+                render={({ field }) => (
+                  <Switch checked={!!field.value} onCheckedChange={field.onChange} />
+                )}
+              />
+            </div>
 
             {/* Duplicate Warning */}
             {watchAmount > 0 && watchDateTime && (

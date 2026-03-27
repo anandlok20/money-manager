@@ -22,6 +22,8 @@ export interface ISplitExpense extends Document {
   totalAmount: number;
   yourShare: number;
   splits: ISplitItem[];
+  isPrivate?: boolean;
+  privateMemberId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +57,8 @@ const SplitExpenseSchema = new Schema<ISplitExpense>(
     totalAmount: { type: Number, required: true },
     yourShare: { type: Number, required: true },
     splits: [SplitItemSchema],
+    isPrivate: { type: Boolean, default: false },
+    privateMemberId: { type: Schema.Types.ObjectId, ref: 'Member', default: null },
   },
   { timestamps: true }
 );

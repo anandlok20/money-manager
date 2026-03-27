@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Check,
   Wallet,
+  Lock,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -60,6 +62,7 @@ interface Goal {
   progress: number;
   remaining: number;
   monthlyNeeded: number | null;
+  isPrivate?: boolean;
   linkedAccountId?: {
     _id: string;
     bankName: string;
@@ -75,6 +78,7 @@ interface GoalFormData {
   deadline: string;
   icon: string;
   color: string;
+  isPrivate: boolean;
 }
 
 const GOAL_ICONS = ['🎯', '🏠', '🚗', '✈️', '📚', '💍', '🎓', '💰', '🏦', '🎁', '🎉', '🌴'];
@@ -106,6 +110,7 @@ export default function GoalsPage() {
     deadline: '',
     icon: '🎯',
     color: '#3b82f6',
+    isPrivate: false,
   });
 
   const { data: goals, isLoading } = useQuery({
@@ -216,6 +221,7 @@ export default function GoalsPage() {
       deadline: '',
       icon: '🎯',
       color: '#3b82f6',
+      isPrivate: false,
     });
   };
 
@@ -228,6 +234,7 @@ export default function GoalsPage() {
       deadline: goal.deadline ? format(new Date(goal.deadline), 'yyyy-MM-dd') : '',
       icon: goal.icon,
       color: goal.color,
+      isPrivate: goal.isPrivate ?? false,
     });
     setEditingGoal(goal);
   };
@@ -382,6 +389,19 @@ export default function GoalsPage() {
                   </div>
                 </div>
               </div>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium">Private</p>
+                      <p className="text-xs text-muted-foreground">Only visible to you</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={formData.isPrivate}
+                    onCheckedChange={(v) => setFormData({ ...formData, isPrivate: v })}
+                  />
+                </div>
               <DialogFooter>
                 <Button
                   type="button"

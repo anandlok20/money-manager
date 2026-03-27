@@ -10,6 +10,8 @@ export interface IBudget extends Document {
   rolloverEnabled: boolean;
   rolloverAmount: number; // Unspent amount carried from prior month
   isActive: boolean;
+  isPrivate?: boolean;
+  privateMemberId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +57,8 @@ const BudgetSchema = new Schema<IBudget>(
       type: Boolean,
       default: true,
     },
+    isPrivate: { type: Boolean, default: false },
+    privateMemberId: { type: Schema.Types.ObjectId, ref: 'Member', default: null },
   },
   {
     timestamps: true,
