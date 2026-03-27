@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import Vehicle, { VehicleType, FuelType, VehicleStatus } from '@/lib/mongodb/models/Vehicle';
 import { z } from 'zod';
 import { checkFeatureAccess } from '@/lib/utils/apiFeatureGate';
+import { buildPrivacyFilter } from '@/lib/utils/privacy';
 
 const vehicleSchema = z.object({
   vehicleType: z.nativeEnum(VehicleType),
@@ -83,10 +84,11 @@ export async function GET(request: NextRequest) {
     const expiringDocuments = searchParams.get('expiringDocuments') === 'true';
 
     const query: Record<string, unknown> = { userId: session.user.id };
-    
+
     if (status) {
       query.status = status;
     }
+    Object.assign(query, buildPrivacyFilter(session.user));
 
     const vehicles = await Vehicle.find(query)
       .sort({ make: 1, model: 1 })

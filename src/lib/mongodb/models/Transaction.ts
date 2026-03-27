@@ -35,6 +35,9 @@ export interface ITransaction extends Document {
   receiptFileName?: string;
   // Tags
   tags?: string[];
+  // Privacy
+  isPrivate?: boolean;
+  privateMemberId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -147,6 +150,9 @@ const TransactionSchema = new Schema<ITransaction>(
       type: String,
       trim: true,
     }],
+    // Privacy
+    isPrivate: { type: Boolean, default: false },
+    privateMemberId: { type: Schema.Types.ObjectId, ref: 'Member', default: null },
   },
   {
     timestamps: true,

@@ -6,6 +6,7 @@ import BankAccount from '@/lib/mongodb/models/BankAccount';
 import { bankAccountSchema } from '@/lib/validations/account';
 import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
 import { canCreateResource } from '@/lib/utils/subscription';
+import { buildPrivacyFilter } from '@/lib/utils/privacy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
     if (!includeInactive) {
       query.isActive = true;
     }
+    Object.assign(query, buildPrivacyFilter(session.user));
 
     const accounts = await BankAccount.find(query)
       .populate('linkedMemberIds', 'name type')
@@ -91,6 +93,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       currentBalance: validatedData.openingBalance,
       isActive: true,
+      privateMemberId: validatedData.isPrivate ? session.user.memberId || undefined : undefined,
     });
 
     return NextResponse.json(

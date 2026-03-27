@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Pencil,
   Trash2,
+  Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -148,6 +150,7 @@ export default function BudgetsPage() {
   // Form state
   const [formCategoryId, setFormCategoryId] = useState('');
   const [formAmount, setFormAmount] = useState('');
+  const [formIsPrivate, setFormIsPrivate] = useState(false);
 
   const currentMonth = selectedDate.getMonth() + 1;
   const currentYear = selectedDate.getFullYear();
@@ -233,6 +236,7 @@ export default function BudgetsPage() {
     setEditingBudget(null);
     setFormCategoryId('');
     setFormAmount('');
+    setFormIsPrivate(false);
     setIsDialogOpen(true);
   };
 
@@ -240,6 +244,7 @@ export default function BudgetsPage() {
     setEditingBudget(budget);
     setFormCategoryId(budget.categoryId._id);
     setFormAmount(budget.amount.toString());
+    setFormIsPrivate((budget as Budget & { isPrivate?: boolean }).isPrivate ?? false);
     setIsDialogOpen(true);
   };
 
@@ -248,6 +253,7 @@ export default function BudgetsPage() {
     setEditingBudget(null);
     setFormCategoryId('');
     setFormAmount('');
+    setFormIsPrivate(false);
   };
 
   const updateMutation = useMutation({
@@ -273,6 +279,7 @@ export default function BudgetsPage() {
       amount: parseFloat(formAmount),
       month: currentMonth,
       year: currentYear,
+      isPrivate: formIsPrivate,
     };
 
     if (editingBudget) {
@@ -562,6 +569,16 @@ export default function BudgetsPage() {
                 onChange={(e) => setFormAmount(e.target.value)}
                 placeholder="0.00"
               />
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Private</p>
+                  <p className="text-xs text-muted-foreground">Only visible to you</p>
+                </div>
+              </div>
+              <Switch checked={formIsPrivate} onCheckedChange={setFormIsPrivate} />
             </div>
             <div className="flex gap-2 pt-4">
               <Button type="button" variant="outline" className="flex-1" onClick={closeDialog}>

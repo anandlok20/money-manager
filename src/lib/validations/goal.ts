@@ -30,6 +30,7 @@ export const goalSchema = z.object({
   linkedAccountId: z
     .string()
     .optional(),
+  isPrivate: z.boolean().optional(),
 });
 
 export const goalUpdateSchema = goalSchema.partial();

@@ -6,6 +6,7 @@ import Card from '@/lib/mongodb/models/Card';
 import { cardSchema } from '@/lib/validations/account';
 import { sanitizeTextFields, handleApiError } from '@/lib/utils/api';
 import { canCreateResource } from '@/lib/utils/subscription';
+import { buildPrivacyFilter } from '@/lib/utils/privacy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
     if (!includeInactive) {
       query.isActive = true;
     }
+    Object.assign(query, buildPrivacyFilter(session.user));
 
     const cards = await Card.find(query)
       .populate('linkedBankId', 'bankName accountHolderName')
@@ -88,6 +90,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       currentBalance: 0,
       isActive: true,
+      privateMemberId: validatedData.isPrivate ? session.user.memberId || undefined : undefined,
     });
 
     return NextResponse.json(

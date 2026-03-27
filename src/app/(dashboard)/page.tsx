@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -18,6 +19,7 @@ import {
   BarChart3,
   Target,
   Users,
+  User,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -131,22 +133,37 @@ interface DashboardData {
   goalsCount: number;
 }
 
-async function fetchDashboardData(): Promise<DashboardData> {
-  const response = await fetch('/api/dashboard/summary');
+interface PersonalSummary {
+  monthlyIncome: number;
+  monthlyExpense: number;
+  monthlySavings: number;
+  linkedBankBalance: number;
+  linkedCardBalance: number;
+  personalNetWorth: number;
+}
+
+async function fetchDashboardData(memberView?: boolean): Promise<{ data: DashboardData; personalSummary?: PersonalSummary }> {
+  const url = memberView ? '/api/dashboard/summary?memberView=true' : '/api/dashboard/summary';
+  const response = await fetch(url);
   if (!response.ok) throw new Error('Failed to fetch dashboard data');
-  const data = await response.json();
-  return data.data;
+  return response.json();
 }
 
 export default function DashboardPage() {
   const { data: session } = useSession();
   const currency = (session?.user as unknown as { currency?: string })?.currency || 'INR';
   const { canAccessFeature } = useSubscription();
+  const isMemberUser = session?.user?.isMemberUser;
+  const [viewMode, setViewMode] = useState<'family' | 'personal'>('family');
+  const isPersonalView = isMemberUser && viewMode === 'personal';
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['dashboard-summary'],
-    queryFn: fetchDashboardData,
+  const { data: dashboardResponse, isLoading, error } = useQuery({
+    queryKey: ['dashboard-summary', isPersonalView],
+    queryFn: () => fetchDashboardData(isPersonalView),
   });
+
+  const data = dashboardResponse?.data;
+  const personalSummary = dashboardResponse?.personalSummary;
 
   if (error) {
     return (
@@ -156,17 +173,43 @@ export default function DashboardPage() {
     );
   }
 
-  const isMemberUser = session?.user?.isMemberUser;
-
   return (
     <div className="space-y-8">
-      {/* Member user banner */}
+      {/* Member user banner + view toggle */}
       {isMemberUser && (
-        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
-          <Users className="h-4 w-4 shrink-0" />
-          <span>
-            Viewing as <span className="font-semibold">{session?.user?.name}</span> — family shared view
-          </span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950/40">
+          <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-300 flex-1">
+            <Users className="h-4 w-4 shrink-0" />
+            <span>
+              Viewing as <span className="font-semibold">{session?.user?.name}</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-1 rounded-lg border border-blue-200 dark:border-blue-700 p-0.5 bg-white dark:bg-blue-950 w-fit">
+            <button
+              onClick={() => setViewMode('family')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors',
+                viewMode === 'family'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900'
+              )}
+            >
+              <Users className="h-3 w-3" />
+              Family
+            </button>
+            <button
+              onClick={() => setViewMode('personal')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors',
+                viewMode === 'personal'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900'
+              )}
+            >
+              <User className="h-3 w-3" />
+              My View
+            </button>
+          </div>
         </div>
       )}
 
@@ -191,7 +234,80 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards — personal view for member users */}
+      {isPersonalView ? (
+        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground">My Income</CardTitle>
+              <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+                <ArrowDownLeft className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="relative">
+              {isLoading ? <Skeleton className="h-8 w-32" /> : (
+                <div className="text-base sm:text-xl lg:text-2xl font-bold text-green-600 dark:text-green-400 truncate">
+                  {formatCurrency(personalSummary?.monthlyIncome || 0, currency)}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground">My Expense</CardTitle>
+              <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                <ArrowUpRight className="h-4 w-4 text-red-600 dark:text-red-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="relative">
+              {isLoading ? <Skeleton className="h-8 w-32" /> : (
+                <div className="text-base sm:text-xl lg:text-2xl font-bold text-red-600 dark:text-red-400 truncate">
+                  {formatCurrency(personalSummary?.monthlyExpense || 0, currency)}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground">My Savings</CardTitle>
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+            </CardHeader>
+            <CardContent className="relative">
+              {isLoading ? <Skeleton className="h-8 w-32" /> : (
+                <div className="text-base sm:text-xl lg:text-2xl font-bold text-blue-600 dark:text-blue-400 truncate">
+                  {formatCurrency(personalSummary?.monthlySavings || 0, currency)}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground">My Accounts</CardTitle>
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Wallet className="h-4 w-4 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent className="relative">
+              {isLoading ? <Skeleton className="h-8 w-32" /> : (
+                <>
+                  <div className="text-base sm:text-xl lg:text-2xl font-bold truncate">
+                    {formatCurrency(personalSummary?.personalNetWorth || 0, currency)}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Family net worth: {formatCurrency(data?.netWorth || 0, currency)}
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
       <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
         {/* Net Worth */}
         <Card className="relative overflow-hidden">
@@ -281,6 +397,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Secondary Summary Cards */}
       <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import mongoose from 'mongoose';
 import { dashboardCache, userCacheKey } from '@/lib/cache/lru-cache';
@@ -22,7 +22,7 @@ interface PopulatedBudget {
   amount: number;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -32,7 +32,10 @@ export async function GET() {
       );
     }
 
-    const cacheKey = userCacheKey(session.user.id, 'dashboard');
+    const { searchParams } = new URL(request.url);
+    const memberView = searchParams.get('memberView') === 'true' && session.user.isMemberUser;
+
+    const cacheKey = userCacheKey(session.user.id, memberView ? 'dashboard-member' : 'dashboard');
     const cached = dashboardCache.get(cacheKey);
     if (cached) return NextResponse.json(cached);
 
@@ -341,8 +344,57 @@ export async function GET() {
     const totalGoalTarget = activeGoals.reduce((sum, g) => sum + g.targetAmount, 0);
     const totalGoalCurrent = activeGoals.reduce((sum, g) => sum + g.currentAmount, 0);
 
+    // Personal summary for member view
+    let personalSummary = null;
+    if (memberView && session.user.memberId) {
+      const memberObjectId = new mongoose.Types.ObjectId(session.user.memberId);
+
+      const [personalStats, linkedBanks, linkedCards] = await Promise.all([
+        // Member's personal income/expense for current month
+        Transaction.aggregate([
+          {
+            $match: {
+              userId: { $eq: userId },
+              memberId: { $eq: memberObjectId },
+              dateTime: { $gte: monthStart, $lte: monthEnd },
+              type: { $in: [TransactionType.INCOME, TransactionType.EXPENSE] },
+            },
+          },
+          { $group: { _id: '$type', total: { $sum: '$amount' } } },
+        ]),
+        // Bank accounts linked to this member
+        BankAccount.find({ userId, isActive: true, linkedMemberIds: memberObjectId })
+          .select('currentBalance')
+          .lean(),
+        // Cards linked to this member
+        Card.find({ userId, isActive: true, linkedMemberId: memberObjectId })
+          .select('currentBalance')
+          .lean(),
+      ]);
+
+      let personalIncome = 0;
+      let personalExpense = 0;
+      personalStats.forEach((s) => {
+        if (s._id === TransactionType.INCOME) personalIncome = s.total;
+        else if (s._id === TransactionType.EXPENSE) personalExpense = s.total;
+      });
+
+      const linkedBankBalance = linkedBanks.reduce((sum, b) => sum + b.currentBalance, 0);
+      const linkedCardBalance = linkedCards.reduce((sum, c) => sum + c.currentBalance, 0);
+
+      personalSummary = {
+        monthlyIncome: personalIncome,
+        monthlyExpense: personalExpense,
+        monthlySavings: personalIncome - personalExpense,
+        linkedBankBalance,
+        linkedCardBalance,
+        personalNetWorth: linkedBankBalance - linkedCardBalance,
+      };
+    }
+
     const responsePayload = {
       success: true,
+      ...(personalSummary && { personalSummary }),
       data: {
         totalBankBalance,
         totalCardBalance,

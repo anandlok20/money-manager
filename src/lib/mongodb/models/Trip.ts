@@ -99,6 +99,8 @@ export interface ITrip extends Document {
     url: string;
     type: string;
   }[];
+  isPrivate?: boolean;
+  privateMemberId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -234,6 +236,8 @@ const TripSchema = new Schema<ITrip>(
       url: { type: String, required: true },
       type: { type: String, required: true },
     }],
+    isPrivate: { type: Boolean, default: false },
+    privateMemberId: { type: Schema.Types.ObjectId, ref: 'Member', default: null },
   },
   {
     timestamps: true,

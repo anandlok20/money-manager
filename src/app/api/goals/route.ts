@@ -6,6 +6,7 @@ import Goal from '@/lib/mongodb/models/Goal';
 import { goalSchema } from '@/lib/validations/goal';
 import { GoalStatus } from '@/lib/mongodb/models/Goal';
 import { canCreateResource } from '@/lib/utils/subscription';
+import { buildPrivacyFilter } from '@/lib/utils/privacy';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
     if (status && Object.values(GoalStatus).includes(status as GoalStatus)) {
       query.status = status;
     }
+    Object.assign(query, buildPrivacyFilter(session.user));
 
     const goals = await Goal.find(query)
       .populate('linkedAccountId', 'bankName accountHolderName')
@@ -114,6 +116,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       currentAmount: validation.data.currentAmount || 0,
       deadline: validation.data.deadline ? new Date(validation.data.deadline) : undefined,
+      privateMemberId: validation.data.isPrivate ? session.user.memberId || undefined : undefined,
     };
 
     const goal = await Goal.create(goalData);

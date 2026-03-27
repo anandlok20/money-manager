@@ -6,7 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Trash2, Receipt } from 'lucide-react';
+import { ArrowLeft, Loader2, Trash2, Receipt, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { updateTransactionSchema, type UpdateTransactionInput } from '@/lib/validations/transaction';
@@ -40,6 +40,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Switch } from '@/components/ui/switch';
 import { ReceiptUploader } from '@/components/transactions/ReceiptUploader';
 import { TagInput, COMMON_TAGS } from '@/components/shared/TagInput';
 import { DuplicateWarning } from '@/components/transactions/DuplicateWarning';
@@ -66,6 +67,7 @@ interface Transaction {
   receiptUrl?: string;
   receiptFileName?: string;
   tags?: string[];
+  isPrivate?: boolean;
   createdAt: string;
 }
 
@@ -282,6 +284,7 @@ export default function TransactionDetailPage() {
       goalId: extractId(transaction.goalId),
       paymentMode: (transaction.paymentMode as UpdateTransactionInput['paymentMode']) || undefined,
       referenceNumber: transaction.referenceNumber || undefined,
+      isPrivate: transaction.isPrivate ?? false,
     } : undefined,
   });
 
@@ -827,6 +830,24 @@ export default function TransactionDetailPage() {
                 excludeId={transaction._id}
               />
             )}
+
+            {/* Private toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Private</p>
+                  <p className="text-xs text-muted-foreground">Only visible to you</p>
+                </div>
+              </div>
+              <Controller
+                name="isPrivate"
+                control={control}
+                render={({ field }) => (
+                  <Switch checked={!!field.value} onCheckedChange={field.onChange} />
+                )}
+              />
+            </div>
 
             {/* Receipt Upload Section */}
             <div className="space-y-2">

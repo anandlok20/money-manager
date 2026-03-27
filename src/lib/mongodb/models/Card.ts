@@ -53,6 +53,8 @@ export interface ICard extends Document {
   linkedBankId?: mongoose.Types.ObjectId;
   linkedMemberId?: mongoose.Types.ObjectId;
   isActive: boolean;
+  isPrivate?: boolean;
+  privateMemberId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
   decryptCVV(): string | undefined;
@@ -138,6 +140,8 @@ const CardSchema = new Schema<ICard>(
       type: Boolean,
       default: true,
     },
+    isPrivate: { type: Boolean, default: false },
+    privateMemberId: { type: Schema.Types.ObjectId, ref: 'Member', default: null },
   },
   {
     timestamps: true,

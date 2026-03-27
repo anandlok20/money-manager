@@ -10,6 +10,7 @@ export const bankAccountSchema = z.object({
   minimumBalance: z.number().min(0).optional(),
   minimumBalanceAlert: z.boolean().optional(),
   linkedMemberIds: z.array(z.string()).optional(),
+  isPrivate: z.boolean().optional(),
 });
 
 export const updateBankAccountSchema = bankAccountSchema.partial();
@@ -33,6 +34,7 @@ export const cardSchema = z.object({
   spendingLimitAlert: z.boolean().optional(),
   linkedBankId: z.string().optional(),
   linkedMemberId: z.string().optional(),
+  isPrivate: z.boolean().optional(),
 });
 
 export const updateCardSchema = cardSchema.partial();

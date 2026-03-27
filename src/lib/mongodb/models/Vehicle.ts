@@ -108,7 +108,8 @@ export interface IVehicle extends Omit<Document, 'model'> {
   
   status: VehicleStatus;
   notes?: string;
-  
+  isPrivate?: boolean;
+  privateMemberId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -238,6 +239,8 @@ const VehicleSchema = new Schema<IVehicle>(
       default: VehicleStatus.ACTIVE,
     },
     notes: String,
+    isPrivate: { type: Boolean, default: false },
+    privateMemberId: { type: Schema.Types.ObjectId, ref: 'Member', default: null },
   },
   {
     timestamps: true,

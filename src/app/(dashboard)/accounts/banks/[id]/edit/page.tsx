@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, Bell } from 'lucide-react';
+import { ArrowLeft, Loader2, Bell, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { updateBankAccountSchema, type UpdateBankAccountInput } from '@/lib/validations/account';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ interface BankAccount {
   currentBalance: number;
   minimumBalance?: number;
   minimumBalanceAlert?: boolean;
+  isPrivate?: boolean;
 }
 
 async function fetchBankAccount(id: string): Promise<BankAccount> {
@@ -78,10 +79,12 @@ export default function EditBankAccountPage() {
       openingBalance: account.openingBalance,
       minimumBalance: account.minimumBalance ?? 0,
       minimumBalanceAlert: account.minimumBalanceAlert ?? true,
+      isPrivate: account.isPrivate ?? false,
     } : undefined,
   });
 
   const minimumBalanceAlert = watch('minimumBalanceAlert');
+  const isPrivate = watch('isPrivate');
 
   const mutation = useMutation({
     mutationFn: (data: UpdateBankAccountInput) => updateBankAccount(id, data),
@@ -250,6 +253,21 @@ export default function EditBankAccountPage() {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Private toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Private</p>
+                  <p className="text-xs text-muted-foreground">Only visible to you</p>
+                </div>
+              </div>
+              <Switch
+                checked={!!isPrivate}
+                onCheckedChange={(checked) => setValue('isPrivate', checked)}
+              />
             </div>
 
             <div className="flex gap-4 pt-4">
