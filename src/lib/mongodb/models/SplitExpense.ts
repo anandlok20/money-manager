@@ -15,6 +15,8 @@ export interface ISplitItem {
   settlementTransactionId?: mongoose.Types.ObjectId;
 }
 
+export type SplitDirection = 'owed_to_me' | 'i_owe';
+
 export interface ISplitExpense extends Document {
   _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
@@ -22,6 +24,7 @@ export interface ISplitExpense extends Document {
   totalAmount: number;
   yourShare: number;
   splits: ISplitItem[];
+  direction: SplitDirection;
   isPrivate?: boolean;
   privateMemberId?: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -57,6 +60,11 @@ const SplitExpenseSchema = new Schema<ISplitExpense>(
     totalAmount: { type: Number, required: true },
     yourShare: { type: Number, required: true },
     splits: [SplitItemSchema],
+    direction: {
+      type: String,
+      enum: ['owed_to_me', 'i_owe'],
+      default: 'owed_to_me',
+    },
     isPrivate: { type: Boolean, default: false },
     privateMemberId: { type: Schema.Types.ObjectId, ref: 'Member', default: null },
   },

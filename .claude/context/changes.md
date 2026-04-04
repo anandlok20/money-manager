@@ -1,5 +1,79 @@
 # Recent Changes Log
 
+## 2026-04-04 — Scheduled Payments Audit & Improvement
+
+### Bug Fixes
+- **Root cause fixed**: `ScheduledPayment` model had no `transactionType` field — all scheduled payments created `TRANSFER_SELF` regardless of intent. Added `transactionType: TransactionType` (required) and `categoryId` (optional, required for EXPENSE/INCOME).
+- **Error retry loop fixed**: On cron failure, `nextRunDate` was restored to the original past date → infinite retries. Now advances `nextRunDate` to the next scheduled slot on failure.
+- **Auto-pause on 3 failures**: After 3 consecutive failures, `isActive` is set to `false`. Reactivating via PATCH also resets `failureCount`.
+
+### New Features
+- **`name` field**: Required label for each scheduled payment (e.g. "Rent Payment", "Netflix").
+- **`endDate` field**: Optional stop date — cron auto-deactivates payment when `now > endDate`.
+- **`failureCount` + `lastError`**: Track consecutive failures; shown as warning badge in list with error detail on hover.
+- **EXPENSE/INCOME support**: Create scheduled expenses (e.g. rent) or income (e.g. salary) with correct transaction type and category.
+- **Destination hidden for EXPENSE/INCOME**: Form only shows destination fields when type is Transfer or Investment.
+
+### Files Modified
+- `src/lib/mongodb/models/ScheduledPayment.ts` — added `name`, `transactionType`, `categoryId`, `endDate`, `failureCount`, `lastError`; made `destinationType` optional
+- `src/lib/validations/scheduled-payment.ts` — added new fields; category-required refinement for EXPENSE/INCOME; destination-required refinement only for TRANSFER/INVESTMENT
+- `src/app/api/scheduled-payments/process/route.ts` — use `payment.transactionType`, pass `categoryId`, check `endDate`, fixed error handling
+- `src/app/api/scheduled-payments/route.ts` — added `populate('categoryId', 'name icon color')`
+- `src/app/api/scheduled-payments/[id]/route.ts` — added `categoryId` populate everywhere; handle `endDate` in PUT; reset `failureCount` on PATCH reactivate
+- `src/app/(dashboard)/scheduled-payments/new/page.tsx` — name, transaction type selector, category selector (filtered by type), end date picker
+- `src/app/(dashboard)/scheduled-payments/[id]/edit/page.tsx` — same additions + pre-populate new fields from API
+- `src/app/(dashboard)/scheduled-payments/page.tsx` — show name as card title, transaction type badge with color, endDate, failure warning, auto-paused badge, last error text
+
+### tsc: ✅ clean
+
+---
+
+## 2026-04-04 — Cash Balance Fix + Member Cash View
+
+### Bug Fixes
+- `src/app/api/accounts/cash/route.ts` — balance now computed from `totalIn - totalOut` (all-time INCOME/EXPENSE transactions with sourceType=CASH) instead of stored `CashAccount.currentBalance` — always accurate, no drift
+
+### New Features
+- **Member cash view**: when a member logs in and opens `/accounts/cash`, they see cash the primary user gave them. Primary's EXPENSE tagged to member = cash member received (+). Primary's INCOME tagged to member = cash member returned (-). "Cash You Hold" = net cash member is holding. "Cash from Family" heading. Add Cash button hidden (member can't add cash entries). Labels adapt to member perspective throughout.
+
+### tsc: ✅ clean
+
+---
+
+## 2026-04-04 — Cash Wallet Improvements + Hydration Fix
+
+### Bug Fixes
+- **Hydration mismatch** (`src/app/(dashboard)/page.tsx`): `localStorage` was read in `useState` initializer using `typeof window !== 'undefined'` — server renders `'family'`, client could render `'personal'` → React 19 hydration mismatch. Fixed by starting with `'family'` and using `useEffect` to load saved value after mount.
+
+### Cash Wallet Enhancements
+- `src/app/api/accounts/cash/route.ts` — GET now accepts `?year=&month=` query params; returns `totalIn`, `totalOut` (all-time) alongside monthly stats; uses `mongoose.Types.ObjectId` for aggregate `$match`
+- `src/app/(dashboard)/accounts/cash/page.tsx` — added month navigator (prev/next arrows); "Cash in Hand" card shows all-time total with sub-line showing total in/out; monthly stat card now scoped to selected month; transaction list filtered to selected month; added `DialogDescription` to fix accessibility warning
+
+### tsc: ✅ clean
+
+---
+
+## 2026-04-04 — Cash Wallet Feature
+
+### New Files
+- `src/lib/mongodb/models/CashAccount.ts` — new model: userId (unique), currentBalance, currency
+- `src/app/api/accounts/cash/route.ts` — GET (balance + monthly stats + transactions), POST (add cash entry + optional split)
+- `src/app/(dashboard)/accounts/cash/page.tsx` — Cash Wallet UI: balance cards, transaction list, Add Cash dialog
+
+### Modified Files
+- `src/lib/mongodb/models/Transaction.ts` — added `cashPersonName` field (free-text person for cash entries)
+- `src/lib/mongodb/models/SplitExpense.ts` — added `direction: 'owed_to_me' | 'i_owe'` field
+- `src/lib/validations/transaction.ts` — added `cashPersonName` to both create/update schemas
+- `src/services/transactionService.ts` — imported CashAccount; added `cashPersonName` to params; EXPENSE/INCOME with `sourceType=CASH` now updates CashAccount.currentBalance atomically
+- `src/app/api/splits/route.ts` — removed EXPENSE-only restriction (INCOME allowed for cash); direction auto-derived from transaction type
+- `src/app/api/splits/[id]/settle/route.ts` — handles `i_owe` direction: creates EXPENSE (pay back) vs existing INCOME (receive back)
+- `src/app/(dashboard)/splits/page.tsx` — added "I Owe" tab + summary card; "Pending" tab now filtered to `owed_to_me` direction only
+- `src/components/layouts/DashboardLayout.tsx` — added `Banknote` import + "Cash" nav item under Accounts
+
+### tsc: ✅ clean
+
+---
+
 ## 2026-03-27 — Edit/Fetch Audit Fixes
 
 ### Bug Fixes

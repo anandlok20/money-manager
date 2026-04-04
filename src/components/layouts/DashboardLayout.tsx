@@ -7,6 +7,7 @@ import { signOut, useSession } from 'next-auth/react';
 import {
   LayoutDashboard,
   Wallet,
+  Banknote,
   ArrowLeftRight,
   TrendingUp,
   TrendingDown,
@@ -80,6 +81,7 @@ const navigation: NavItem[] = [
     children: [
       { name: 'Banks', href: '/accounts/banks', icon: Building2 },
       { name: 'Cards', href: '/accounts/cards', icon: CreditCard },
+      { name: 'Cash', href: '/accounts/cash', icon: Banknote },
       { name: 'Assets', href: '/accounts/assets', icon: TrendingUp },
       { name: 'Loans', href: '/loans', icon: Landmark },
       { name: 'Splits', href: '/splits', icon: SplitSquareVertical },

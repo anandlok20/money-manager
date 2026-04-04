@@ -4,7 +4,6 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import ScheduledPayment from '@/lib/mongodb/models/ScheduledPayment';
 import { createTransaction } from '@/services/transactionService';
 import { calculateNextRunDate } from '@/services/scheduledPaymentService';
-import { TransactionType, AccountType } from '@/types';
 
 // Maximum payments to process in a single CRON run (catch-up storm protection)
 const MAX_PAYMENTS_PER_RUN = 50;
@@ -65,10 +64,16 @@ export async function POST(request: NextRequest) {
       if (!payment) break; // No more due payments
 
       try {
-        // Determine transaction type based on destination
-        const transactionType = payment.destinationType === AccountType.INVESTMENT
-          ? TransactionType.INVESTMENT_CONTRIBUTION
-          : TransactionType.TRANSFER_SELF;
+        // Check end date — if payment has expired, deactivate and skip
+        if (payment.endDate && now > payment.endDate) {
+          await ScheduledPayment.findByIdAndUpdate(payment._id, {
+            $set: { isActive: false, nextRunDate: payment.nextRunDate },
+          });
+          continue;
+        }
+
+        // Use the stored transaction type (EXPENSE, INCOME, TRANSFER_SELF, INVESTMENT_CONTRIBUTION)
+        const transactionType = payment.transactionType;
 
         // Create the transaction (atomically updates balances)
         await createTransaction({
@@ -77,6 +82,7 @@ export async function POST(request: NextRequest) {
           amount: payment.amount,
           dateTime: now,
           note: payment.note || 'Scheduled payment',
+          categoryId: payment.categoryId?.toString(),
           memberId: payment.memberId?.toString(),
           sourceType: payment.sourceType,
           sourceBankId: payment.sourceBankId?.toString(),
@@ -96,22 +102,34 @@ export async function POST(request: NextRequest) {
           nextRunDate = calculateNextRunDate(nextRunDate, payment.frequency);
         }
 
-        // Update with correct next run date and last run timestamp
+        // Update with correct next run date and last run timestamp; reset failure state
         await ScheduledPayment.findByIdAndUpdate(payment._id, {
           $set: {
             lastRunDate: now,
             nextRunDate: nextRunDate,
+            failureCount: 0,
+            lastError: undefined,
           },
         });
 
         processedCount++;
       } catch (error) {
         console.error(`Error processing scheduled payment ${payment._id}:`, error);
-        
-        // Restore the original nextRunDate so it can be retried
+
+        const newFailureCount = (payment.failureCount ?? 0) + 1;
+        // Advance nextRunDate instead of restoring the old past date — prevents infinite retry loop
+        let nextRunDate = calculateNextRunDate(payment.nextRunDate, payment.frequency);
+        while (nextRunDate <= now) {
+          nextRunDate = calculateNextRunDate(nextRunDate, payment.frequency);
+        }
+
         await ScheduledPayment.findByIdAndUpdate(payment._id, {
           $set: {
-            nextRunDate: payment.nextRunDate,
+            nextRunDate,
+            failureCount: newFailureCount,
+            lastError: error instanceof Error ? error.message : 'Unknown error',
+            // Auto-pause after 3 consecutive failures
+            isActive: newFailureCount < 3,
           },
         });
 

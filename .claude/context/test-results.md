@@ -1,5 +1,21 @@
 # Test Results
 
+## 2026-04-04 — Scheduled Payments Audit
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| `npx tsc --noEmit` | ✅ clean | 0 errors after all scheduled payments changes |
+
+---
+
+## 2026-04-04 — Cash Wallet + Hydration Fix
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| `npx tsc --noEmit` | ✅ clean | 0 errors after hydration fix + month selector |
+
+---
+
 ## 2026-03-27 — Edit/Fetch Audit Fixes
 
 | Check | Status | Notes |

@@ -40,25 +40,43 @@ export async function POST(
 
     const createdTransactionIds: string[] = [];
 
+    const isIOwe = splitExpense.direction === 'i_owe';
+
     for (const splitItemId of validatedData.splitItemIds) {
       const item = splitExpense.splits.find((s) => s._id.toString() === splitItemId);
 
       if (!item) continue;
       if (item.status === SplitStatus.SETTLED) continue; // already settled — skip silently
 
-      // Create an INCOME transaction for the repayment
-      const repaymentTx = await createTransaction({
-        userId: session.user.id,
-        type: TransactionType.INCOME,
-        amount: item.amount,
-        dateTime: new Date(),
-        note: `Split repayment from ${item.name}`,
-        memberId: item.memberId?.toString(),
-        // Credit to the same account that was debited for the original expense
-        sourceType: originalTransaction.sourceType as AccountType | undefined,
-        sourceBankId: originalTransaction.sourceBankId?.toString(),
-        sourceCardId: originalTransaction.sourceCardId?.toString(),
-      });
+      let repaymentTx;
+      if (isIOwe) {
+        // I owe: I'm paying back — create an EXPENSE from my cash
+        repaymentTx = await createTransaction({
+          userId: session.user.id,
+          type: TransactionType.EXPENSE,
+          amount: item.amount,
+          dateTime: new Date(),
+          note: `Cash repaid to ${item.name}`,
+          memberId: item.memberId?.toString(),
+          sourceType: originalTransaction.sourceType as AccountType | undefined,
+          sourceBankId: originalTransaction.sourceBankId?.toString(),
+          sourceCardId: originalTransaction.sourceCardId?.toString(),
+        });
+      } else {
+        // Owed to me: they paid me back — create an INCOME transaction
+        repaymentTx = await createTransaction({
+          userId: session.user.id,
+          type: TransactionType.INCOME,
+          amount: item.amount,
+          dateTime: new Date(),
+          note: `Split repayment from ${item.name}`,
+          memberId: item.memberId?.toString(),
+          // Credit to the same account that was debited for the original expense
+          sourceType: originalTransaction.sourceType as AccountType | undefined,
+          sourceBankId: originalTransaction.sourceBankId?.toString(),
+          sourceCardId: originalTransaction.sourceCardId?.toString(),
+        });
+      }
 
       item.status = SplitStatus.SETTLED;
       item.settledAt = new Date();
