@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { CheckCircle2, Clock, ExternalLink, Receipt, Loader2 } from 'lucide-react';
+import { CheckCircle2, Clock, ExternalLink, Receipt, Loader2, ArrowDownToLine } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,7 @@ interface SplitExpense {
   totalAmount: number;
   yourShare: number;
   splits: SplitItem[];
+  direction?: 'owed_to_me' | 'i_owe';
   createdAt: string;
   transactionId: {
     _id: string;
@@ -59,10 +60,11 @@ async function settleSplitItems(splitId: string, splitItemIds: string[]) {
   return res.json();
 }
 
-function SplitCard({ split, onSettle, settlingIds }: {
+function SplitCard({ split, onSettle, settlingIds, settleLabel = 'Settle' }: {
   split: SplitExpense;
   onSettle: (splitId: string, itemId: string) => void;
   settlingIds: Set<string>;
+  settleLabel?: string;
 }) {
   const pendingItems = split.splits.filter((s) => s.status === 'PENDING');
   const txDate = split.transactionId?.dateTime
@@ -104,7 +106,7 @@ function SplitCard({ split, onSettle, settlingIds }: {
                 {settlingIds.has(item._id) ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
                 ) : (
-                  'Settle'
+                  settleLabel
                 )}
               </Button>
             </div>
@@ -201,7 +203,15 @@ export default function SplitsPage() {
     settleMutation.mutate({ splitId, itemId });
   };
 
+  // "Owed to me" = others owe me (I paid, they need to return)
   const pendingSplits = allSplits?.filter((s) =>
+    (s.direction ?? 'owed_to_me') === 'owed_to_me' &&
+    s.splits.some((item) => item.status === 'PENDING')
+  ) ?? [];
+
+  // "I owe" = I received cash or someone paid on my behalf, I need to return
+  const iOweSplits = allSplits?.filter((s) =>
+    s.direction === 'i_owe' &&
     s.splits.some((item) => item.status === 'PENDING')
   ) ?? [];
 
@@ -214,6 +224,11 @@ export default function SplitsPage() {
     0
   );
 
+  const totalIOwe = iOweSplits.reduce(
+    (sum, s) => sum + s.splits.filter((i) => i.status === 'PENDING').reduce((a, b) => a + b.amount, 0),
+    0
+  );
+
   const totalRecovered = settledSplits.reduce(
     (sum, s) => sum + s.splits.filter((i) => i.status === 'SETTLED').reduce((a, b) => a + b.amount, 0),
     0
@@ -222,7 +237,7 @@ export default function SplitsPage() {
   return (
     <div className="space-y-6">
       {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -230,13 +245,26 @@ export default function SplitsPage() {
                 <Clock className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Pending</p>
+                <p className="text-xs text-muted-foreground">Owed to me</p>
                 <p className="text-xl font-bold">{formatCurrency(totalPending)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
+                <ArrowDownToLine className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">I owe</p>
+                <p className="text-xl font-bold">{formatCurrency(totalIOwe)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="col-span-2 sm:col-span-1">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/20">
@@ -253,12 +281,20 @@ export default function SplitsPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="pending">
-        <TabsList className="w-full">
+        <TabsList className="w-full overflow-x-auto">
           <TabsTrigger value="pending" className="flex-1">
-            Pending
+            Owed to me
             {pendingSplits.length > 0 && (
               <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                 {pendingSplits.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="i-owe" className="flex-1">
+            I Owe
+            {iOweSplits.length > 0 && (
+              <Badge variant="destructive" className="ml-2 h-5 px-1.5 text-xs">
+                {iOweSplits.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -285,6 +321,32 @@ export default function SplitsPage() {
                 split={split}
                 onSettle={handleSettle}
                 settlingIds={settlingIds}
+              />
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="i-owe" className="space-y-4 mt-4">
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-36 w-full" />
+            ))
+          ) : iOweSplits.length === 0 ? (
+            <div className="text-center py-12">
+              <ArrowDownToLine className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-muted-foreground">Nothing to return</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Cash received with &quot;to be returned&quot; will appear here
+              </p>
+            </div>
+          ) : (
+            iOweSplits.map((split) => (
+              <SplitCard
+                key={split._id}
+                split={split}
+                onSettle={handleSettle}
+                settlingIds={settlingIds}
+                settleLabel="Mark Paid"
               />
             ))
           )}

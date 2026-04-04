@@ -31,6 +31,7 @@ export async function GET(
       userId: session.user.id,
     })
       .populate('memberId', 'name type')
+      .populate('categoryId', 'name icon color')
       .populate('sourceBankId', 'bankName accountHolderName')
       .populate('sourceCardId', 'cardName last4Digits')
       .populate('destinationBankId', 'bankName accountHolderName')
@@ -77,10 +78,11 @@ export async function PUT(
 
     const body = await request.json();
     
-    // Convert startDate string to Date before validation
+    // Convert date strings to Date before validation
     const dataToValidate = {
       ...body,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
+      endDate: body.endDate ? new Date(body.endDate) : undefined,
     };
     
     const validatedData = updateScheduledPaymentSchema.parse(dataToValidate);
@@ -127,6 +129,7 @@ export async function PUT(
       { new: true }
     )
       .populate('memberId', 'name type')
+      .populate('categoryId', 'name icon color')
       .populate('sourceBankId', 'bankName accountHolderName')
       .populate('sourceCardId', 'cardName last4Digits')
       .populate('destinationBankId', 'bankName accountHolderName')
@@ -173,13 +176,17 @@ export async function PATCH(
 
     await connectToDatabase();
 
-    // Only allow toggling isActive via PATCH
+    // Only allow toggling isActive via PATCH; also reset failureCount when reactivating
+    const patch: Record<string, unknown> = { isActive: body.isActive };
+    if (body.isActive) patch.failureCount = 0;
+
     const payment = await ScheduledPayment.findOneAndUpdate(
       { _id: id, userId: session.user.id },
-      { $set: { isActive: body.isActive } },
+      { $set: patch },
       { new: true }
     )
       .populate('memberId', 'name type')
+      .populate('categoryId', 'name icon color')
       .populate('sourceBankId', 'bankName accountHolderName')
       .populate('sourceCardId', 'cardName last4Digits')
       .populate('destinationBankId', 'bankName accountHolderName')

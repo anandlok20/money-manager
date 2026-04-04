@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -154,12 +154,11 @@ export default function DashboardPage() {
   const currency = (session?.user as unknown as { currency?: string })?.currency || 'INR';
   const { canAccessFeature } = useSubscription();
   const isMemberUser = session?.user?.isMemberUser;
-  const [viewMode, setViewMode] = useState<'family' | 'personal'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('dashboard-view-mode') as 'family' | 'personal') || 'family';
-    }
-    return 'family';
-  });
+  const [viewMode, setViewMode] = useState<'family' | 'personal'>('family');
+  useEffect(() => {
+    const saved = localStorage.getItem('dashboard-view-mode') as 'family' | 'personal' | null;
+    if (saved === 'personal' || saved === 'family') setViewMode(saved);
+  }, []);
   const isPersonalView = isMemberUser && viewMode === 'personal';
 
   const { data: dashboardResponse, isLoading, error } = useQuery({

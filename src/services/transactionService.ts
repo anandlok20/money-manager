@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Transaction, { ITransaction } from '@/lib/mongodb/models/Transaction';
 import Goal from '@/lib/mongodb/models/Goal';
+import CashAccount from '@/lib/mongodb/models/CashAccount';
 import { dashboardCache, userCacheKey } from '@/lib/cache/lru-cache';
 import { TransactionType, AccountType } from '@/types';
 import {
@@ -28,6 +29,7 @@ interface CreateTransactionParams {
   destinationInvestmentId?: string;
   paymentMode?: 'upi' | 'neft' | 'rtgs' | 'imps' | 'cash' | 'cheque' | 'card' | 'netbanking' | 'other';
   referenceNumber?: string;
+  cashPersonName?: string;
   isPrivate?: boolean;
   privateMemberId?: string;
 }
@@ -61,6 +63,7 @@ export async function createTransaction(
           destinationInvestmentId: params.destinationInvestmentId,
           paymentMode: params.paymentMode,
           referenceNumber: params.referenceNumber,
+          cashPersonName: params.cashPersonName,
           isPrivate: params.isPrivate ?? false,
           privateMemberId: params.privateMemberId || undefined,
         },
@@ -223,7 +226,14 @@ async function applyTransactionToBalances(
   switch (type) {
     case TransactionType.EXPENSE:
       // Deduct from source account
-      if (sourceType && sourceType !== AccountType.CASH) {
+      if (sourceType === AccountType.CASH) {
+        // Deduct from cash wallet balance
+        await CashAccount.findOneAndUpdate(
+          { userId: params.userId },
+          { $inc: { currentBalance: -amount } },
+          { upsert: true, session }
+        );
+      } else if (sourceType) {
         const sourceAccountId = getAccountId(
           sourceType,
           params.sourceBankId,
@@ -245,7 +255,14 @@ async function applyTransactionToBalances(
 
     case TransactionType.INCOME:
       // Add to source account
-      if (sourceType && sourceType !== AccountType.CASH) {
+      if (sourceType === AccountType.CASH) {
+        // Add to cash wallet balance
+        await CashAccount.findOneAndUpdate(
+          { userId: params.userId },
+          { $inc: { currentBalance: amount } },
+          { upsert: true, session }
+        );
+      } else if (sourceType) {
         const sourceAccountId = getAccountId(
           sourceType,
           params.sourceBankId,
@@ -344,9 +361,14 @@ async function reverseTransactionFromBalances(
 
   switch (type) {
     case TransactionType.EXPENSE:
-      // Reverse expense: for card, debt was increased, so decrease it back
-      // For bank, balance was decreased, so increase it back
-      if (sourceType && sourceType !== AccountType.CASH) {
+      // Reverse expense: add back to source
+      if (sourceType === AccountType.CASH) {
+        await CashAccount.findOneAndUpdate(
+          { userId: transaction.userId.toString() },
+          { $inc: { currentBalance: amount } },
+          { upsert: true, session }
+        );
+      } else if (sourceType) {
         const sourceAccountId = getAccountId(
           sourceType,
           transaction.sourceBankId?.toString(),
@@ -365,8 +387,14 @@ async function reverseTransactionFromBalances(
       break;
 
     case TransactionType.INCOME:
-      // Deduct from source account
-      if (sourceType && sourceType !== AccountType.CASH) {
+      // Deduct from source account (reverse income)
+      if (sourceType === AccountType.CASH) {
+        await CashAccount.findOneAndUpdate(
+          { userId: transaction.userId.toString() },
+          { $inc: { currentBalance: -amount } },
+          { upsert: true, session }
+        );
+      } else if (sourceType) {
         const sourceAccountId = getAccountId(
           sourceType,
           transaction.sourceBankId?.toString(),

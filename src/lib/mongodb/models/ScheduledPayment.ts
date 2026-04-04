@@ -1,21 +1,27 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { Frequency, AccountType } from '@/types';
+import { Frequency, AccountType, TransactionType } from '@/types';
 
 export interface IScheduledPayment extends Document {
   _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
+  name: string;
   isActive: boolean;
+  transactionType: TransactionType;
+  categoryId?: mongoose.Types.ObjectId;
   frequency: Frequency;
   startDate: Date;
+  endDate?: Date;
   nextRunDate: Date;
   lastRunDate?: Date;
+  failureCount: number;
+  lastError?: string;
   amount: number;
   note?: string;
   memberId?: mongoose.Types.ObjectId;
   sourceType: AccountType;
   sourceBankId?: mongoose.Types.ObjectId;
   sourceCardId?: mongoose.Types.ObjectId;
-  destinationType: AccountType;
+  destinationType?: AccountType;
   destinationBankId?: mongoose.Types.ObjectId;
   destinationCardId?: mongoose.Types.ObjectId;
   destinationInvestmentId?: mongoose.Types.ObjectId;
@@ -31,9 +37,33 @@ const ScheduledPaymentSchema = new Schema<IScheduledPayment>(
       required: true,
       index: true,
     },
+    name: {
+      type: String,
+      required: [true, 'Name is required'],
+      trim: true,
+    },
     isActive: {
       type: Boolean,
       default: true,
+    },
+    transactionType: {
+      type: String,
+      enum: Object.values(TransactionType),
+      required: [true, 'Transaction type is required'],
+    },
+    categoryId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Category',
+    },
+    endDate: {
+      type: Date,
+    },
+    failureCount: {
+      type: Number,
+      default: 0,
+    },
+    lastError: {
+      type: String,
     },
     frequency: {
       type: String,
@@ -81,7 +111,6 @@ const ScheduledPaymentSchema = new Schema<IScheduledPayment>(
     destinationType: {
       type: String,
       enum: Object.values(AccountType),
-      required: [true, 'Destination type is required'],
     },
     destinationBankId: {
       type: Schema.Types.ObjectId,

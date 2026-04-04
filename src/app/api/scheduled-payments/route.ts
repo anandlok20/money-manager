@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
 
     const payments = await ScheduledPayment.find(query)
       .populate('memberId', 'name type')
+      .populate('categoryId', 'name icon color')
       .populate('sourceBankId', 'bankName accountHolderName')
       .populate('sourceCardId', 'cardName last4Digits')
       .populate('destinationBankId', 'bankName accountHolderName')

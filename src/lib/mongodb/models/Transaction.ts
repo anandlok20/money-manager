@@ -33,6 +33,8 @@ export interface ITransaction extends Document {
   // Receipt/Attachment
   receiptUrl?: string;
   receiptFileName?: string;
+  // Cash person (for cash wallet entries — free-text name of person involved)
+  cashPersonName?: string;
   // Tags
   tags?: string[];
   // Privacy
@@ -142,6 +144,11 @@ const TransactionSchema = new Schema<ITransaction>(
       trim: true,
     },
     receiptFileName: {
+      type: String,
+      trim: true,
+    },
+    // Cash wallet: free-text person name for cash entries
+    cashPersonName: {
       type: String,
       trim: true,
     },

@@ -67,9 +67,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Transaction not found' }, { status: 404 });
     }
 
-    if (transaction.type !== TransactionType.EXPENSE) {
+    // Allow EXPENSE and INCOME (cash wallet entries can be INCOME with i_owe direction)
+    if (transaction.type !== TransactionType.EXPENSE && transaction.type !== TransactionType.INCOME) {
       return NextResponse.json(
-        { success: false, error: 'Only expense transactions can be split' },
+        { success: false, error: 'Only expense or income transactions can be split' },
         { status: 400 }
       );
     }
@@ -93,11 +94,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // For income transactions (e.g. cash received), direction is i_owe; otherwise owed_to_me
+    const direction = transaction.type === TransactionType.INCOME ? 'i_owe' : 'owed_to_me';
+
     const splitExpense = await SplitExpense.create({
       userId: session.user.id,
       transactionId: validatedData.transactionId,
       totalAmount: transaction.amount,
       yourShare: Math.max(0, yourShare),
+      direction,
       splits: validatedData.splits.map((s) => ({
         name: s.name,
         memberId: s.memberId || undefined,
