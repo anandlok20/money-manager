@@ -1,5 +1,15 @@
 # Backlog — 2026-03-27
 
+## ✅ Completed — Habit Tracker (2026-04-27)
+
+Full habit tracker added under Planning sidebar:
+- Models: Habit, HabitLog
+- API: /api/habits, /api/habits/[id], /api/habits/[id]/logs
+- Pages: /habits (Today/All/Week tabs), /habits/[id] (calendar heatmap + stats)
+- Navigation: Habits added to Planning section with Repeat2 icon
+
+---
+
 ## 🔴 Critical
 _(none currently)_
 
