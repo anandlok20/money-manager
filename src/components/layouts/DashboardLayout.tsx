@@ -41,6 +41,7 @@ import {
   ChevronLeft,
   Crown,
   Shield,
+  Repeat2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -102,6 +103,7 @@ const navigation: NavItem[] = [
     children: [
       { name: 'Goals', href: '/goals', icon: Target },
       { name: 'Budgets', href: '/budgets', icon: PiggyBank },
+      { name: 'Habits', href: '/habits', icon: Repeat2 },
       { name: 'Trips', href: '/trips', icon: Plane, gatedFeature: 'trips' },
     ],
   },
@@ -166,6 +168,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       '/splits': 'Split Expenses',
       '/members': 'Members',
       '/scheduled-payments': 'Scheduled Payments',
+      '/habits': 'Habits',
       '/settings': 'Settings',
     };
     // Check for exact match first

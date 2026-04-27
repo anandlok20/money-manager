@@ -1,5 +1,13 @@
 # Test Results
 
+## 2026-04-27 — Habit Tracker Feature
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| `npx tsc --noEmit` | ✅ clean | 0 errors after fixing `ringColor` invalid CSSProperty and removing Zod `.default()` schema defaults (caused Resolver type mismatch in useForm) |
+
+---
+
 ## 2026-04-04 — Scheduled Payments Audit
 
 | Check | Status | Notes |

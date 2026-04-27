@@ -1,5 +1,52 @@
 # Recent Changes Log
 
+## 2026-04-27 — Fix Mongoose bundled in browser (Habit Tracker)
+
+### Bug Fixes
+- **Root cause**: `habits/page.tsx` and `habits/[id]/page.tsx` were importing `HABIT_CATEGORIES` and `CATEGORY_META` directly from `src/lib/mongodb/models/Habit.ts`. That file imports `mongoose`, which requires Node-only modules (`dns`, `fs`, `net`, `tls`, `async_hooks`) — causing browser bundle errors.
+- **Fix**: Extracted `HABIT_CATEGORIES`, `CATEGORY_META`, and `HabitCategory` type into `src/lib/constants/habits.ts` (zero dependencies). Both model and client pages now import from there.
+
+### Files Added
+- `src/lib/constants/habits.ts` — pure constants file (no mongoose), safe to import in client components
+
+### Files Modified
+- `src/lib/mongodb/models/Habit.ts` — removed inline constant definitions; imports from `@/lib/constants/habits` and re-exports them
+- `src/lib/validations/habit.ts` — import `HABIT_CATEGORIES` from `@/lib/constants/habits` instead of model
+- `src/app/(dashboard)/habits/page.tsx` — import constants from `@/lib/constants/habits`
+- `src/app/(dashboard)/habits/[id]/page.tsx` — import constants from `@/lib/constants/habits`
+
+### tsc: ✅ clean
+
+---
+
+## 2026-04-27 — Habit Tracker Feature
+
+### New Features
+- **Full Habit Tracker**: Add, edit, pause, delete habits. Log daily completions. Streak tracking with longest-streak calculation. Calendar heatmap + 15-week activity grid.
+- **Categories**: 9 habit categories (Health, Fitness, Learning, Mindfulness, Productivity, Finance, Social, Creative, Other), each with a default icon and colour.
+- **Today View**: Progress bar showing X/Y habits completed today. Habits split into Pending / Completed sections with one-tap check-off.
+- **All Habits tab**: Category filter pills, manage all habits.
+- **This Week tab**: Week overview strip + per-habit streak summary linking to detail page.
+- **Habit detail page** (`/habits/[id]`): Today check card, streak/total/rate stat cards, 15-week rolling activity heatmap, monthly calendar (navigate prev/next month), completion history list, habit metadata panel.
+
+### Files Added
+- `src/lib/mongodb/models/Habit.ts` — Habit model with frequency, targetDays, streak, longestStreak, totalCompletions; compound indexes
+- `src/lib/mongodb/models/HabitLog.ts` — HabitLog model, unique index on (habitId, date)
+- `src/lib/validations/habit.ts` — createHabitSchema, updateHabitSchema, logHabitSchema (Zod)
+- `src/app/api/habits/route.ts` — GET (list with today's completedToday flag), POST (create)
+- `src/app/api/habits/[id]/route.ts` — GET, PUT, DELETE (cascade-deletes logs)
+- `src/app/api/habits/[id]/logs/route.ts` — GET (monthly logs for calendar), POST (toggle completion + recalculate streak)
+- `src/app/(dashboard)/habits/page.tsx` — Main habits page (Today / All Habits / This Week tabs, add/edit dialog, delete confirm)
+- `src/app/(dashboard)/habits/[id]/page.tsx` — Habit detail: heatmap, calendar, stats, toggle, delete
+
+### Files Modified
+- `src/components/layouts/DashboardLayout.tsx` — Added `Repeat2` icon; added `{ name: 'Habits', href: '/habits', icon: Repeat2 }` under Planning; added `/habits` to `pageTitle` map
+- `.env.local` — Added `ALLOWED_DEV_ORIGINS=192.168.1.14` so mobile phone can access the dev server
+
+### tsc: ✅ clean
+
+---
+
 ## 2026-04-04 — Scheduled Payments Audit & Improvement
 
 ### Bug Fixes
