@@ -3,10 +3,9 @@
 import { use, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, getDaysInMonth } from 'date-fns';
+import { format, getDay, getDaysInMonth } from 'date-fns';
 import {
   ArrowLeft,
-  Flame,
   Trophy,
   CheckCircle2,
   Calendar,
@@ -30,7 +29,6 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { CATEGORY_META } from '@/lib/constants/habits';
 import type { HabitCategory } from '@/lib/constants/habits';
 
 // ─── types ───────────────────────────────────────────────────────────────────
@@ -94,7 +92,6 @@ function CalendarHeatmap({
   onDayClick: (date: string, completed: boolean) => void;
 }) {
   const firstDay   = new Date(year, month - 1, 1);
-  const lastDay    = new Date(year, month, 0);
   const daysInMonth = getDaysInMonth(firstDay);
   const startOffset = getDay(firstDay); // 0=Sun
 
@@ -239,22 +236,7 @@ export default function HabitDetailPage({ params }: { params: Promise<{ id: stri
     enabled: !!habit,
   });
 
-  // Fetch full history for heatmap (last 6 months)
-  const { data: heatmapData } = useQuery<{ logs: HabitLog[] }>({
-    queryKey: ['habit-heatmap', id],
-    queryFn:  async () => {
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      const yr  = sixMonthsAgo.getFullYear();
-      const mo  = sixMonthsAgo.getMonth() + 1;
-      // Fetch a large range — use 12 months
-      const r = await fetch(`/api/habits/${id}/logs?year=${now.getFullYear()}&month=${now.getMonth() + 1}`);
-      return { logs: [] }; // placeholder; heatmap built from all months below
-    },
-    enabled: false, // we'll build it differently
-  });
-
-  // Fetch all logs for heatmap (12 months rolling)
+  // Fetch all logs for heatmap (4 months rolling)
   const allLogsQueries = Array.from({ length: 4 }, (_, i) => {
     const d = new Date(now);
     d.setMonth(d.getMonth() - i);

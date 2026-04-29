@@ -263,7 +263,7 @@ export async function GET(request: NextRequest) {
     // Convert to array format for charts
     const monthlyTrendData = Array.from(monthlyTrendMap.entries()).map(([key]) => {
       const data = monthlyTrendMap.get(key)!;
-      const [year, month] = key.split('-').map(Number);
+      const [, month] = key.split('-').map(Number);
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       return {
         month: monthNames[month - 1],

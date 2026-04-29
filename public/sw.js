@@ -1,12 +1,12 @@
 const CACHE_VERSION = '6';
 const CACHE_NAME = `family-expense-manager-v${CACHE_VERSION}`;
-const MAX_CACHE_ITEMS = 100; // Limit cache size to prevent storage bloat
+const _MAX_CACHE_ITEMS = 100; // Reserved for future cache-trim use
 const STATIC_ASSETS = [
   '/manifest.json',
 ];
 
-// Helper to limit cache size
-async function trimCache(cacheName, maxItems) {
+// Helper to limit cache size — reserved for future use
+async function _trimCache(cacheName, maxItems) {
   const cache = await caches.open(cacheName);
   const keys = await cache.keys();
   if (keys.length > maxItems) {
@@ -122,5 +122,5 @@ self.addEventListener('sync', (event) => {
 async function syncTransactions() {
   // This would sync offline transactions when back online
   // Implementation depends on IndexedDB structure
-  console.log('Syncing transactions...');
+  console.info('Syncing transactions...');
 }

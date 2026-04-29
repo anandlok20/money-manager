@@ -1079,7 +1079,6 @@ function parseYesBankStatement(text: string): ParsedTransaction[] {
         
         if (amounts.length >= 2) {
           const val1 = parseFloat(amounts[0]?.replace(/,/g, '') || '0');
-          const val2 = parseFloat(amounts[1]?.replace(/,/g, '') || '0');
           // Yes Bank sometimes shows amount and balance only
           amount = val1;
           isCredit = remaining.toLowerCase().includes(' cr') || 

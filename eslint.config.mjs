@@ -25,6 +25,8 @@ const eslintConfig = defineConfig([
       "no-console": ["warn", { allow: ["warn", "error", "info"] }],
       // Disallow unused variables (catch typos)
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      // React Compiler can't memoize react-hook-form's watch() — not actionable
+      "react-hooks/incompatible-library": "off",
     },
   },
 ]);

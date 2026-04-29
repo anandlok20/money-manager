@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -50,12 +49,6 @@ const SavingsRateGauge = dynamic(() => import('@/components/dashboard/Charts').t
   loading: () => <Skeleton className="h-[200px] w-full" />,
   ssr: false,
 });
-
-const BudgetProgressChart = dynamic(() => import('@/components/dashboard/Charts').then(mod => ({ default: mod.BudgetProgressChart })), {
-  loading: () => <Skeleton className="h-[200px] w-full" />,
-  ssr: false,
-});
-
 
 interface BudgetProgress {
   _id: string;
