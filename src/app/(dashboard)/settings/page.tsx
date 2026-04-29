@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
@@ -28,9 +28,14 @@ import {
   Minus,
   Loader2,
   Lock,
+  MessageCircle,
+  Send,
+  CheckCircle2,
+  ExternalLink,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -48,6 +53,182 @@ import { useUIStore, colorThemes, appModes } from '@/stores/uiStore';
 import { CurrencyConverter } from '@/components/shared/CurrencyConverter';
 import { SetSensitivePasswordDialog, useSensitiveDataAccess } from '@/components/shared/SensitiveDataPassword';
 import { Badge } from '@/components/ui/badge';
+
+// ─── Common IANA timezones ───────────────────────────────────────────────────
+const TIMEZONES = [
+  { value: 'Asia/Kolkata',    label: 'India (IST, UTC+5:30)' },
+  { value: 'Asia/Dubai',      label: 'Dubai (GST, UTC+4)' },
+  { value: 'Asia/Singapore',  label: 'Singapore (SGT, UTC+8)' },
+  { value: 'Asia/Tokyo',      label: 'Tokyo (JST, UTC+9)' },
+  { value: 'Europe/London',   label: 'London (GMT/BST)' },
+  { value: 'Europe/Paris',    label: 'Paris (CET, UTC+1)' },
+  { value: 'America/New_York',label: 'New York (ET)' },
+  { value: 'America/Chicago', label: 'Chicago (CT)' },
+  { value: 'America/Denver',  label: 'Denver (MT)' },
+  { value: 'America/Los_Angeles', label: 'Los Angeles (PT)' },
+  { value: 'Australia/Sydney', label: 'Sydney (AEST, UTC+10)' },
+];
+
+function WhatsAppNotificationsCard() {
+  const [phone,     setPhone]     = useState('');
+  const [timezone,  setTimezone]  = useState('Asia/Kolkata');
+  const [configured, setConfigured] = useState(false);
+  const [saving,    setSaving]    = useState(false);
+  const [testing,   setTesting]   = useState(false);
+  const [saved,     setSaved]     = useState(false);
+
+  const load = useCallback(async () => {
+    const r = await fetch('/api/settings/whatsapp');
+    if (!r.ok) return;
+    const d = await r.json();
+    setPhone(d.whatsappPhone ?? '');
+    setTimezone(d.timezone ?? 'Asia/Kolkata');
+    setConfigured(d.configured ?? false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const r = await fetch('/api/settings/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ whatsappPhone: phone, timezone }),
+      });
+      const d = await r.json();
+      if (!r.ok) { toast.error(d.error ?? 'Failed to save'); return; }
+      toast.success('WhatsApp settings saved!');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch { toast.error('Failed to save'); }
+    finally { setSaving(false); }
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    try {
+      const r = await fetch('/api/settings/whatsapp/test', { method: 'POST' });
+      const d = await r.json();
+      if (!r.ok) { toast.error(d.error ?? 'Test failed'); return; }
+      toast.success('Test message sent! Check your WhatsApp.');
+    } catch { toast.error('Failed to send test message'); }
+    finally { setTesting(false); }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+            <MessageCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">WhatsApp Reminders</CardTitle>
+            <CardDescription className="text-xs">
+              Get habit reminders sent to your WhatsApp
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {/* API status banner */}
+        {!configured && (
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <Bell className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="text-xs text-amber-800 dark:text-amber-300 space-y-1">
+              <p className="font-semibold">WhatsApp API not configured yet</p>
+              <p>Add <code className="bg-amber-100 dark:bg-amber-900/40 px-1 rounded">WHATSAPP_PHONE_NUMBER_ID</code> and <code className="bg-amber-100 dark:bg-amber-900/40 px-1 rounded">WHATSAPP_ACCESS_TOKEN</code> to your Vercel environment variables.</p>
+              <a
+                href="https://developers.facebook.com/apps"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 underline font-medium"
+              >
+                Open Meta Developer Console <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          </div>
+        )}
+
+        {configured && (
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+            <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+            <p className="text-xs text-green-800 dark:text-green-300 font-medium">
+              WhatsApp API is configured and ready
+            </p>
+          </div>
+        )}
+
+        {/* Phone number */}
+        <div className="space-y-1.5">
+          <Label htmlFor="wa-phone" className="text-sm font-medium">
+            Your WhatsApp Number
+          </Label>
+          <Input
+            id="wa-phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            placeholder="919876543210"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="font-mono"
+          />
+          <p className="text-xs text-muted-foreground">
+            Country code + number, no spaces or +. India example: <strong>919876543210</strong>
+          </p>
+        </div>
+
+        {/* Timezone */}
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">Your Timezone</Label>
+          <Select value={timezone} onValueChange={setTimezone}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIMEZONES.map((tz) => (
+                <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Habit reminder times are matched in your local timezone
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button onClick={handleSave} disabled={saving || !phone} className="flex-1 gap-2">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : saved ? <CheckCircle2 className="h-4 w-4" /> : null}
+            {saving ? 'Saving…' : saved ? 'Saved!' : 'Save Settings'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleTest}
+            disabled={testing || !phone || !configured}
+            className="flex-1 gap-2"
+          >
+            {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {testing ? 'Sending…' : 'Send Test Message'}
+          </Button>
+        </div>
+
+        {/* How reminders work */}
+        <div className="p-3 rounded-xl bg-muted/40 border border-border space-y-2 text-xs text-muted-foreground">
+          <p className="font-semibold text-foreground">How it works</p>
+          <ul className="space-y-1 list-disc list-inside">
+            <li>Set a <strong>Reminder Time</strong> on any habit (in the Add/Edit habit dialog)</li>
+            <li>At that time each day, you&apos;ll receive a WhatsApp message</li>
+            <li>One reminder per habit per day — no duplicate sends</li>
+            <li>Works only when the app is deployed to Vercel (cron jobs run there)</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -599,33 +780,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Notifications Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-              <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">Notifications</CardTitle>
-              <CardDescription className="text-xs">Configure notification preferences</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
-            <div className="space-y-0.5">
-              <Label className="font-medium">Push Notifications</Label>
-              <p className="text-xs text-muted-foreground">
-                Get notified about important updates
-              </p>
-            </div>
-            <Switch disabled />
-          </div>
-          <p className="text-xs text-muted-foreground px-1">
-            Notifications coming soon
-          </p>
-        </CardContent>
-      </Card>
+      <WhatsAppNotificationsCard />
 
       {/* Help Section */}
       <Card>

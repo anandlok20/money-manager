@@ -1,5 +1,16 @@
 # Backlog — 2026-03-27
 
+## ✅ Completed — WhatsApp Habit Reminders (2026-04-27)
+
+- Meta Cloud API v25.0 integration (`src/lib/utils/whatsapp.ts`)
+- Cron job every minute: `/api/cron/reminders` — timezone-aware, deduplicated
+- Settings UI: phone + timezone + test button (`settings/page.tsx`)
+- User model: `whatsappPhone`, `timezone` fields
+- Habit model: `lastReminderDate` deduplication field
+- vercel.json: `* * * * *` cron for reminders
+
+---
+
 ## ✅ Completed — Habit Tracker (2026-04-27)
 
 Full habit tracker added under Planning sidebar:

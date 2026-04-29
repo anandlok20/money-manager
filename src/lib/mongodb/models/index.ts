@@ -17,6 +17,10 @@ export { default as StoredDocument } from './StoredDocument';
 export { default as PasswordResetToken } from './PasswordResetToken';
 export { default as Subscription } from './Subscription';
 export { default as PricingConfig } from './PricingConfig';
+export { default as Habit } from './Habit';
+export { default as HabitLog } from './HabitLog';
+export { default as CashAccount } from './CashAccount';
+export { default as SplitExpense } from './SplitExpense';
 
 export type { IUser, UserRole } from './User';
 export type { IMember } from './Member';
@@ -38,3 +42,7 @@ export type { IStoredDocument } from './StoredDocument';
 export type { IPasswordResetToken } from './PasswordResetToken';
 export type { ISubscription, IAddon, PlanType, SubscriptionStatus } from './Subscription';
 export type { IPricingConfig, IAddonDefinition, IPlanLimits } from './PricingConfig';
+export type { IHabit, HabitCategory, HabitFrequency } from './Habit';
+export type { IHabitLog } from './HabitLog';
+export type { ICashAccount } from './CashAccount';
+export type { ISplitExpense } from './SplitExpense';

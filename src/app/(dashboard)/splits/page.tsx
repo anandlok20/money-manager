@@ -152,7 +152,7 @@ function SettledCard({ split }: { split: SplitExpense }) {
               <span className="text-sm font-medium text-emerald-600">{formatCurrency(item.amount)}</span>
               {item.settlementTransactionId && (
                 <Link href={`/transactions?highlight=${item.settlementTransactionId}`}>
-                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
+                  <Button size="sm" variant="ghost" className="h-9 w-9 p-0">
                     <ExternalLink className="h-3.5 w-3.5" />
                   </Button>
                 </Link>

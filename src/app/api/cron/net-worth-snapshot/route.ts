@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`[CRON] Net worth snapshots: ${snapshotCount} saved, ${errors.length} errors`);
+    console.info(`[CRON] Net worth snapshots: ${snapshotCount} saved, ${errors.length} errors`);
 
     return NextResponse.json({
       success: true,

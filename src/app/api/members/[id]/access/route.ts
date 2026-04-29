@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
@@ -7,7 +8,7 @@ import { MemberType } from '@/types';
 import { membersCache } from '@/lib/cache/lru-cache';
 
 function generateAccessCode(): string {
-  return require('crypto').randomBytes(4).toString('hex').toUpperCase();
+  return crypto.randomBytes(4).toString('hex').toUpperCase();
 }
 
 // POST — Enable access: generate code and enable

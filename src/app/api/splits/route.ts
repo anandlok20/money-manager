@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
         amount: s.amount,
         status: SplitStatus.PENDING,
       })),
-      isPrivate: validatedData.isPrivate,
+      isPrivate: validatedData.isPrivate ?? false,
       privateMemberId: validatedData.isPrivate ? session.user.memberId || undefined : undefined,
     });
 

@@ -503,13 +503,13 @@ export default function HabitDetailPage({ params }: { params: Promise<{ id: stri
               Calendar
             </CardTitle>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={prevMonth}>
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={prevMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-sm font-semibold min-w-[90px] text-center">
                 {MONTH_NAMES[calMonth - 1]} {calYear}
               </span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={nextMonth} disabled={!canGoNext}>
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={nextMonth} disabled={!canGoNext}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

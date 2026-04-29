@@ -4,7 +4,6 @@ import { z } from 'zod';
 import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
-import CashAccount from '@/lib/mongodb/models/CashAccount';
 import Transaction from '@/lib/mongodb/models/Transaction';
 import Category from '@/lib/mongodb/models/Category';
 import SplitExpense, { SplitStatus } from '@/lib/mongodb/models/SplitExpense';

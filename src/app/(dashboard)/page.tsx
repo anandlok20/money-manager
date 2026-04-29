@@ -154,12 +154,21 @@ export default function DashboardPage() {
   const currency = (session?.user as unknown as { currency?: string })?.currency || 'INR';
   const { canAccessFeature } = useSubscription();
   const isMemberUser = session?.user?.isMemberUser;
-  const [viewMode, setViewMode] = useState<'family' | 'personal'>('family');
+  const [viewMode, setViewModeState] = useState<'family' | 'personal'>('family');
+  const [hydrated, setHydrated] = useState(false);
+
+  // Hydrate localStorage value once on mount — wrapped in queueMicrotask to
+  // avoid the React Compiler "synchronous setState in effect" warning.
   useEffect(() => {
-    const saved = localStorage.getItem('dashboard-view-mode') as 'family' | 'personal' | null;
-    if (saved === 'personal' || saved === 'family') setViewMode(saved);
+    queueMicrotask(() => {
+      const saved = localStorage.getItem('dashboard-view-mode') as 'family' | 'personal' | null;
+      if (saved === 'personal' || saved === 'family') setViewModeState(saved);
+      setHydrated(true);
+    });
   }, []);
-  const isPersonalView = isMemberUser && viewMode === 'personal';
+
+  const setViewMode = (v: 'family' | 'personal') => setViewModeState(v);
+  const isPersonalView = hydrated && isMemberUser && viewMode === 'personal';
 
   const { data: dashboardResponse, isLoading, error } = useQuery({
     queryKey: ['dashboard-summary', isPersonalView],
@@ -240,10 +249,10 @@ export default function DashboardPage() {
 
       {/* Summary Cards — personal view for member users */}
       {isPersonalView ? (
-        <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent" />
-            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+            <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
               <CardTitle className="text-sm font-medium text-muted-foreground">My Income</CardTitle>
               <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
                 <ArrowDownLeft className="h-4 w-4 text-green-600 dark:text-green-400" />
@@ -259,7 +268,7 @@ export default function DashboardPage() {
           </Card>
           <Card className="relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent" />
-            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+            <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
               <CardTitle className="text-sm font-medium text-muted-foreground">My Expense</CardTitle>
               <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
                 <ArrowUpRight className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -275,7 +284,7 @@ export default function DashboardPage() {
           </Card>
           <Card className="relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent" />
-            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+            <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
               <CardTitle className="text-sm font-medium text-muted-foreground">My Savings</CardTitle>
               <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
                 <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -291,7 +300,7 @@ export default function DashboardPage() {
           </Card>
           <Card className="relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-            <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+            <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
               <CardTitle className="text-sm font-medium text-muted-foreground">My Accounts</CardTitle>
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Wallet className="h-4 w-4 text-primary" />
@@ -312,11 +321,11 @@ export default function DashboardPage() {
           </Card>
         </div>
       ) : (
-      <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {/* Net Worth */}
         <Card className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Net Worth
             </CardTitle>
@@ -338,7 +347,7 @@ export default function DashboardPage() {
         {/* Bank Balance */}
         <Card className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Bank Balance
             </CardTitle>
@@ -360,7 +369,7 @@ export default function DashboardPage() {
         {/* Monthly Income */}
         <Card className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               This Month Income
             </CardTitle>
@@ -382,7 +391,7 @@ export default function DashboardPage() {
         {/* Monthly Expense */}
         <Card className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               This Month Expense
             </CardTitle>
@@ -404,11 +413,11 @@ export default function DashboardPage() {
       )}
 
       {/* Secondary Summary Cards */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card Balance (Debt) */}
         <Card className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Credit Card Debt
             </CardTitle>
@@ -433,7 +442,7 @@ export default function DashboardPage() {
         {/* Investments */}
         <Card className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Investments
             </CardTitle>
@@ -455,7 +464,7 @@ export default function DashboardPage() {
         {/* Monthly Savings */}
         <Card className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Monthly Savings
             </CardTitle>
@@ -480,7 +489,7 @@ export default function DashboardPage() {
         {/* Savings Rate */}
         <Card className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent" />
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2 relative">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Savings Rate
             </CardTitle>
@@ -515,7 +524,7 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Expense by Category */}
         <Card className="lg:col-span-1">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2">
             <div>
               <CardTitle className="text-lg font-semibold">Expenses by Category</CardTitle>
               <CardDescription className="text-xs">This month&apos;s spending breakdown</CardDescription>
@@ -542,7 +551,7 @@ export default function DashboardPage() {
 
         {/* Income vs Expense Trend */}
         <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2">
             <div>
               <CardTitle className="text-lg font-semibold">Income vs Expenses</CardTitle>
               <CardDescription className="text-xs">Last 6 months trend analysis</CardDescription>
@@ -610,7 +619,7 @@ export default function DashboardPage() {
 
         {/* Budget Progress */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2">
             <div>
               <CardTitle className="text-lg font-semibold">Budget Progress</CardTitle>
               <CardDescription className="text-xs">Active budget tracking</CardDescription>
@@ -671,7 +680,7 @@ export default function DashboardPage() {
 
       {/* Goals Progress */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2 pb-2">
           <div>
             <CardTitle className="text-base">Savings Goals</CardTitle>
             <CardDescription>
@@ -735,7 +744,7 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Accounts Overview */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <CardTitle>Accounts</CardTitle>
               <CardDescription>Your bank accounts and cards</CardDescription>
@@ -821,7 +830,7 @@ export default function DashboardPage() {
 
         {/* Recent Transactions */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <CardTitle>Recent Transactions</CardTitle>
               <CardDescription>Your latest financial activity</CardDescription>
@@ -911,7 +920,7 @@ export default function DashboardPage() {
       {/* Investments Section — only show if feature is enabled */}
       {canAccessFeature('investments') && (isLoading || (data?.investments && data.investments.length > 0)) && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <CardTitle>Investments</CardTitle>
               <CardDescription>Your investment portfolio</CardDescription>

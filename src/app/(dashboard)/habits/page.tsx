@@ -479,7 +479,7 @@ function HabitCard({
               </p>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 -mt-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 -mt-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -647,7 +647,7 @@ export default function HabitsPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Today's Progress</p>
+                <p className="text-sm font-medium text-muted-foreground">Today&apos;s Progress</p>
                 <p className="text-2xl font-bold">
                   {completedToday} <span className="text-muted-foreground text-lg font-normal">/ {dueToday.length}</span>
                 </p>

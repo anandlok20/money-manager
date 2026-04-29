@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import Habit from '@/lib/mongodb/models/Habit';
 import HabitLog from '@/lib/mongodb/models/HabitLog';
 import { createHabitSchema } from '@/lib/validations/habit';
+import { sanitizeText } from '@/lib/utils/sanitize';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -43,6 +44,8 @@ export async function POST(req: NextRequest) {
   const data = parsed.data;
   const habit = await Habit.create({
     ...data,
+    name: sanitizeText(data.name),
+    description: data.description ? sanitizeText(data.description) : undefined,
     userId: session.user.id,
     startDate: new Date(data.startDate),
     endDate: data.endDate ? new Date(data.endDate) : undefined,

@@ -250,7 +250,7 @@ export default function CashWalletPage() {
           <CardContent className="pt-4 pb-4">
             {/* Month nav */}
             <div className="flex items-center justify-between mb-3">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToPrevMonth}>
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={goToPrevMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <p className="text-sm font-medium">
@@ -262,7 +262,7 @@ export default function CashWalletPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-9 w-9"
                 onClick={goToNextMonth}
                 disabled={isCurrentMonth}
               >

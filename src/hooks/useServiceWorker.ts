@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 
 export function useServiceWorker() {
   const [isReady, setIsReady] = useState(false);
-  const [isOffline, setIsOffline] = useState(false);
+  // Initialise from navigator if available — avoids the cascading-render warning
+  // from calling setIsOffline inside the effect body.
+  const [isOffline, setIsOffline] = useState(() =>
+    typeof navigator !== 'undefined' ? !navigator.onLine : false
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    // Check online status
-    setIsOffline(!navigator.onLine);
 
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
@@ -25,7 +26,7 @@ export function useServiceWorker() {
         .then((registrations) => Promise.all(registrations.map((r) => r.unregister())))
         .then(() => navigator.serviceWorker.register('/sw.js'))
         .then((registration) => {
-          console.log('Service Worker registered:', registration.scope);
+          console.info('Service Worker registered:', registration.scope);
           setIsReady(true);
 
           registration.addEventListener('updatefound', () => {
@@ -33,7 +34,7 @@ export function useServiceWorker() {
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('New content available, refresh to update');
+                  console.info('New content available, refresh to update');
                 }
               });
             }

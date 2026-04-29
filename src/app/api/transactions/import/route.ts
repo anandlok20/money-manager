@@ -136,7 +136,7 @@ function parsePDFTransactions(text: string, bankFormat: string): Array<{
     ? detectBankFromPDF(text) 
     : bankFormat;
   
-  console.log(`Using bank parser: ${detectedBank}`);
+  console.info(`Using bank parser: ${detectedBank}`);
   
   let transactions: Array<{
     date: string;

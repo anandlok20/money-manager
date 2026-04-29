@@ -81,15 +81,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        created: results.success.length,
-        failed: results.failed.length,
-        results,
+    const allFailed = results.failed.length > 0 && results.success.length === 0;
+    return NextResponse.json(
+      {
+        success: !allFailed,
+        data: {
+          created: results.success.length,
+          failed: results.failed.length,
+          results,
+        },
+        message: `Created ${results.success.length} transactions, ${results.failed.length} failed`,
       },
-      message: `Created ${results.success.length} transactions, ${results.failed.length} failed`,
-    });
+      { status: allFailed ? 400 : 200 }
+    );
   } catch (error) {
     return handleApiError(error, 'Failed to create transactions');
   }

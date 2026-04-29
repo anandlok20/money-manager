@@ -9,7 +9,7 @@ export const splitItemInputSchema = z.object({
 export const createSplitSchema = z.object({
   transactionId: z.string().min(1, 'Transaction is required'),
   splits: z.array(splitItemInputSchema).min(1, 'At least one participant is required'),
-  isPrivate: z.boolean().optional().default(false),
+  isPrivate: z.boolean().optional(),
 });
 
 export const updateSplitSchema = z.object({

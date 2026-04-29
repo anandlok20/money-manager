@@ -67,8 +67,8 @@ export default function JoinPage() {
   async function handleSetup(e: React.FormEvent) {
     e.preventDefault();
     if (!codeInfo) return;
-    if (setupPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (setupPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
       return;
     }
     if (setupPassword !== setupConfirm) {
@@ -222,7 +222,7 @@ export default function JoinPage() {
                 <Input
                   id="setup-password"
                   type={showSetupPass ? 'text' : 'password'}
-                  placeholder="At least 6 characters"
+                  placeholder="At least 8 characters"
                   value={setupPassword}
                   onChange={(e) => setSetupPassword(e.target.value)}
                   autoComplete="new-password"

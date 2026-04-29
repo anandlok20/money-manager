@@ -4,7 +4,10 @@ import { z } from 'zod';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Loan from '@/lib/mongodb/models/Loan';
+import Vehicle from '@/lib/mongodb/models/Vehicle';
 import { buildPrivacyFilter } from '@/lib/utils/privacy';
+
+void Vehicle; // Registers Vehicle model for .populate('linkedVehicleId')
 
 const createLoanSchema = z.object({
   lender: z.string().min(1, 'Lender is required').max(200),

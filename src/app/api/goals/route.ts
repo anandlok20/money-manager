@@ -7,6 +7,7 @@ import { goalSchema } from '@/lib/validations/goal';
 import { GoalStatus } from '@/lib/mongodb/models/Goal';
 import { canCreateResource } from '@/lib/utils/subscription';
 import { buildPrivacyFilter } from '@/lib/utils/privacy';
+import { sanitizeTextFields } from '@/lib/utils/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -111,8 +112,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const sanitizedData = sanitizeTextFields(validation.data as Record<string, unknown>);
     const goalData = {
-      ...validation.data,
+      ...sanitizedData,
       userId: session.user.id,
       currentAmount: validation.data.currentAmount || 0,
       deadline: validation.data.deadline ? new Date(validation.data.deadline) : undefined,
