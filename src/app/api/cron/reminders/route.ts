@@ -1,3 +1,24 @@
+/**
+ * Habit reminder cron — sends WhatsApp messages at each habit's reminderTime.
+ *
+ * IMPORTANT: This endpoint must be invoked at least once per minute for
+ * minute-precision reminders to work. Vercel Hobby plan only allows
+ * once-daily crons, so this is NOT scheduled in vercel.json.
+ *
+ * Set up an external scheduler (free tier) to call this URL every minute:
+ *
+ *   1. cron-job.org (recommended)
+ *      - URL:    https://YOUR_DEPLOYMENT.vercel.app/api/cron/reminders
+ *      - Method: POST
+ *      - Header: Authorization: Bearer <CRON_SECRET>
+ *      - Schedule: every 1 minute
+ *
+ *   2. UptimeRobot, EasyCron, GitHub Actions cron, Cloudflare Workers Cron,
+ *      Google Cloud Scheduler — all support 1-minute intervals on free tiers.
+ *
+ *   3. Upgrade to Vercel Pro and add this back to vercel.json:
+ *        { "path": "/api/cron/reminders", "schedule": "* * * * *" }
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { connectToDatabase } from '@/lib/mongodb/client';
@@ -10,7 +31,7 @@ import {
   todayInZone,
 } from '@/lib/utils/whatsapp';
 
-// Vercel also calls crons with GET
+// Vercel and most cron services call with GET
 export async function GET(req: NextRequest) {
   return POST(req);
 }

@@ -391,6 +391,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
                     rel="noopener noreferrer"
                     className="aspect-video bg-muted rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded dynamic origin */}
                     <img
                       src={image}
                       alt={`Document image ${index + 1}`}

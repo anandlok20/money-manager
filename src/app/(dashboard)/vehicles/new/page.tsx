@@ -1002,6 +1002,7 @@ export default function NewVehiclePage() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {images.map((image, index) => (
                           <div key={index} className="relative group">
+                            {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded dynamic origin */}
                             <img
                               src={image}
                               alt={`Vehicle ${index + 1}`}

@@ -338,6 +338,7 @@ export default function NewDocumentPage() {
                 <div className="grid grid-cols-3 gap-2 mt-2">
                   {images.map((img, index) => (
                     <div key={index} className="relative group">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded dynamic origin */}
                       <img
                         src={img}
                         alt={`Document ${index + 1}`}

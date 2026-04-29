@@ -1,5 +1,15 @@
 # Test Results
 
+## 2026-04-29 — Final Lint + Vercel Cron Cleanup
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| `npx tsc --noEmit` | ✅ clean | 0 errors |
+| `npm run lint`     | ✅ clean | 0 errors, 0 warnings (was 394 errors / 124 warnings at audit start) |
+| `vercel.json` cron | ✅ Hobby-compatible | Reminders cron moved to external scheduler (see route file docblock) |
+
+---
+
 ## 2026-04-29 — Project-wide Audit Fixes
 
 | Check | Status | Notes |

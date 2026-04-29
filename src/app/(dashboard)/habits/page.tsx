@@ -537,7 +537,7 @@ function HabitCard({
 }
 
 // ─── Weekly Progress Strip ─────────────────────────────────────────────────────
-function WeekStrip({ habits }: { habits: Habit[] }) {
+function WeekStrip() {
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
 
@@ -830,7 +830,7 @@ export default function HabitsPage() {
               <CardTitle className="text-base">Week Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              <WeekStrip habits={habits} />
+              <WeekStrip />
             </CardContent>
           </Card>
 
