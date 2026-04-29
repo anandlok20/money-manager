@@ -248,6 +248,13 @@ const TripSchema = new Schema<ITrip>(
 TripSchema.index({ userId: 1, status: 1 });
 TripSchema.index({ userId: 1, startDate: -1 });
 
+// Reject trips where endDate is before startDate
+TripSchema.pre('validate', function () {
+  if (this.startDate && this.endDate && this.endDate < this.startDate) {
+    this.invalidate('endDate', 'End date must be on or after start date');
+  }
+});
+
 const Trip: Model<ITrip> =
   mongoose.models.Trip || mongoose.model<ITrip>('Trip', TripSchema);
 

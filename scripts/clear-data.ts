@@ -22,9 +22,9 @@ if (!MONGODB_URI) {
 
 async function clearData() {
   try {
-    console.log('🔌 Connecting to MongoDB...');
+    console.info('🔌 Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI!);
-    console.log('✅ Connected to MongoDB');
+    console.info('✅ Connected to MongoDB');
 
     const db = mongoose.connection.db;
     if (!db) {
@@ -36,12 +36,12 @@ async function clearData() {
     const user = await usersCollection.findOne({ email: 'test@example.com' });
     
     if (!user) {
-      console.log('⚠️ Test user not found. Nothing to clear.');
+      console.info('⚠️ Test user not found. Nothing to clear.');
       return;
     }
 
     const userId = user._id;
-    console.log(`👤 Clearing data for user: ${user.email} (${userId})`);
+    console.info(`👤 Clearing data for user: ${user.email} (${userId})`);
 
     // Collections to clear
     const collections = [
@@ -59,26 +59,26 @@ async function clearData() {
       'documents',
     ];
 
-    console.log('\n🧹 Clearing collections...');
+    console.info('\n🧹 Clearing collections...');
     
     for (const collectionName of collections) {
       try {
         const collection = db.collection(collectionName);
         const result = await collection.deleteMany({ userId });
-        console.log(`   ✅ ${collectionName}: ${result.deletedCount} documents deleted`);
+        console.info(`   ✅ ${collectionName}: ${result.deletedCount} documents deleted`);
       } catch {
-        console.log(`   ⚠️ ${collectionName}: collection may not exist`);
+        console.info(`   ⚠️ ${collectionName}: collection may not exist`);
       }
     }
 
-    console.log('\n🎉 Data cleared successfully!');
+    console.info('\n🎉 Data cleared successfully!');
 
   } catch (error) {
     console.error('❌ Clear failed:', error);
     throw error;
   } finally {
     await mongoose.disconnect();
-    console.log('\n🔌 Disconnected from MongoDB');
+    console.info('\n🔌 Disconnected from MongoDB');
   }
 }
 

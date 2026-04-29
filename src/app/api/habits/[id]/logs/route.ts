@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Habit from '@/lib/mongodb/models/Habit';
 import HabitLog from '@/lib/mongodb/models/HabitLog';
 import { logHabitSchema } from '@/lib/validations/habit';
+import { sanitizeText } from '@/lib/utils/sanitize';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -50,46 +52,75 @@ export async function POST(req: NextRequest, { params }: Params) {
   const parsed = logHabitSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { date, completed, note } = parsed.data;
+  const { date, completed } = parsed.data;
+  const note = parsed.data.note ? sanitizeText(parsed.data.note) : undefined;
 
   await connectToDatabase();
 
-  const habit = await Habit.findOne({ _id: id, userId: session.user.id });
+  // Verify ownership before opening a transaction
+  const habit = await Habit.findOne({ _id: id, userId: session.user.id })
+    .select('longestStreak')
+    .lean();
   if (!habit) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  if (!completed) {
-    const deleted = await HabitLog.findOneAndDelete({ habitId: id, userId: session.user.id, date });
-    if (deleted) {
-      await Habit.updateOne({ _id: id }, { $inc: { totalCompletions: -1 } });
-      await recalculateStreak(id, session.user.id, habit.longestStreak);
-    }
-    return NextResponse.json({ completed: false });
+  // ── Atomic transaction: log + counter + streak ─────────────────────────────
+  const dbSession = await mongoose.startSession();
+  try {
+    await dbSession.withTransaction(async () => {
+      if (!completed) {
+        const deleted = await HabitLog.findOneAndDelete(
+          { habitId: id, userId: session.user.id, date },
+          { session: dbSession }
+        );
+        if (deleted) {
+          await Habit.updateOne(
+            { _id: id },
+            { $inc: { totalCompletions: -1 } },
+            { session: dbSession }
+          );
+          await recalculateStreakAtomic(id, session.user.id, habit.longestStreak, dbSession);
+        }
+      } else {
+        const existing = await HabitLog.findOne(
+          { habitId: id, userId: session.user.id, date },
+          null,
+          { session: dbSession }
+        );
+        await HabitLog.findOneAndUpdate(
+          { habitId: id, userId: session.user.id, date },
+          { note, completedAt: new Date() },
+          { upsert: true, new: true, session: dbSession }
+        );
+        if (!existing) {
+          await Habit.updateOne(
+            { _id: id },
+            { $inc: { totalCompletions: 1 } },
+            { session: dbSession }
+          );
+        }
+        await recalculateStreakAtomic(id, session.user.id, habit.longestStreak, dbSession);
+      }
+    });
+  } finally {
+    await dbSession.endSession();
   }
 
-  // upsert log
-  const existing = await HabitLog.findOne({ habitId: id, userId: session.user.id, date });
-  await HabitLog.findOneAndUpdate(
-    { habitId: id, userId: session.user.id, date },
-    { note, completedAt: new Date() },
-    { upsert: true, new: true }
-  );
-
-  if (!existing) {
-    await Habit.updateOne({ _id: id }, { $inc: { totalCompletions: 1 } });
-  }
-  await recalculateStreak(id, session.user.id, habit.longestStreak);
-
-  return NextResponse.json({ completed: true });
+  return NextResponse.json({ completed });
 }
 
-async function recalculateStreak(habitId: string, userId: string, currentLongest: number) {
-  const logs = await HabitLog.find({ habitId, userId })
+async function recalculateStreakAtomic(
+  habitId: string,
+  userId: string,
+  currentLongest: number,
+  dbSession: mongoose.ClientSession
+) {
+  const logs = await HabitLog.find({ habitId, userId }, null, { session: dbSession })
     .sort({ date: -1 })
     .select('date')
     .lean();
 
   if (logs.length === 0) {
-    await Habit.updateOne({ _id: habitId }, { streak: 0 });
+    await Habit.updateOne({ _id: habitId }, { streak: 0 }, { session: dbSession });
     return;
   }
 
@@ -109,7 +140,6 @@ async function recalculateStreak(habitId: string, userId: string, currentLongest
   };
 
   let streak = calcStreak(today);
-  // allow streak if completed yesterday but not yet today
   if (streak === 0) {
     const yd = new Date();
     yd.setDate(yd.getDate() - 1);
@@ -117,5 +147,9 @@ async function recalculateStreak(habitId: string, userId: string, currentLongest
   }
 
   const longestStreak = Math.max(streak, currentLongest);
-  await Habit.updateOne({ _id: habitId }, { streak, longestStreak });
+  await Habit.updateOne(
+    { _id: habitId },
+    { streak, longestStreak },
+    { session: dbSession }
+  );
 }

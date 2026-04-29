@@ -262,14 +262,14 @@ const Document = mongoose.models.Document || mongoose.model('Document', Document
 
 async function seed() {
   try {
-    console.log('🔌 Connecting to MongoDB...');
+    console.info('🔌 Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI!);
-    console.log('✅ Connected to MongoDB');
+    console.info('✅ Connected to MongoDB');
 
     // Get or create test user
     let user = await User.findOne({ email: 'test@example.com' });
     if (!user) {
-      console.log('📝 Creating test user...');
+      console.info('📝 Creating test user...');
       user = await User.create({
         email: 'test@example.com',
         name: 'Test User',
@@ -278,10 +278,10 @@ async function seed() {
       });
     }
     const userId = user._id;
-    console.log(`👤 Using user: ${user.email} (${userId})`);
+    console.info(`👤 Using user: ${user.email} (${userId})`);
 
     // Clear existing data for this user
-    console.log('🧹 Clearing existing test data...');
+    console.info('🧹 Clearing existing test data...');
     await Promise.all([
       Member.deleteMany({ userId }),
       Category.deleteMany({ userId }),
@@ -298,7 +298,7 @@ async function seed() {
     ]);
 
     // ============ Members ============
-    console.log('👥 Creating members...');
+    console.info('👥 Creating members...');
     const members = await Member.insertMany([
       { userId, name: 'Self', type: MemberType.SELF, isActive: true },
       { userId, name: 'Priya Sharma', type: MemberType.FAMILY, relationship: 'Spouse', phone: '+91 98765 43210', email: 'priya@email.com' },
@@ -306,10 +306,10 @@ async function seed() {
       { userId, name: 'Parents', type: MemberType.FAMILY, relationship: 'Parent' },
       { userId, name: 'Rahul Kumar', type: MemberType.OTHER, relationship: 'Friend', phone: '+91 98765 43212' },
     ]);
-    console.log(`   ✅ Created ${members.length} members`);
+    console.info(`   ✅ Created ${members.length} members`);
 
     // ============ Categories ============
-    console.log('🏷️ Creating categories...');
+    console.info('🏷️ Creating categories...');
     const expenseCategories = await Category.insertMany([
       { userId, name: 'Food & Dining', type: CategoryType.EXPENSE, icon: 'Utensils', color: '#ef4444' },
       { userId, name: 'Groceries', type: CategoryType.EXPENSE, icon: 'ShoppingCart', color: '#f97316' },
@@ -341,30 +341,30 @@ async function seed() {
       { userId, name: 'Gift Received', type: CategoryType.INCOME, icon: 'Gift', color: '#a855f7' },
       { userId, name: 'Other Income', type: CategoryType.INCOME, icon: 'Plus', color: '#64748b' },
     ]);
-    console.log(`   ✅ Created ${expenseCategories.length + incomeCategories.length} categories`);
+    console.info(`   ✅ Created ${expenseCategories.length + incomeCategories.length} categories`);
 
     // ============ Bank Accounts ============
-    console.log('🏦 Creating bank accounts...');
+    console.info('🏦 Creating bank accounts...');
     const bankAccounts = await BankAccount.insertMany([
       { userId, bankName: 'HDFC Bank', accountHolderName: 'Test User', accountNumber: '1234567890', ifscCode: 'HDFC0001234', upiId: 'testuser@hdfcbank', openingBalance: 150000, currentBalance: 185000 },
       { userId, bankName: 'ICICI Bank', accountHolderName: 'Test User', accountNumber: '9876543210', ifscCode: 'ICIC0001234', upiId: 'testuser@icici', openingBalance: 75000, currentBalance: 92500 },
       { userId, bankName: 'SBI', accountHolderName: 'Test User', accountNumber: '5555666677', ifscCode: 'SBIN0001234', openingBalance: 50000, currentBalance: 48000 },
       { userId, bankName: 'Kotak Mahindra', accountHolderName: 'Test User', accountNumber: '1111222233', ifscCode: 'KKBK0001234', upiId: 'testuser@kotak', openingBalance: 25000, currentBalance: 31000 },
     ]);
-    console.log(`   ✅ Created ${bankAccounts.length} bank accounts`);
+    console.info(`   ✅ Created ${bankAccounts.length} bank accounts`);
 
     // ============ Cards ============
-    console.log('💳 Creating cards...');
+    console.info('💳 Creating cards...');
     const cards = await Card.insertMany([
       { userId, cardName: 'HDFC Regalia', last4Digits: '4567', cardType: 'credit', billingCycleDay: 15, creditLimit: 300000, currentBalance: 45000, linkedBankId: bankAccounts[0]._id },
       { userId, cardName: 'Amazon Pay ICICI', last4Digits: '8901', cardType: 'credit', billingCycleDay: 1, creditLimit: 150000, currentBalance: 12500, linkedBankId: bankAccounts[1]._id },
       { userId, cardName: 'SBI SimplyCLICK', last4Digits: '2345', cardType: 'credit', billingCycleDay: 20, creditLimit: 100000, currentBalance: 8000, linkedBankId: bankAccounts[2]._id },
       { userId, cardName: 'HDFC Debit Card', last4Digits: '6789', cardType: 'debit', linkedBankId: bankAccounts[0]._id },
     ]);
-    console.log(`   ✅ Created ${cards.length} cards`);
+    console.info(`   ✅ Created ${cards.length} cards`);
 
     // ============ Investments ============
-    console.log('📈 Creating investments...');
+    console.info('📈 Creating investments...');
     const investments = await Investment.insertMany([
       { userId, name: 'HDFC Flexi Cap Fund', type: InvestmentType.MUTUAL_FUND, currentValue: 250000, investedAmount: 200000 },
       { userId, name: 'Axis Bluechip Fund', type: InvestmentType.MUTUAL_FUND, currentValue: 180000, investedAmount: 150000 },
@@ -380,10 +380,10 @@ async function seed() {
       { userId, name: 'Bitcoin', type: InvestmentType.CRYPTO, currentValue: 45000, investedAmount: 30000 },
       { userId, name: 'Ethereum', type: InvestmentType.CRYPTO, currentValue: 25000, investedAmount: 20000 },
     ]);
-    console.log(`   ✅ Created ${investments.length} investments`);
+    console.info(`   ✅ Created ${investments.length} investments`);
 
     // ============ Transactions ============
-    console.log('💸 Creating transactions...');
+    console.info('💸 Creating transactions...');
     const today = new Date();
     const transactions = [];
 
@@ -562,10 +562,10 @@ async function seed() {
     }
 
     await Transaction.insertMany(transactions);
-    console.log(`   ✅ Created ${transactions.length} transactions`);
+    console.info(`   ✅ Created ${transactions.length} transactions`);
 
     // ============ Budgets ============
-    console.log('📊 Creating budgets...');
+    console.info('📊 Creating budgets...');
     const budgets = await Budget.insertMany([
       { userId, name: 'Food Budget', categoryId: expenseCategories.find(c => c.name === 'Food & Dining')?._id, amount: 15000, period: 'monthly', alertThreshold: 80 },
       { userId, name: 'Groceries Budget', categoryId: expenseCategories.find(c => c.name === 'Groceries')?._id, amount: 12000, period: 'monthly', alertThreshold: 75 },
@@ -574,10 +574,10 @@ async function seed() {
       { userId, name: 'Transportation Budget', categoryId: expenseCategories.find(c => c.name === 'Transportation')?._id, amount: 8000, period: 'monthly', alertThreshold: 85 },
       { userId, name: 'Fuel Budget', categoryId: expenseCategories.find(c => c.name === 'Fuel')?._id, amount: 7000, period: 'monthly', alertThreshold: 80 },
     ]);
-    console.log(`   ✅ Created ${budgets.length} budgets`);
+    console.info(`   ✅ Created ${budgets.length} budgets`);
 
     // ============ Goals ============
-    console.log('🎯 Creating goals...');
+    console.info('🎯 Creating goals...');
     const goals = await Goal.insertMany([
       { userId, name: 'Emergency Fund', targetAmount: 500000, currentAmount: 185000, deadline: new Date('2026-12-31'), icon: '🏦', color: '#22c55e' },
       { userId, name: 'New Car', targetAmount: 1500000, currentAmount: 450000, deadline: new Date('2027-06-30'), icon: '🚗', color: '#3b82f6' },
@@ -585,10 +585,10 @@ async function seed() {
       { userId, name: 'Home Down Payment', targetAmount: 2000000, currentAmount: 750000, deadline: new Date('2028-12-31'), icon: '🏠', color: '#f59e0b' },
       { userId, name: 'Kids Education', targetAmount: 1000000, currentAmount: 200000, deadline: new Date('2030-04-01'), icon: '🎓', color: '#ec4899' },
     ]);
-    console.log(`   ✅ Created ${goals.length} goals`);
+    console.info(`   ✅ Created ${goals.length} goals`);
 
     // ============ Trips ============
-    console.log('✈️ Creating trips...');
+    console.info('✈️ Creating trips...');
     const trips = await Trip.insertMany([
       {
         userId,
@@ -652,10 +652,10 @@ async function seed() {
         ],
       },
     ]);
-    console.log(`   ✅ Created ${trips.length} trips`);
+    console.info(`   ✅ Created ${trips.length} trips`);
 
     // ============ Scheduled Payments ============
-    console.log('📅 Creating scheduled payments...');
+    console.info('📅 Creating scheduled payments...');
     const scheduledPayments = await ScheduledPayment.insertMany([
       { userId, name: 'House Rent', amount: 25000, frequency: Frequency.MONTHLY, nextDueDate: new Date('2026-02-05'), categoryId: expenseCategories.find(c => c.name === 'Rent')?._id, bankAccountId: bankAccounts[0]._id, isActive: true },
       { userId, name: 'Electricity Bill', amount: 3000, frequency: Frequency.MONTHLY, nextDueDate: new Date('2026-02-08'), categoryId: expenseCategories.find(c => c.name === 'Bills & Utilities')?._id, bankAccountId: bankAccounts[0]._id, isActive: true },
@@ -666,19 +666,19 @@ async function seed() {
       { userId, name: 'SIP - HDFC Flexi Cap', amount: 10000, frequency: Frequency.MONTHLY, nextDueDate: new Date('2026-02-05'), categoryId: expenseCategories.find(c => c.name === 'Other Expense')?._id, bankAccountId: bankAccounts[0]._id, isActive: true, autoProcess: true },
       { userId, name: 'SIP - Axis Bluechip', amount: 5000, frequency: Frequency.MONTHLY, nextDueDate: new Date('2026-02-10'), categoryId: expenseCategories.find(c => c.name === 'Other Expense')?._id, bankAccountId: bankAccounts[1]._id, isActive: true, autoProcess: true },
     ]);
-    console.log(`   ✅ Created ${scheduledPayments.length} scheduled payments`);
+    console.info(`   ✅ Created ${scheduledPayments.length} scheduled payments`);
 
     // ============ Vehicles ============
-    console.log('🚗 Creating vehicles...');
+    console.info('🚗 Creating vehicles...');
     const vehicles = await Vehicle.insertMany([
       { userId, name: 'My Honda City', type: 'car', make: 'Honda', model: 'City', year: 2022, registrationNumber: 'DL 01 AB 1234', fuelType: 'Petrol', purchaseDate: new Date('2022-03-15'), purchasePrice: 1200000, currentValue: 950000 },
       { userId, name: 'Royal Enfield Classic', type: 'motorcycle', make: 'Royal Enfield', model: 'Classic 350', year: 2021, registrationNumber: 'DL 02 CD 5678', fuelType: 'Petrol', purchaseDate: new Date('2021-08-20'), purchasePrice: 195000, currentValue: 150000 },
       { userId, name: 'TVS Jupiter', type: 'scooter', make: 'TVS', model: 'Jupiter 125', year: 2023, registrationNumber: 'DL 03 EF 9012', fuelType: 'Petrol', purchaseDate: new Date('2023-05-10'), purchasePrice: 85000, currentValue: 70000 },
     ]);
-    console.log(`   ✅ Created ${vehicles.length} vehicles`);
+    console.info(`   ✅ Created ${vehicles.length} vehicles`);
 
     // ============ Documents ============
-    console.log('📄 Creating documents...');
+    console.info('📄 Creating documents...');
     const documents = await Document.insertMany([
       { userId, name: 'Passport', type: 'identity', category: 'Personal', description: 'Indian Passport', expiryDate: new Date('2032-06-15') },
       { userId, name: 'Aadhar Card', type: 'identity', category: 'Personal', description: 'UIDAI Aadhar Card' },
@@ -691,33 +691,33 @@ async function seed() {
       { userId, name: 'Employment Contract', type: 'legal', category: 'Work', description: 'Current Job Offer Letter' },
       { userId, name: 'Degree Certificate', type: 'education', category: 'Education', description: 'B.Tech Degree Certificate' },
     ]);
-    console.log(`   ✅ Created ${documents.length} documents`);
+    console.info(`   ✅ Created ${documents.length} documents`);
 
     // ============ Summary ============
-    console.log('\n🎉 Seed completed successfully!');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`   👤 User: test@example.com`);
-    console.log(`   👥 Members: ${members.length}`);
-    console.log(`   🏷️ Categories: ${expenseCategories.length + incomeCategories.length}`);
-    console.log(`   🏦 Bank Accounts: ${bankAccounts.length}`);
-    console.log(`   💳 Cards: ${cards.length}`);
-    console.log(`   📈 Investments: ${investments.length}`);
-    console.log(`   💸 Transactions: ${transactions.length}`);
-    console.log(`   📊 Budgets: ${budgets.length}`);
-    console.log(`   🎯 Goals: ${goals.length}`);
-    console.log(`   ✈️ Trips: ${trips.length}`);
-    console.log(`   📅 Scheduled Payments: ${scheduledPayments.length}`);
-    console.log(`   🚗 Vehicles: ${vehicles.length}`);
-    console.log(`   📄 Documents: ${documents.length}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('\n💡 Login with: test@example.com (create this user via registration)');
+    console.info('\n🎉 Seed completed successfully!');
+    console.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.info(`   👤 User: test@example.com`);
+    console.info(`   👥 Members: ${members.length}`);
+    console.info(`   🏷️ Categories: ${expenseCategories.length + incomeCategories.length}`);
+    console.info(`   🏦 Bank Accounts: ${bankAccounts.length}`);
+    console.info(`   💳 Cards: ${cards.length}`);
+    console.info(`   📈 Investments: ${investments.length}`);
+    console.info(`   💸 Transactions: ${transactions.length}`);
+    console.info(`   📊 Budgets: ${budgets.length}`);
+    console.info(`   🎯 Goals: ${goals.length}`);
+    console.info(`   ✈️ Trips: ${trips.length}`);
+    console.info(`   📅 Scheduled Payments: ${scheduledPayments.length}`);
+    console.info(`   🚗 Vehicles: ${vehicles.length}`);
+    console.info(`   📄 Documents: ${documents.length}`);
+    console.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.info('\n💡 Login with: test@example.com (create this user via registration)');
 
   } catch (error) {
     console.error('❌ Seed failed:', error);
     throw error;
   } finally {
     await mongoose.disconnect();
-    console.log('\n🔌 Disconnected from MongoDB');
+    console.info('\n🔌 Disconnected from MongoDB');
   }
 }
 

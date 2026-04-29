@@ -102,7 +102,6 @@ export default function RootLayout({
             The HTML is always fetched fresh (SW uses network-first for navigation),
             so this unregisters stale service workers that would otherwise serve
             outdated chunks. */}
-        {/* eslint-disable-next-line @next/next/no-before-interactive-script-component */}
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(regs) {

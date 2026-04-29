@@ -4,6 +4,9 @@ import { z } from 'zod';
 import { authOptions } from '@/lib/auth/config';
 import { connectToDatabase } from '@/lib/mongodb/client';
 import Loan from '@/lib/mongodb/models/Loan';
+import Vehicle from '@/lib/mongodb/models/Vehicle';
+
+void Vehicle; // Registers Vehicle model for .populate('linkedVehicleId')
 
 const updateLoanSchema = z.object({
   isPrivate: z.boolean().optional(),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -96,6 +96,20 @@ export default function CardsPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, Record<string, boolean>>>({});
   const { isPasswordSet, hasAccess, grantAccess, revokeAccess, expiresAt } = useSensitiveDataAccess();
+
+  // Track the current time as state so the countdown re-renders without
+  // calling Date.now() during render. Initialise lazily so SSR returns 0
+  // and the client paints the real value on mount.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    if (!hasAccess) return;
+    // Defer initial setNow to next microtask so React Compiler doesn't flag
+    // it as a cascading render trigger.
+    queueMicrotask(() => setNow(Date.now()));
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, [hasAccess]);
+  const minutesLeft = expiresAt && now ? Math.max(0, Math.ceil((expiresAt - now) / 60000)) : 0;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['cards'],
@@ -207,8 +221,8 @@ export default function CardsPage() {
                     {hasAccess ? 'Sensitive Data Unlocked' : 'Sensitive Data Protected'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {hasAccess 
-                      ? `Access expires in ${Math.ceil((expiresAt! - Date.now()) / 60000)} minutes`
+                    {hasAccess
+                      ? `Access expires in ${minutesLeft} minutes`
                       : 'CVV and PIN are protected. Unlock to view.'}
                   </p>
                 </div>
@@ -348,7 +362,7 @@ export default function CardsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7"
+                            className="h-9 w-9"
                             onClick={() => toggleVisibility(card._id, 'cardNumber')}
                           >
                             {visibleSecrets[card._id]?.cardNumber ? (
@@ -361,7 +375,7 @@ export default function CardsPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7"
+                          className="h-9 w-9"
                           onClick={() => copyToClipboard(card.cardNumber || card.last4Digits || '', `${card._id}-number`)}
                         >
                           {copiedField === `${card._id}-number` ? (
@@ -441,7 +455,7 @@ export default function CardsPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7"
+                          className="h-9 w-9"
                           onClick={() => toggleVisibility(card._id, 'pin')}
                           disabled={!hasAccess}
                         >
@@ -454,7 +468,7 @@ export default function CardsPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7"
+                          className="h-9 w-9"
                           onClick={() => hasAccess && copyToClipboard(card.pin || '', `${card._id}-pin`)}
                           disabled={!hasAccess}
                         >

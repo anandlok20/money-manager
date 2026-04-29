@@ -281,7 +281,7 @@ export function SplitSection({ totalAmount, members, participants, onParticipant
       {participants.length > 0 && totalAmount > 0 && (
         <div className="rounded-lg border bg-muted/30 p-3 space-y-1 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Others' total</span>
+            <span className="text-muted-foreground">Others&apos; total</span>
             <span>
               {formatCurrency(splitsTotal)}
               {splitMode === 'percentage' && (

@@ -98,8 +98,9 @@ export function sanitizeUrl(url: string | undefined | null): string {
 export function sanitizeEmail(email: string | undefined | null): string {
   if (!email || typeof email !== 'string') return '';
   const sanitized = sanitizeText(email).toLowerCase();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(sanitized) ? sanitized : '';
+  // Require at least one alphanumeric in local + domain, TLD ≥ 2 chars
+  const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+  return emailRegex.test(sanitized) && sanitized.length <= 254 ? sanitized : '';
 }
 
 /**

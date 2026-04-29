@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongodb/client';
 import Habit from '@/lib/mongodb/models/Habit';
 import HabitLog from '@/lib/mongodb/models/HabitLog';
 import { updateHabitSchema } from '@/lib/validations/habit';
+import { sanitizeText } from '@/lib/utils/sanitize';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -41,8 +42,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
   await connectToDatabase();
 
   const updateData: Record<string, unknown> = { ...parsed.data };
-  if (parsed.data.startDate) updateData.startDate = new Date(parsed.data.startDate);
-  if (parsed.data.endDate)   updateData.endDate   = new Date(parsed.data.endDate);
+  if (parsed.data.name)        updateData.name        = sanitizeText(parsed.data.name);
+  if (parsed.data.description) updateData.description = sanitizeText(parsed.data.description);
+  if (parsed.data.startDate)   updateData.startDate   = new Date(parsed.data.startDate);
+  if (parsed.data.endDate)     updateData.endDate     = new Date(parsed.data.endDate);
   if (parsed.data.reminderTime === '') delete updateData.reminderTime;
 
   const habit = await Habit.findOneAndUpdate(

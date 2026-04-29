@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
@@ -10,11 +10,9 @@ import {
   Banknote,
   ArrowLeftRight,
   TrendingUp,
-  TrendingDown,
   Users,
   Settings,
   Menu,
-  X,
   LogOut,
   ChevronDown,
   CreditCard,
@@ -36,10 +34,7 @@ import {
   ArrowLeft,
   Home,
   Sparkles,
-  Bell,
-  Search,
   ChevronLeft,
-  Crown,
   Shield,
   Repeat2,
 } from 'lucide-react';
@@ -55,7 +50,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { useSubscription } from '@/hooks/useSubscription';
 
 interface NavChild {

@@ -12,7 +12,9 @@ export interface IUser extends Document {
   hasSelectedPlan: boolean;
   lockEnabled: boolean;
   pinHash?: string;
-  sensitiveDataPasswordHash?: string; // Password to view sensitive info like CVV/PIN
+  sensitiveDataPasswordHash?: string;
+  whatsappPhone?: string; // E.164 format, e.g. "919876543210"
+  timezone?: string;      // IANA timezone, e.g. "Asia/Kolkata"
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,6 +59,18 @@ const UserSchema = new Schema<IUser>(
     },
     sensitiveDataPasswordHash: {
       type: String,
+    },
+    whatsappPhone: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: (v: string) => !v || /^[1-9]\d{7,14}$/.test(v),
+        message: 'whatsappPhone must be E.164 format without leading + or 0',
+      },
+    },
+    timezone: {
+      type: String,
+      default: 'Asia/Kolkata',
     },
   },
   {

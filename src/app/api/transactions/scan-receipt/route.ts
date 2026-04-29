@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
     const categories = await Category.find({ userId: session.user.id }).lean();
     const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c._id.toString()]));
 
-    let extractedText = manualText || '';
+    const extractedText = manualText || '';
 
     // If image provided and ANTHROPIC_API_KEY is set, use Claude Vision for OCR
     let aiData = null;

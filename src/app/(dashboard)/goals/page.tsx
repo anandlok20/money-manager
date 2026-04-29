@@ -288,7 +288,7 @@ export default function GoalsPage() {
               New Goal
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Create New Goal</DialogTitle>
               <DialogDescription>
@@ -638,7 +638,7 @@ export default function GoalsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingGoal} onOpenChange={(open) => !open && setEditingGoal(null)}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Goal</DialogTitle>
             <DialogDescription>
@@ -739,7 +739,7 @@ export default function GoalsPage() {
 
       {/* Contribution Dialog */}
       <Dialog open={!!contributionGoal} onOpenChange={(open) => !open && setContributionGoal(null)}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Add Contribution</DialogTitle>
             <DialogDescription>

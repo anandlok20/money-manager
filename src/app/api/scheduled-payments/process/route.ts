@@ -37,6 +37,26 @@ export async function POST(request: NextRequest) {
     await connectToDatabase();
 
     const now = new Date();
+
+    // Recover any stuck payments — claimed (nextRunDate=2099) but never finalised
+    // because the previous cron crashed mid-execution. After 5 min, reset them.
+    const stuckThreshold = new Date(now.getTime() - 5 * 60 * 1000);
+    await ScheduledPayment.updateMany(
+      {
+        isActive: true,
+        nextRunDate: new Date('2099-01-01'),
+        updatedAt: { $lt: stuckThreshold },
+      },
+      [
+        {
+          $set: {
+            nextRunDate: { $ifNull: ['$lastRunDate', stuckThreshold] },
+            lastError: 'Recovered from stuck claim — previous cron may have crashed',
+          },
+        },
+      ]
+    );
+
     let processedCount = 0;
     const errors: { paymentId: string; error: string }[] = [];
 

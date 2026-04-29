@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       });
     } else if (process.env.NODE_ENV === 'development') {
       // Only log in development when email service is not configured
-      console.log('[DEV] Password Reset Link:', resetUrl);
+      console.info('[DEV] Password Reset Link:', resetUrl);
     }
 
     return NextResponse.json({

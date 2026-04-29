@@ -1,5 +1,22 @@
 # Test Results
 
+## 2026-04-29 — Project-wide Audit Fixes
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| `npx tsc --noEmit` | ✅ clean | 0 errors after 25+ fixes across critical/high/medium severity |
+| `npm run lint`     | ✅ 0 errors / 49 warnings | Down from 394 errors / 124 warnings. Errors fixed: 4 prefer-const, 2 unescaped-entities, 1 require-import, 1 cards setState-in-effect, 1 cards Date.now() purity, 1 dashboard cascading-render, 1 orphan disable comment. SFDX autogen typings now ignored. Remaining 49 warnings are unused imports + 2 React Compiler info warnings about react-hook-form's `watch()` API. |
+
+---
+
+## 2026-04-27 — WhatsApp Habit Reminders
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| `npx tsc --noEmit` | ✅ clean | 0 errors — all new files (whatsapp.ts, API routes, cron, settings component) type-checked clean on first pass |
+
+---
+
 ## 2026-04-27 — Habit Tracker Feature
 
 | Check | Status | Notes |

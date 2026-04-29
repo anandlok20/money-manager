@@ -203,21 +203,21 @@ export default function LoansPage() {
                       {loan.status === 'active' && (
                         <>
                           <Link href={`/loans/${loan._id}`}>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Button variant="ghost" size="icon" className="h-9 w-9">
                               <Eye className="h-3.5 w-3.5" />
                             </Button>
                           </Link>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7"
+                            className="h-9 w-9"
                             onClick={() => router.push(`/loans/${loan._id}/edit`)}
                           >
                             <Edit className="h-3.5 w-3.5" />
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <Button variant="ghost" size="icon" className="h-9 w-9">
                                 <X className="h-3.5 w-3.5" />
                               </Button>
                             </AlertDialogTrigger>

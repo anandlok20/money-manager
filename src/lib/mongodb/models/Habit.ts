@@ -24,6 +24,7 @@ export interface IHabit extends Document {
   streak: number;
   longestStreak: number;
   totalCompletions: number;
+  lastReminderDate?: string; // YYYY-MM-DD
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +47,7 @@ const HabitSchema = new Schema<IHabit>(
     streak:           { type: Number, default: 0 },
     longestStreak:    { type: Number, default: 0 },
     totalCompletions: { type: Number, default: 0 },
+    lastReminderDate: { type: String }, // YYYY-MM-DD, prevents duplicate sends per day
   },
   { timestamps: true }
 );

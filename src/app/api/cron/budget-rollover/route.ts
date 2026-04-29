@@ -53,25 +53,13 @@ export async function POST(request: NextRequest) {
 
     for (const budget of priorBudgets) {
       try {
-        // Skip if a budget already exists for this user+category in the current month
-        const alreadyExists = await Budget.exists({
-          userId: budget.userId,
-          categoryId: budget.categoryId,
-          month: currentMonth,
-          year: currentYear,
-        });
-
-        if (alreadyExists) {
-          skippedCount++;
-          continue;
-        }
-
         let rolloverAmount = 0;
 
         if (budget.rolloverEnabled) {
-          // Calculate spent amount for the prior month
-          const priorMonthStart = new Date(priorYear, priorMonth - 1, 1);
-          const priorMonthEnd = new Date(priorYear, priorMonth, 0, 23, 59, 59, 999);
+          // Calculate spent amount for the prior month (UTC boundaries are fine —
+          // budget month is a calendar concept, not tied to user timezone)
+          const priorMonthStart = new Date(Date.UTC(priorYear, priorMonth - 1, 1));
+          const priorMonthEnd   = new Date(Date.UTC(priorYear, priorMonth, 0, 23, 59, 59, 999));
 
           const spentResult = await Transaction.aggregate([
             {
@@ -88,26 +76,42 @@ export async function POST(request: NextRequest) {
           const spent = spentResult[0]?.total || 0;
           const totalAvailable = budget.amount + (budget.rolloverAmount || 0);
           rolloverAmount = Math.max(0, totalAvailable - spent);
+          // Cap rollover at 2x the budget to prevent runaway accumulation
+          rolloverAmount = Math.min(rolloverAmount, budget.amount * 2);
         }
 
-        await Budget.create({
-          userId: budget.userId,
-          categoryId: budget.categoryId,
-          amount: budget.amount,
-          month: currentMonth,
-          year: currentYear,
-          rolloverEnabled: budget.rolloverEnabled,
-          rolloverAmount,
-          isActive: true,
-        });
+        // Atomic upsert: prevents race condition between concurrent cron invocations.
+        // If the doc already exists, this is a no-op and we count it as skipped.
+        const result = await Budget.updateOne(
+          {
+            userId: budget.userId,
+            categoryId: budget.categoryId,
+            month: currentMonth,
+            year: currentYear,
+          },
+          {
+            $setOnInsert: {
+              userId: budget.userId,
+              categoryId: budget.categoryId,
+              amount: budget.amount,
+              month: currentMonth,
+              year: currentYear,
+              rolloverEnabled: budget.rolloverEnabled,
+              rolloverAmount,
+              isActive: true,
+            },
+          },
+          { upsert: true }
+        );
 
-        createdCount++;
+        if (result.upsertedCount > 0) createdCount++;
+        else skippedCount++;
       } catch (err) {
         errors.push({ budgetId: budget._id.toString(), error: String(err) });
       }
     }
 
-    console.log(`[CRON] Budget rollover: ${createdCount} created, ${skippedCount} skipped, ${errors.length} errors`);
+    console.info(`[CRON] Budget rollover: ${createdCount} created, ${skippedCount} skipped, ${errors.length} errors`);
 
     return NextResponse.json({
       success: true,

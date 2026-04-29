@@ -647,8 +647,8 @@ function parseICICIStatement(text: string): ParsedTransaction[] {
     
     if (match) {
       const date = match[1].replace(/-/g, '/');
-      let remaining = match[3] || '';
-      
+      const remaining = match[3] || '';
+
       // Extract amounts (ICICI shows withdrawal, deposit, balance)
       const amounts = remaining.match(/[\d,]+\.\d{2}/g) || [];
       
@@ -770,7 +770,7 @@ function parseAxisStatement(text: string): ParsedTransaction[] {
       if (amounts.length >= 1) {
         // Description is before first amount
         const firstAmountIdx = remaining.indexOf(amounts[0] || "");
-        let description = remaining.substring(0, firstAmountIdx).trim();
+        const description = remaining.substring(0, firstAmountIdx).trim();
         
         // Axis shows DR/CR indicator
         let isCredit = remaining.includes(' CR') || remaining.includes(' Cr');
@@ -985,7 +985,7 @@ function parseIDBIStatement(text: string): ParsedTransaction[] {
     if (!dateMatch) continue;
     
     const date = dateMatch[1];
-    let remaining = line.substring(dateMatch[0].length).trim();
+    const remaining = line.substring(dateMatch[0].length).trim();
     
     // Skip B/F (Brought Forward) lines
     if (remaining.includes('B/F') || remaining.includes('OPENING BALANCE')) continue;
@@ -1517,8 +1517,8 @@ function parseGenericStatement(text: string): ParsedTransaction[] {
 // Main PDF parser - detects bank and uses appropriate parser
 function parsePDF(text: string): { transactions: ParsedTransaction[]; metadata: StatementMetadata } {
   const bank = detectBank(text);
-  console.log(`Detected bank: ${bank}`);
-  console.log(`PDF text preview (first 500 chars): ${text.substring(0, 500)}`);
+  console.info(`Detected bank: ${bank}`);
+  console.info(`PDF text preview (first 500 chars): ${text.substring(0, 500)}`);
   
   // Extract metadata first
   const metadata = extractStatementMetadata(text, bank);
@@ -1566,7 +1566,7 @@ function parsePDF(text: string): { transactions: ParsedTransaction[]; metadata: 
       transactions = parseGenericStatement(text);
   }
   
-  console.log(`Parser found ${transactions.length} transactions`);
+  console.info(`Parser found ${transactions.length} transactions`);
   
   // If bank-specific parser returns few results, try generic as fallback
   if (transactions.length < 3) {
